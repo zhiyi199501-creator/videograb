@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - TEMP_DIR=/tmp/videos
+      - MAX_CONCURRENT=3
+      - JOB_TTL_HOURS=2
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000
+      # B站等平台需要登录 Cookie。本地开发可挂载 Netscape 格式 cookies 文件：
+      # - COOKIES_FILE=/cookies/cookies.txt
+    volumes:
+      - video-temp:/tmp/videos
+      # - ./cookies.txt:/cookies/cookies.txt:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  video-temp:
