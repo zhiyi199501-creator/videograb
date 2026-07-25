@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="mt-auto border-t border-[#f0f1f2] bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <footer className="mt-auto border-t border-[#e8eef5]/80 bg-white/70 backdrop-blur-sm">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <div className="mb-3 flex items-center gap-2">
@@ -22,7 +22,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm text-[#64748b]">
               <li><Link href="/" className="hover:text-[#1677ff]">视频下载</Link></li>
               <li><Link href="/pricing" className="hover:text-[#1677ff]">定价方案</Link></li>
-              <li><span className="text-[#94a3b8]">AI 总结（即将上线）</span></li>
+              <li><span className="text-[#94a3b8]">AI 总结（已上线）</span></li>
             </ul>
           </div>
 

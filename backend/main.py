@@ -1,13 +1,19 @@
 import asyncio
 import logging
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
+# 加载 backend/.env（DeepSeek API Key 等），不覆盖已有环境变量
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
 from routers.api import limiter, router
+from routers.summarize import router as summarize_router
 from services.ytdlp import job_store
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
@@ -42,6 +48,7 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(summarize_router)
 
 
 @app.get("/health")

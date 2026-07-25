@@ -13,13 +13,13 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#f0f1f2] bg-white/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-[#e8eef5]/80 bg-white/75 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1677ff] text-sm font-bold text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#1677ff] to-[#38bdf8] text-sm font-bold text-white shadow-[0_4px_12px_-4px_rgba(22,119,255,0.5)]">
             V
           </div>
-          <span className="text-base font-bold text-[#0f172a]">VideoGrab</span>
+          <span className="text-base font-bold tracking-tight text-[#0f172a]">VideoGrab</span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">

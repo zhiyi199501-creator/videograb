@@ -5,18 +5,19 @@
 ## 功能特性
 
 - 粘贴链接一键解析，选择清晰度/格式后下载
-- 实时下载进度（SSE 推送）
+- 实时下载进度（SSE 推送）；下载完成后自动唤起浏览器保存
+- **AI 视频总结**（手动触发）：字幕提取 / 无字幕语音转写 → DeepSeek 流式摘要 → 思维导图 → 智能问答
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无数据库，内存 Job + 临时文件，2 小时 TTL 自动清理
 - IP 限流（60 次/小时）防滥用
-- Pro 功能占位（AI 总结 / 字幕翻译 / 批量 4K）与定价页
+- Pro 功能占位（字幕翻译 / 批量 4K）与定价页
 
 ## 技术栈
 
 | 层 | 选型 |
 |----|------|
-| 前端 | Next.js 16 + Tailwind CSS |
-| 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg |
+| 前端 | Next.js 16 + Tailwind CSS + markmap |
+| 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg + DeepSeek + faster-whisper |
 | 状态 | 内存 Job Registry + `/tmp/videos` |
 | 部署 | Docker Compose |
 
@@ -35,6 +36,7 @@ downloadapp/
 ### 前置依赖
 
 - Node.js 20+、Python 3.10+、ffmpeg
+- AI 总结需 [DeepSeek API Key](https://platform.deepseek.com/api_keys)；无字幕视频首次转写会下载 Whisper 模型
 
 ### 后端
 
@@ -73,6 +75,18 @@ docker compose up --build
 | `TEMP_DIR` | /tmp/videos | 临时文件目录 |
 | `CORS_ORIGINS` | http://localhost:3000 | 允许的前端域名 |
 | `NEXT_PUBLIC_API_URL` | http://localhost:8000 | 前端调用的后端地址 |
+| `DEEPSEEK_API_KEY` | （空） | AI 总结必填，见 `backend/.env.example` |
+| `DEEPSEEK_MODEL` | deepseek-v4-flash | DeepSeek 模型 ID |
+| `WHISPER_MODEL` | tiny | 无字幕时 ASR 模型 |
+| `ASR_MAX_DURATION` | 1800 | ASR 最长秒数 |
+| `HF_ENDPOINT` | https://hf-mirror.com | Whisper 权重下载镜像 |
+
+后端本地开发请复制环境变量文件：
+
+```bash
+cp backend/.env.example backend/.env
+# 编辑 backend/.env，填入 DEEPSEEK_API_KEY
+```
 
 ## API 概览
 
@@ -83,9 +97,11 @@ docker compose up --build
 | GET | `/api/jobs/{id}/events` | SSE 进度推送 |
 | POST | `/api/jobs/{id}/download` | 开始下载 |
 | GET | `/api/jobs/{id}/file` | 下载文件（attachment） |
+| GET | `/api/jobs/{id}/summarize` | SSE：字幕 + AI 摘要 + 思维导图 |
+| POST | `/api/jobs/{id}/chat` | SSE：基于字幕的 AI 问答 |
 | DELETE | `/api/jobs/{id}` | 清理任务与文件 |
 
-详见 [docs/design.md](docs/design.md)。
+详见 [docs/design.md](docs/design.md)、[docs/ai-summary.md](docs/ai-summary.md)。
 
 ## 生产部署
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import MobileTip from "@/components/download/MobileTip";
 import FormatPicker from "@/components/download/FormatPicker";
 import ProgressBar from "@/components/download/ProgressBar";
+import SummaryPanel from "@/components/summary/SummaryPanel";
 import {
   FormatInfo,
   JobResponse,
@@ -50,11 +51,37 @@ export default function DownloadPage() {
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [thumbError, setThumbError] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
   const selectedFormatRef = useRef("");
+  const autoSavedRef = useRef(false);
 
   useEffect(() => {
     selectedFormatRef.current = selectedFormat;
   }, [selectedFormat]);
+
+  // 切换任务时重置自动保存标记
+  useEffect(() => {
+    autoSavedRef.current = false;
+    setAutoSaved(false);
+  }, [jobId]);
+
+  // 服务端下载完成后，自动触发浏览器保存
+  useEffect(() => {
+    if (phase !== "complete" || autoSavedRef.current) return;
+    autoSavedRef.current = true;
+
+    const filename = job?.filename || "video.mp4";
+    const url = getFileUrl(jobId);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setAutoSaved(true);
+  }, [phase, jobId, job?.filename]);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,7 +198,7 @@ export default function DownloadPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
       <MobileTip />
 
       <Link
@@ -252,7 +279,7 @@ export default function DownloadPage() {
           </h2>
           <ProgressBar progress={Math.max(progress, 0.05)} label="下载进度" />
           <p className="mt-4 text-center text-xs text-[#94a3b8]">
-            请保持页面打开，下载完成后即可保存
+            请保持页面打开，完成后将自动保存到本地
           </p>
         </div>
       )}
@@ -262,16 +289,23 @@ export default function DownloadPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-3xl">
             ✅
           </div>
-          <h2 className="text-lg font-bold text-[#0f172a]">下载完成！</h2>
+          <h2 className="text-lg font-bold text-[#0f172a]">
+            {autoSaved ? "已开始保存！" : "下载完成！"}
+          </h2>
           <p className="mt-2 line-clamp-2 text-sm text-[#64748b]">
             {job?.title || job?.filename}
+          </p>
+          <p className="mt-2 text-xs text-[#94a3b8]">
+            {autoSaved
+              ? "若浏览器未弹出保存，请点击下方按钮重试"
+              : "正在唤起保存…"}
           </p>
           <a
             href={getFileUrl(jobId)}
             download={job?.filename || "video.mp4"}
             className="mt-6 inline-block w-full rounded-full bg-[#1677ff] py-3 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] sm:w-auto sm:px-12"
           >
-            保存到手机 / 电脑
+            {autoSaved ? "再次保存到手机 / 电脑" : "保存到手机 / 电脑"}
           </a>
           <Link
             href="/"
@@ -281,6 +315,10 @@ export default function DownloadPage() {
           </Link>
         </div>
       )}
+
+      {(phase === "ready" ||
+        phase === "downloading" ||
+        phase === "complete") && <SummaryPanel jobId={jobId} />}
 
       {phase === "failed" && (
         <div className="rounded-xl bg-white p-8 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">

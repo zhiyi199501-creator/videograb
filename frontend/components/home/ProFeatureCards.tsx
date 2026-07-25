@@ -3,129 +3,87 @@ import Link from "next/link";
 const features = [
   {
     title: "AI 视频总结",
-    desc: "一键生成视频内容摘要，快速掌握核心要点",
-    tags: ["#AI", "#效率", "#学习"],
+    desc: "摘要 · 导图 · 问答",
     price: "¥29",
-    original: "¥99",
-    badge: "即将上线",
+    badge: "已上线",
     featured: false,
-    gradient: "from-emerald-400 to-teal-600",
-    icon: "🤖",
+    icon: "✨",
   },
   {
     title: "字幕翻译",
-    desc: "自动提取字幕并翻译为多语言，突破语言障碍",
-    tags: ["#字幕", "#翻译", "#多语言"],
+    desc: "多语言字幕",
     price: "¥19",
-    original: "¥59",
     badge: "即将上线",
     featured: false,
-    gradient: "from-violet-400 to-purple-600",
-    icon: "🌍",
+    icon: "🌐",
   },
   {
     title: "Pro 全能套餐",
-    desc: "批量下载 · 4K 无损 · 无限制 · AI 总结 · 字幕翻译",
-    tags: ["#批量", "#4K", "#无限制"],
+    desc: "批量 · 4K · 无限次",
     price: "¥29",
-    original: "¥99",
-    badge: "限时优惠",
+    badge: "限时",
     featured: true,
-    gradient: "from-[#1677ff] to-[#0050d4]",
     icon: "⚡",
   },
 ];
 
 export default function ProFeatureCards() {
   return (
-    <section className="px-4 py-8 sm:px-6">
-      <div className="mb-6 text-center">
-        <h2 className="text-lg font-bold text-[#0f172a]">Pro 高级功能</h2>
-        <p className="mt-1 text-sm text-[#64748b]">解锁更多能力，提升下载体验</p>
-      </div>
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((f) => (
-          <div
-            key={f.title}
-            className={`relative overflow-hidden rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-transform hover:-translate-y-0.5 ${
-              f.featured
-                ? "bg-gradient-to-br from-[#1e3a5f] via-[#2d1b69] to-[#1a1a2e] text-white sm:col-span-2 lg:col-span-1"
-                : "bg-white"
-            }`}
+    <section className="px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-bold text-[#0f172a]">Pro 高级功能</h2>
+          <Link
+            href="/pricing"
+            className="text-xs font-medium text-[#1677ff] hover:underline"
           >
-            <span
-              className={`absolute right-3 top-3 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                f.featured
-                  ? "bg-orange-500 text-white"
-                  : "bg-[#1677ff]/10 text-[#1677ff]"
-              }`}
-            >
-              {f.badge}
-            </span>
+            查看定价 →
+          </Link>
+        </div>
 
+        <div className="overflow-hidden rounded-2xl border border-[#e8eef5] bg-white/90 shadow-[0_4px_20px_-10px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+          {features.map((f, i) => (
             <div
-              className={`flex h-28 items-center justify-center bg-gradient-to-br ${f.gradient} text-4xl ${
-                f.featured ? "opacity-80" : ""
-              }`}
+              key={f.title}
+              className={`flex items-center gap-3 px-3.5 py-2.5 ${
+                i > 0 ? "border-t border-[#f1f5f9]" : ""
+              } ${f.featured ? "bg-[#1677ff]/[0.04]" : ""}`}
             >
-              {f.icon}
-            </div>
-
-            <div className="p-4">
-              <h3
-                className={`text-sm font-bold ${
-                  f.featured ? "text-white" : "text-[#0f172a]"
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${
+                  f.featured
+                    ? "bg-[#1677ff] text-white"
+                    : "bg-[#f1f5f9] text-[#334155]"
                 }`}
               >
-                {f.title}
-              </h3>
-              <p
-                className={`mt-1 text-xs leading-relaxed ${
-                  f.featured ? "text-white/70" : "text-[#64748b]"
-                }`}
-              >
-                {f.desc}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {f.tags.map((tag) => (
+                {f.icon}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-sm font-semibold text-[#0f172a]">
+                    {f.title}
+                  </span>
                   <span
-                    key={tag}
-                    className={`text-xs ${
-                      f.featured ? "text-white/50" : "text-[#94a3b8]"
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                      f.featured
+                        ? "bg-[#1677ff]/10 text-[#1677ff]"
+                        : "bg-[#f1f5f9] text-[#64748b]"
                     }`}
                   >
-                    {tag}
+                    {f.badge}
                   </span>
-                ))}
+                </div>
+                <p className="truncate text-xs text-[#94a3b8]">{f.desc}</p>
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <span
-                  className={`text-lg font-bold ${
-                    f.featured ? "text-orange-400" : "text-[#1677ff]"
-                  }`}
-                >
-                  {f.price}/月
+              <div className="shrink-0 text-right">
+                <span className="text-sm font-bold text-[#1677ff]">
+                  {f.price}
                 </span>
-                <span
-                  className={`text-xs line-through ${
-                    f.featured ? "text-white/40" : "text-[#94a3b8]"
-                  }`}
-                >
-                  原价 {f.original}/月
-                </span>
+                <span className="text-[10px] text-[#94a3b8]">/月</span>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-6 text-center">
-        <Link
-          href="/pricing"
-          className="inline-flex items-center gap-1 text-sm font-medium text-[#1677ff] hover:underline"
-        >
-          查看完整定价方案 →
-        </Link>
+          ))}
+        </div>
       </div>
     </section>
   );

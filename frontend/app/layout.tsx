@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "VideoGrab — 万能视频下载，一键保存到本地",
@@ -17,7 +24,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className="flex min-h-screen flex-col bg-white font-sans text-[#020817] antialiased"
+        className={`${jakarta.variable} flex min-h-screen flex-col font-sans text-[#020817] antialiased`}
       >
         <Suspense>{children}</Suspense>
       </body>

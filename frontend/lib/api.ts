@@ -117,3 +117,103 @@ export function formatDuration(seconds?: number | null): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+
+export type SummarizeEventType =
+  | "status"
+  | "subtitle"
+  | "content"
+  | "mindmap"
+  | "done"
+  | "error"
+  | "ping"
+  | "message";
+
+export interface SummarizeEvent {
+  event: SummarizeEventType;
+  data: {
+    message?: string;
+    text?: string;
+    source?: string;
+    segment_count?: number;
+    delta?: string;
+    markdown?: string;
+    ok?: boolean;
+  };
+}
+
+async function consumeSse(
+  res: Response,
+  onEvent: (ev: SummarizeEvent) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "请求失败" }));
+    throw new Error(err.detail || err.message || "请求失败");
+  }
+  if (!res.body) throw new Error("浏览器不支持流式响应");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let currentEvent = "message";
+
+  const flushBlock = (block: string) => {
+    const lines = block.split("\n");
+    let eventName = currentEvent;
+    const dataLines: string[] = [];
+    for (const line of lines) {
+      if (line.startsWith("event:")) {
+        eventName = line.slice(6).trim();
+      } else if (line.startsWith("data:")) {
+        dataLines.push(line.slice(5).trim());
+      }
+    }
+    if (dataLines.length === 0) return;
+    try {
+      const data = JSON.parse(dataLines.join("\n"));
+      onEvent({ event: eventName as SummarizeEventType, data });
+    } catch {
+      /* ignore malformed chunk */
+    }
+  };
+
+  while (true) {
+    if (signal?.aborted) {
+      await reader.cancel().catch(() => undefined);
+      break;
+    }
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() || "";
+    for (const part of parts) {
+      if (part.trim()) flushBlock(part);
+    }
+  }
+  if (buffer.trim()) flushBlock(buffer);
+}
+
+export function subscribeSummarize(
+  jobId: string,
+  onEvent: (ev: SummarizeEvent) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  return fetch(`${API_BASE}/api/jobs/${jobId}/summarize`, { signal }).then(
+    (res) => consumeSse(res, onEvent, signal)
+  );
+}
+
+export function askAboutVideo(
+  jobId: string,
+  question: string,
+  onEvent: (ev: SummarizeEvent) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  return fetch(`${API_BASE}/api/jobs/${jobId}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+    signal,
+  }).then((res) => consumeSse(res, onEvent, signal));
+}

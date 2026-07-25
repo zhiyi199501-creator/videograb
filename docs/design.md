@@ -137,8 +137,8 @@ data: {"status":"downloading","progress":0.42}
 
 | 路径 | 组件 |
 |------|------|
-| `/` | Navbar, HeroSection, UrlInputBar, PlatformGrid, ProFeatureCards, Footer |
-| `/download/[id]` | FormatPicker, ProgressBar, MobileTip |
+| `/` | Navbar, HeroSection, UrlInputBar, PlatformGrid（紧凑标签）, ProFeatureCards（紧凑列表）, Footer |
+| `/download/[id]` | FormatPicker, ProgressBar, MobileTip, SummaryPanel；下载完成后自动唤起保存 |
 | `/pricing` | 三档套餐卡片 |
 
 ### 响应式断点
@@ -177,10 +177,18 @@ downloadapp/
 - 后端可扩展 `require_pro: bool` 字段限制 4K/批量
 - 定价页 `/pricing` 已占位，后续接入支付网关
 
-### 7.2 AI 接口预留
+### 7.2 AI 视频总结（已实现）
 
-- 下载完成后 Job 可扩展 `transcript_path`、`summary` 字段
-- 新增 `POST /api/jobs/{id}/summarize` 端点（Phase 3）
+详见 [ai-summary.md](ai-summary.md)。用户在下载页**手动点击**「AI 视频总结」触发（不自动开始）。
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/jobs/{id}/summarize` | SSE：`status` / `ping` / `subtitle` / `content` / `mindmap` / `done` |
+| POST | `/api/jobs/{id}/chat` | body `{ "question": "..." }`，SSE 流式回答 |
+
+Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summary`、`mindmap`。
+
+字幕优先平台轨；无字幕时 `faster-whisper` ASR。环境变量：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`WHISPER_MODEL`、`HF_ENDPOINT`。
 
 ### 7.3 DB 迁移路径
 
@@ -199,6 +207,10 @@ downloadapp/
 | RATE_LIMIT | 10/hour | IP 解析限流 |
 | TEMP_DIR | /tmp/videos | 临时文件目录 |
 | CORS_ORIGINS | http://localhost:3000 | 前端域名 |
+| DEEPSEEK_API_KEY | （空） | AI 总结必填 |
+| DEEPSEEK_MODEL | deepseek-v4-flash | DeepSeek 模型 |
+| WHISPER_MODEL | tiny | 无字幕 ASR 模型 |
+| HF_ENDPOINT | https://hf-mirror.com | Whisper 权重镜像 |
 
 ### Docker Compose
 
