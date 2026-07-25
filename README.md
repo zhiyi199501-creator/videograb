@@ -7,6 +7,7 @@
 - 粘贴链接一键解析，选择清晰度/格式后下载
 - 实时下载进度（SSE 推送）；下载完成后自动唤起浏览器保存
 - **AI 视频总结**（手动触发）：字幕提取 / 无字幕语音转写 → DeepSeek 流式摘要 → 思维导图 → 智能问答
+  - Markdown 精美排版；思维导图全屏与 PNG/SVG 导出；字幕下载 SRT / VTT / TXT
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无数据库，内存 Job + 临时文件，2 小时 TTL 自动清理
 - IP 限流（60 次/小时）防滥用
@@ -16,7 +17,7 @@
 
 | 层 | 选型 |
 |----|------|
-| 前端 | Next.js 16 + Tailwind CSS + markmap |
+| 前端 | Next.js 16 + Tailwind CSS + marked + typography + markmap |
 | 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg + DeepSeek + faster-whisper |
 | 状态 | 内存 Job Registry + `/tmp/videos` |
 | 部署 | Docker Compose |

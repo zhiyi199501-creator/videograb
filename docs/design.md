@@ -190,6 +190,8 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 
 字幕优先平台轨；无字幕时 `faster-whisper` ASR。环境变量：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`WHISPER_MODEL`、`HF_ENDPOINT`。
 
+前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。
+
 ### 7.3 DB 迁移路径
 
 - 当前：内存 Job + 文件系统

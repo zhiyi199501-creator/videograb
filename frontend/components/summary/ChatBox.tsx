@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { askAboutVideo } from "@/lib/api";
+import MarkdownContent from "./MarkdownContent";
 
 interface ChatBoxProps {
   jobId: string;
@@ -75,9 +76,17 @@ export default function ChatBox({ jobId, disabled }: ChatBoxProps) {
                 : "mr-8 bg-white text-[#0f172a] shadow-sm"
             }`}
           >
-            <pre className="whitespace-pre-wrap font-sans">
-              {m.content || (streaming && i === messages.length - 1 ? "…" : "")}
-            </pre>
+            {m.role === "assistant" ? (
+              m.content ? (
+                <MarkdownContent content={m.content} />
+              ) : (
+                <span className="text-[#94a3b8]">
+                  {streaming && i === messages.length - 1 ? "…" : ""}
+                </span>
+              )
+            ) : (
+              <pre className="whitespace-pre-wrap font-sans">{m.content}</pre>
+            )}
           </div>
         ))}
       </div>

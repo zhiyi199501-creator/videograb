@@ -151,12 +151,14 @@ async def summarize_events(job_id: str) -> AsyncIterator[dict]:
                 "data": {"message": "语音转写完成，正在生成总结…"},
             }
 
+        segments = subs.get("segments") or []
         yield {
             "event": "subtitle",
             "data": {
                 "text": subs["text"],
                 "source": subs["source"],
-                "segment_count": len(subs.get("segments") or []),
+                "segment_count": len(segments),
+                "segments": segments,
             },
         }
 

@@ -318,7 +318,9 @@ export default function DownloadPage() {
 
       {(phase === "ready" ||
         phase === "downloading" ||
-        phase === "complete") && <SummaryPanel jobId={jobId} />}
+        phase === "complete") && (
+          <SummaryPanel jobId={jobId} title={job?.title} />
+        )}
 
       {phase === "failed" && (
         <div className="rounded-xl bg-white p-8 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">

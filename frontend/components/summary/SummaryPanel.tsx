@@ -1,23 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { subscribeSummarize } from "@/lib/api";
+import { SubtitleSegment, subscribeSummarize } from "@/lib/api";
+import {
+  SubtitleFormat,
+  downloadSubtitles,
+} from "@/lib/subtitleFormat";
 import ChatBox from "./ChatBox";
+import MarkdownContent from "./MarkdownContent";
 import MindMapView from "./MindMapView";
 
 type Tab = "summary" | "subtitle" | "mindmap" | "chat";
 
 interface SummaryPanelProps {
   jobId: string;
+  title?: string | null;
 }
 
-export default function SummaryPanel({ jobId }: SummaryPanelProps) {
+export default function SummaryPanel({ jobId, title }: SummaryPanelProps) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("summary");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [subtitle, setSubtitle] = useState("");
+  const [segments, setSegments] = useState<SubtitleSegment[]>([]);
   const [mindmap, setMindmap] = useState("");
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -38,6 +45,7 @@ export default function SummaryPanel({ jobId }: SummaryPanelProps) {
     setDone(false);
     setSummary("");
     setSubtitle("");
+    setSegments([]);
     setMindmap("");
     setTab("summary");
 
@@ -53,6 +61,7 @@ export default function SummaryPanel({ jobId }: SummaryPanelProps) {
             setStatus(ev.data.message);
           } else if (ev.event === "subtitle" && ev.data.text) {
             setSubtitle(ev.data.text);
+            setSegments(ev.data.segments || []);
             setStatus("字幕已提取");
           } else if (ev.event === "content" && ev.data.delta) {
             setSummary((prev) => prev + ev.data.delta);
@@ -77,6 +86,11 @@ export default function SummaryPanel({ jobId }: SummaryPanelProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadSubtitle = (format: SubtitleFormat) => {
+    if (!subtitle.trim() && segments.length === 0) return;
+    downloadSubtitles(segments, format, title || undefined, subtitle);
   };
 
   const tabs: { id: Tab; label: string; disabled?: boolean }[] = [
@@ -158,25 +172,45 @@ export default function SummaryPanel({ jobId }: SummaryPanelProps) {
           {tab === "summary" && (
             <div className="min-h-[160px]">
               {loading && !summary && !error && (
-                <p className="animate-pulse text-sm text-[#94a3b8]">{status || "生成中…"}</p>
+                <p className="animate-pulse text-sm text-[#94a3b8]">
+                  {status || "生成中…"}
+                </p>
               )}
               {summary ? (
-                <article className="prose-sm max-w-none whitespace-pre-wrap text-sm leading-relaxed text-[#0f172a]">
-                  {summary}
-                </article>
+                <MarkdownContent content={summary} />
               ) : (
                 !loading &&
-                !error && (
-                  <p className="text-sm text-[#94a3b8]">暂无摘要</p>
-                )
+                !error && <p className="text-sm text-[#94a3b8]">暂无摘要</p>
               )}
             </div>
           )}
 
           {tab === "subtitle" && (
-            <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl bg-[#f8fafc] p-3 font-sans text-xs leading-relaxed text-[#334155]">
-              {subtitle || "暂无字幕"}
-            </pre>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-[#94a3b8]">
+                  {segments.length
+                    ? `共 ${segments.length} 条字幕`
+                    : "纯文本字幕"}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {(["srt", "vtt", "txt"] as SubtitleFormat[]).map((fmt) => (
+                    <button
+                      key={fmt}
+                      type="button"
+                      disabled={!subtitle}
+                      onClick={() => handleDownloadSubtitle(fmt)}
+                      className="rounded-md border border-[#1677ff]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      下载 {fmt.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl bg-[#f8fafc] p-3 font-sans text-xs leading-relaxed text-[#334155]">
+                {subtitle || "暂无字幕"}
+              </pre>
+            </div>
           )}
 
           {tab === "mindmap" &&

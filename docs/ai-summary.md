@@ -9,6 +9,7 @@
 2. 用户点击「AI 视频总结」
 3. `GET /api/jobs/{id}/summarize` 以 SSE 推送进度与结果
 4. 可在 Tab 中查看摘要 / 字幕 / 思维导图，或进行问答
+5. 字幕可下载为 SRT / VTT / TXT；思维导图支持全屏与 PNG / SVG 导出
 
 ## SSE 事件
 
@@ -16,12 +17,16 @@
 |------|------|
 | `status` | 进度文案（含语音转写等待秒数） |
 | `ping` | 心跳，防止代理缓冲导致前端卡住 |
-| `subtitle` | 字幕或转写全文 |
-| `content` | 摘要增量（delta） |
-| `mindmap` | 思维导图 Markdown |
+| `subtitle` | 字幕全文 + `segments`（含起止时间，供下载） |
+| `content` | 摘要增量（delta）；另附 `delta_b64` 防字符丢失 |
+| `mindmap` | 思维导图 Markdown（附 `markdown_b64`） |
 | `done` / `error` | 结束 |
 
 问答：`POST /api/jobs/{id}/chat`，body `{ "question": "..." }`，同样 SSE 流式返回。
+
+### SSE 字符保真
+
+后端将文本字段同时以明文 + Base64（`*_b64`）写入单行 JSON；前端优先用 Base64 解包，并仅按 SSE 规范去掉 `data:` 后可选的一个空格（不再 `.trim()` 整行），避免 Markdown 空格 / 换行 / `*` 丢失。
 
 ## 字幕策略
 
@@ -34,6 +39,8 @@
 - 文本截断约 15000 字
 - 结果缓存到 Job：`subtitle_text` / `subtitles` / `subtitle_source`
 - 同一 job 并发总结共用一次提取，避免重复 ASR
+- 前端可将 `segments` 导出为 **SRT / VTT / TXT**（文件名取视频标题）
+- 下载使用 `application/octet-stream` Blob，避免浏览器把 `text/*` 强制存成 `.txt`
 
 ## DeepSeek
 
@@ -56,8 +63,10 @@
 ## 前端
 
 - `SummaryPanel`：手动触发；摘要 / 字幕 / 思维导图 / 问答
-- `MindMapView`：`markmap-lib` + `markmap-view`
-- SSE：`fetch` + `ReadableStream`（非 EventSource）
+- `MarkdownContent`：`marked` + `@tailwindcss/typography`（`prose`）渲染摘要与问答
+- `MindMapView`：`markmap-lib` + `markmap-view`；全屏；完整内容 PNG（2.5x）/ SVG 导出（不受当前缩放平移影响）
+- SSE：`fetch` + `ReadableStream`（非 EventSource）；Base64 解包
+- 开发预览：`/dev/summary-preview`（固定样例，无需总结视频）
 - 下载页内容区约 `max-w-4xl`，便于阅读摘要与导图
 
 ## 后端模块
@@ -68,7 +77,7 @@
 | `services/asr.py` | 无字幕时音频转写 |
 | `services/deepseek.py` | DeepSeek 流式/非流式调用 |
 | `services/summarizer.py` | 编排 + SSE 事件 + 心跳 |
-| `routers/summarize.py` | `/summarize`、`/chat` 路由 |
+| `routers/summarize.py` | `/summarize`、`/chat`；SSE 封装与 Base64 |
 
 ## 验收建议
 
@@ -76,5 +85,6 @@
 |------|------|
 | 有字幕 | `https://www.bilibili.com/video/BV1mAAmzqEfP` |
 | 无字幕（走 ASR） | `https://www.bilibili.com/video/BV1SNgS6EExv` |
+| UI 预览 | 打开 `/dev/summary-preview` 测 Markdown / 导图导出 |
 
 本地需已安装 `ffmpeg`，并配置 `backend/.env` 中的 `DEEPSEEK_API_KEY`。

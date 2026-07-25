@@ -69,7 +69,7 @@
 |----|------|------|
 | F3.1 | 用户登录 | JWT + SQLite |
 | F3.2 | 付费套餐 | 次数/清晰度限制，Stripe 或微信支付 |
-| F3.3 | AI 视频总结 | 手动触发；字幕或 ASR + DeepSeek SSE + markmap + 问答（见 docs/ai-summary.md） |
+| F3.3 | AI 视频总结 | 手动触发；字幕或 ASR + DeepSeek SSE + markmap + 问答；Markdown 排版、导图全屏/导出、字幕 SRT/VTT/TXT 下载（见 docs/ai-summary.md） |
 | F3.4 | 字幕翻译 | yt-dlp 提取字幕 + 翻译 API |
 
 ## 4. 非功能需求

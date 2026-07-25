@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import base64
 import json
 import logging
-import asyncio
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -18,13 +19,28 @@ from services.ytdlp import job_store
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
 
+_B64_TEXT_KEYS = ("delta", "text", "markdown", "message")
+
 
 class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
 
 
 def _sse(event: str, data: dict) -> str:
-    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+    """封装 SSE：整包 JSON 单行写出，避免换行被协议拆行吃掉。
+
+    流式文本字段额外带 base64 副本（*_b64），前端优先解包，
+    防止代理或错误解析导致 Markdown 空格、换行、* 等字符丢失。
+    """
+    payload = dict(data)
+    for key in _B64_TEXT_KEYS:
+        val = payload.get(key)
+        if isinstance(val, str) and val:
+            payload[f"{key}_b64"] = base64.b64encode(val.encode("utf-8")).decode(
+                "ascii"
+            )
+    body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    return f"event: {event}\ndata: {body}\n\n"
 
 
 def _sse_padding() -> str:

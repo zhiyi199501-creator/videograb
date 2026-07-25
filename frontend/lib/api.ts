@@ -128,6 +128,12 @@ export type SummarizeEventType =
   | "ping"
   | "message";
 
+export interface SubtitleSegment {
+  start: number;
+  end: number;
+  text: string;
+}
+
 export interface SummarizeEvent {
   event: SummarizeEventType;
   data: {
@@ -135,10 +141,47 @@ export interface SummarizeEvent {
     text?: string;
     source?: string;
     segment_count?: number;
+    segments?: SubtitleSegment[];
     delta?: string;
     markdown?: string;
     ok?: boolean;
   };
+}
+
+/** 仅去掉 SSE 规范允许的 data: 后可选单个空格，保留内容首尾空白 */
+function sseDataPayload(line: string): string {
+  const raw = line.slice(5);
+  return raw.startsWith(" ") ? raw.slice(1) : raw;
+}
+
+function decodeB64Fields(data: SummarizeEvent["data"]): SummarizeEvent["data"] {
+  if (typeof window === "undefined" && typeof atob !== "function") {
+    return data;
+  }
+  const next = { ...data } as SummarizeEvent["data"] & Record<string, unknown>;
+  const pairs: [keyof SummarizeEvent["data"], string][] = [
+    ["delta", "delta_b64"],
+    ["text", "text_b64"],
+    ["markdown", "markdown_b64"],
+    ["message", "message_b64"],
+  ];
+  for (const [field, b64Key] of pairs) {
+    const encoded = next[b64Key];
+    if (typeof encoded === "string" && encoded) {
+      try {
+        const decoded = decodeURIComponent(
+          Array.from(atob(encoded), (c) =>
+            `%${c.charCodeAt(0).toString(16).padStart(2, "0")}`
+          ).join("")
+        );
+        (next as Record<string, unknown>)[field as string] = decoded;
+      } catch {
+        /* keep plaintext field */
+      }
+      delete next[b64Key];
+    }
+  }
+  return next;
 }
 
 async function consumeSse(
@@ -165,13 +208,16 @@ async function consumeSse(
       if (line.startsWith("event:")) {
         eventName = line.slice(6).trim();
       } else if (line.startsWith("data:")) {
-        dataLines.push(line.slice(5).trim());
+        dataLines.push(sseDataPayload(line));
       }
     }
     if (dataLines.length === 0) return;
     try {
-      const data = JSON.parse(dataLines.join("\n"));
-      onEvent({ event: eventName as SummarizeEventType, data });
+      const raw = JSON.parse(dataLines.join("\n")) as SummarizeEvent["data"];
+      onEvent({
+        event: eventName as SummarizeEventType,
+        data: decodeB64Fields(raw),
+      });
     } catch {
       /* ignore malformed chunk */
     }
