@@ -1,7 +1,7 @@
 # AI 视频总结功能说明
 
 > 字幕提取（或语音转写）→ DeepSeek 流式摘要 → markmap 思维导图 → 基于字幕的问答。  
-> **需用户手动点击「AI 视频总结」**，解析成功后不会自动触发。
+> 解析成功后**自动触发**总结；仍可手动「重新生成」（执行中禁用）。
 
 ## 用户流程
 
@@ -10,6 +10,8 @@
 3. `GET /api/jobs/{id}/summarize` 以 SSE 推送进度与结果
 4. 可在 Tab 中查看摘要 / 字幕 / 思维导图，或进行问答
 5. 字幕可下载为 SRT / VTT / TXT；思维导图支持全屏与 PNG / SVG 导出
+6. 解析成功后**自动触发** AI 总结；可点「重新生成」（执行中按钮禁用）
+7. 下载页与总结左右同屏（约 40% : 60%）
 
 ## SSE 事件
 
@@ -62,12 +64,14 @@
 
 ## 前端
 
-- `SummaryPanel`：手动触发；摘要 / 字幕 / 思维导图 / 问答
+- `SummaryPanel`：解析后可 `autoStart` 自动总结；摘要 / 字幕 / 思维导图 / 问答；保留「重新生成」（执行中禁用）
 - `MarkdownContent`：`marked` + `@tailwindcss/typography`（`prose`）渲染摘要与问答
 - `MindMapView`：`markmap-lib` + `markmap-view`；全屏；完整内容 PNG（2.5x）/ SVG 导出（不受当前缩放平移影响）
+- 下载页：左右同屏（左 40% 视频信息，右 60% 总结），移动端上下堆叠
+- 首页：标题与搜索垂直居中；连按三次 Enter 展开 Slogan 副文案
 - SSE：`fetch` + `ReadableStream`（非 EventSource）；Base64 解包
 - 开发预览：`/dev/summary-preview`（固定样例，无需总结视频）
-- 下载页内容区约 `max-w-4xl`，便于阅读摘要与导图
+- 下载页内容区 `max-w-6xl`，便于同屏阅读
 
 ## 后端模块
 

@@ -15,10 +15,18 @@ type Tab = "summary" | "subtitle" | "mindmap" | "chat";
 interface SummaryPanelProps {
   jobId: string;
   title?: string | null;
+  /** 挂载后自动开始总结 */
+  autoStart?: boolean;
+  className?: string;
 }
 
-export default function SummaryPanel({ jobId, title }: SummaryPanelProps) {
-  const [open, setOpen] = useState(false);
+export default function SummaryPanel({
+  jobId,
+  title,
+  autoStart = false,
+  className = "",
+}: SummaryPanelProps) {
+  const [open, setOpen] = useState(autoStart);
   const [tab, setTab] = useState<Tab>("summary");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,6 +96,13 @@ export default function SummaryPanel({ jobId, title }: SummaryPanelProps) {
     }
   };
 
+  // 解析完成后自动触发（job 切换时重新触发）
+  useEffect(() => {
+    if (!autoStart) return;
+    void startSummarize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart 变化自动触发
+  }, [autoStart, jobId]);
+
   const handleDownloadSubtitle = (format: SubtitleFormat) => {
     if (!subtitle.trim() && segments.length === 0) return;
     downloadSubtitles(segments, format, title || undefined, subtitle);
@@ -100,59 +115,57 @@ export default function SummaryPanel({ jobId, title }: SummaryPanelProps) {
     { id: "chat", label: "问答", disabled: !subtitle },
   ];
 
+  const actionLabel = loading
+    ? "总结中…"
+    : done
+      ? "重新生成"
+      : open
+        ? "开始总结"
+        : "AI 视频总结";
+
   return (
-    <div className="mt-6 w-full">
+    <div className={`w-full ${className}`}>
       {!open ? (
         <button
           type="button"
           onClick={startSummarize}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-[#1677ff]/30 bg-[#1677ff]/5 py-3 text-sm font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10"
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-[#1677ff]/30 bg-[#1677ff]/5 py-3 text-sm font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span>✨</span>
-          AI 视频总结
+          {actionLabel}
         </button>
       ) : (
-        <div className="w-full rounded-xl border border-[#eef0f3] bg-white p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-bold text-[#0f172a]">AI 视频总结</h2>
+        <div className="flex h-full w-full flex-col rounded-xl border border-[#eef0f3] bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
+                AI 视频总结
+              </h2>
               {status && (
-                <p className="mt-0.5 text-xs text-[#64748b]">
-                  {loading && !done ? `${status}` : status}
+                <p className="mt-0.5 truncate text-xs text-[#64748b]">
+                  {loading && !done ? status : status}
                 </p>
               )}
             </div>
-            <div className="flex gap-2">
-              {done && (
-                <button
-                  type="button"
-                  onClick={startSummarize}
-                  className="rounded-full px-3 py-1 text-xs text-[#64748b] hover:bg-[#f1f5f9]"
-                >
-                  重新生成
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  abortRef.current?.abort();
-                  setOpen(false);
-                }}
-                className="rounded-full px-3 py-1 text-xs text-[#94a3b8] hover:bg-[#f1f5f9]"
-              >
-                收起
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={startSummarize}
+              disabled={loading}
+              className="shrink-0 rounded-full border border-[#1677ff]/25 bg-[#1677ff]/5 px-3 py-1 text-xs font-medium text-[#1677ff] hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {actionLabel}
+            </button>
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-1.5 border-b border-[#f1f5f9] pb-3">
+          <div className="mb-3 flex flex-wrap gap-1.5 border-b border-[#f1f5f9] pb-2">
             {tabs.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 disabled={t.disabled}
                 onClick={() => setTab(t.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                   tab === t.id
                     ? "bg-[#1677ff] text-white"
                     : "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
@@ -164,67 +177,69 @@ export default function SummaryPanel({ jobId, title }: SummaryPanelProps) {
           </div>
 
           {error && (
-            <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            <div className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          {tab === "summary" && (
-            <div className="min-h-[160px]">
-              {loading && !summary && !error && (
-                <p className="animate-pulse text-sm text-[#94a3b8]">
-                  {status || "生成中…"}
-                </p>
-              )}
-              {summary ? (
-                <MarkdownContent content={summary} />
-              ) : (
-                !loading &&
-                !error && <p className="text-sm text-[#94a3b8]">暂无摘要</p>
-              )}
-            </div>
-          )}
-
-          {tab === "subtitle" && (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-[#94a3b8]">
-                  {segments.length
-                    ? `共 ${segments.length} 条字幕`
-                    : "纯文本字幕"}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(["srt", "vtt", "txt"] as SubtitleFormat[]).map((fmt) => (
-                    <button
-                      key={fmt}
-                      type="button"
-                      disabled={!subtitle}
-                      onClick={() => handleDownloadSubtitle(fmt)}
-                      className="rounded-md border border-[#1677ff]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      下载 {fmt.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {tab === "summary" && (
+              <div className="min-h-[120px]">
+                {loading && !summary && !error && (
+                  <p className="animate-pulse text-sm text-[#94a3b8]">
+                    {status || "生成中…"}
+                  </p>
+                )}
+                {summary ? (
+                  <MarkdownContent content={summary} />
+                ) : (
+                  !loading &&
+                  !error && <p className="text-sm text-[#94a3b8]">暂无摘要</p>
+                )}
               </div>
-              <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-xl bg-[#f8fafc] p-3 font-sans text-xs leading-relaxed text-[#334155]">
-                {subtitle || "暂无字幕"}
-              </pre>
-            </div>
-          )}
+            )}
 
-          {tab === "mindmap" &&
-            (mindmap ? (
-              <MindMapView markdown={mindmap} />
-            ) : (
-              <p className="text-sm text-[#94a3b8]">
-                {loading ? "思维导图生成中…" : "暂无思维导图"}
-              </p>
-            ))}
+            {tab === "subtitle" && (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-[#94a3b8]">
+                    {segments.length
+                      ? `共 ${segments.length} 条字幕`
+                      : "纯文本字幕"}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(["srt", "vtt", "txt"] as SubtitleFormat[]).map((fmt) => (
+                      <button
+                        key={fmt}
+                        type="button"
+                        disabled={!subtitle}
+                        onClick={() => handleDownloadSubtitle(fmt)}
+                        className="rounded-md border border-[#1677ff]/30 bg-white px-2 py-0.5 text-xs font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {fmt.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <pre className="max-h-[360px] overflow-y-auto whitespace-pre-wrap rounded-xl bg-[#f8fafc] p-3 font-sans text-xs leading-relaxed text-[#334155]">
+                  {subtitle || "暂无字幕"}
+                </pre>
+              </div>
+            )}
 
-          {tab === "chat" && (
-            <ChatBox jobId={jobId} disabled={!subtitle || loading} />
-          )}
+            {tab === "mindmap" &&
+              (mindmap ? (
+                <MindMapView markdown={mindmap} />
+              ) : (
+                <p className="text-sm text-[#94a3b8]">
+                  {loading ? "思维导图生成中…" : "暂无思维导图"}
+                </p>
+              ))}
+
+            {tab === "chat" && (
+              <ChatBox jobId={jobId} disabled={!subtitle || loading} />
+            )}
+          </div>
         </div>
       )}
     </div>

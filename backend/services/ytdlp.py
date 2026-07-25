@@ -28,19 +28,29 @@ DOWNLOAD_TIMEOUT = int(os.environ.get("DOWNLOAD_TIMEOUT", "600"))
 class DownloadTimeout(Exception):
     """下载超过整体时间预算时抛出，用于主动中止卡住/被限速的任务。"""
 
-# 可选：为需要登录/风控的平台（B站、YouTube 会员视频等）提供 cookie。
-#   COOKIES_FILE: Netscape 格式 cookie 文件路径
-#   COOKIES_FROM_BROWSER: 从本机浏览器读取，如 "chrome"/"edge"/"firefox"/"safari"
-COOKIES_FILE = os.environ.get("COOKIES_FILE", "").strip()
-COOKIES_FROM_BROWSER = os.environ.get("COOKIES_FROM_BROWSER", "").strip()
 
 _download_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
-
 
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
+
+# 可选：为需要登录/风控的平台（B站、YouTube 会员视频等）提供 cookie。
+#   COOKIES_FILE: Netscape 格式 cookie 文件路径
+#   COOKIES_FROM_BROWSER: 从本机浏览器读取，如 "chrome"/"edge"/"firefox"/"safari"
+def _cookie_opts() -> dict:
+    cookies_file = os.environ.get("COOKIES_FILE", "").strip()
+    cookies_from_browser = os.environ.get("COOKIES_FROM_BROWSER", "").strip()
+    if cookies_file and os.path.exists(cookies_file):
+        return {"cookiefile": cookies_file}
+    if cookies_from_browser:
+        # 支持 "chrome" 或 "chrome:Profile 1"
+        if ":" in cookies_from_browser:
+            browser, profile = cookies_from_browser.split(":", 1)
+            return {"cookiesfrombrowser": (browser.strip(), profile.strip())}
+        return {"cookiesfrombrowser": (cookies_from_browser,)}
+    return {}
 
 
 def _base_opts(url: str = "") -> dict:
@@ -71,12 +81,7 @@ def _base_opts(url: str = "") -> dict:
         },
     }
 
-    # 注入 cookie（解决 B站 412、YouTube 会员/年龄限制等风控）
-    if COOKIES_FILE and os.path.exists(COOKIES_FILE):
-        opts["cookiefile"] = COOKIES_FILE
-    elif COOKIES_FROM_BROWSER:
-        opts["cookiesfrombrowser"] = (COOKIES_FROM_BROWSER,)
-
+    opts.update(_cookie_opts())
     return opts
 
 

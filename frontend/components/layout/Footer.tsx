@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="mt-auto border-t border-[#e8eef5]/80 bg-white/70 backdrop-blur-sm">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <div className="mb-3 flex items-center gap-2">
@@ -36,7 +36,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-[#f0f1f2] pt-6 text-xs text-[#94a3b8] sm:flex-row">
+        <div className="mt-5 flex flex-col items-center justify-between gap-2 border-t border-[#f0f1f2] pt-4 text-xs text-[#94a3b8] sm:flex-row">
           <span>© 2026 VideoGrab. 基于 yt-dlp 开源项目构建。</span>
           <span>沪ICP备XXXXXXXX号（占位）</span>
         </div>

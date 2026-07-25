@@ -8,14 +8,21 @@ const platforms = [
   { name: "1000+ 更多", color: "#1677ff" },
 ];
 
-export default function PlatformGrid() {
+interface PlatformGridProps {
+  compact?: boolean;
+}
+
+export default function PlatformGrid({ compact = false }: PlatformGridProps) {
   return (
-    <section id="platforms" className="px-4 pb-6 pt-2 sm:px-6">
+    <section
+      id="platforms"
+      className={`px-4 sm:px-6 ${compact ? "pb-3 pt-1" : "pb-6 pt-2"}`}
+    >
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-medium tracking-wide text-[#94a3b8]">
           支持平台
         </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
           {platforms.map((p) => (
             <span
               key={p.name}
