@@ -20,9 +20,31 @@ export default function Footer() {
           <div>
             <h4 className="mb-3 text-sm font-bold text-[#0f172a]">产品</h4>
             <ul className="space-y-2 text-sm text-[#64748b]">
-              <li><Link href="/" className="hover:text-[#1677ff]">视频下载</Link></li>
-              <li><Link href="/pricing" className="hover:text-[#1677ff]">定价方案</Link></li>
-              <li><span className="text-[#94a3b8]">AI 总结（已上线）</span></li>
+              <li>
+                <Link href="/" className="hover:text-[#1677ff]" title="免费在线视频下载">
+                  视频下载
+                </Link>
+              </li>
+              <li>
+                <Link href="/#how-to-use" className="hover:text-[#1677ff]" title="如何使用 VideoGrab 下载视频">
+                  使用说明
+                </Link>
+              </li>
+              <li>
+                <Link href="/#comparison" className="hover:text-[#1677ff]" title="VideoGrab 与其他下载工具对比">
+                  工具对比
+                </Link>
+              </li>
+              <li>
+                <Link href="/#faq" className="hover:text-[#1677ff]" title="VideoGrab 常见问题">
+                  常见问题
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-[#1677ff]" title="VideoGrab 定价方案">
+                  定价方案
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -77,6 +77,7 @@ docker compose up --build
 | `TEMP_DIR` | /tmp/videos | 临时文件目录 |
 | `CORS_ORIGINS` | http://localhost:3000 | 允许的前端域名 |
 | `NEXT_PUBLIC_API_URL` | http://localhost:8000 | 前端调用的后端地址 |
+| `NEXT_PUBLIC_SITE_URL` | https://videograb.lianxi.com | 正式站点域名（SEO canonical / sitemap / OG） |
 | `DEEPSEEK_API_KEY` | （空） | AI 总结必填，见 `backend/.env.example` |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | DeepSeek 模型 ID |
 | `WHISPER_MODEL` | tiny | 无字幕时 ASR 模型 |

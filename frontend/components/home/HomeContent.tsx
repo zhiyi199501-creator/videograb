@@ -4,9 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import HeroSection from "@/components/home/HeroSection";
 import UrlInputBar from "@/components/home/UrlInputBar";
 import PlatformGrid from "@/components/home/PlatformGrid";
+import HowToSection from "@/components/home/HowToSection";
+import ComparisonSection from "@/components/home/ComparisonSection";
+import FaqSection from "@/components/home/FaqSection";
 
 /**
  * 简洁首页：标题 + 搜索居中；连按三次 Enter 展开 Slogan 副文案。
+ * 首屏下方为 GEO 结构化内容（使用说明 / 对比 / FAQ）。
  */
 export default function HomeContent() {
   const [demoMode, setDemoMode] = useState(false);
@@ -40,13 +44,18 @@ export default function HomeContent() {
   }, []);
 
   return (
-    <div
-      data-demo={demoMode ? "on" : "off"}
-      className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center pb-8"
-    >
-      <HeroSection compact={!demoMode} />
-      <UrlInputBar compact />
-      <PlatformGrid compact />
-    </div>
+    <>
+      <div
+        data-demo={demoMode ? "on" : "off"}
+        className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center pb-8"
+      >
+        <HeroSection compact={!demoMode} />
+        <UrlInputBar compact />
+        <PlatformGrid compact />
+      </div>
+      <HowToSection />
+      <ComparisonSection />
+      <FaqSection />
+    </>
   );
 }
