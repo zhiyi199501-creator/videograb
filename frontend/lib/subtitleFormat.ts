@@ -65,9 +65,9 @@ export function segmentsToTxt(segments: SubtitleSegment[]): string {
   return lines.join("\n") + (lines.length ? "\n" : "");
 }
 
-function safeFilename(name: string): string {
+export function safeFilename(name: string, fallback = "download"): string {
   const cleaned = name.replace(/[\\/:*?"<>|]+/g, "_").trim();
-  return cleaned.slice(0, 80) || "subtitle";
+  return cleaned.slice(0, 80) || fallback;
 }
 
 /** 解析展示用字幕行 `[mm:ss] text` / `[hh:mm:ss] text` 为分段 */
@@ -123,7 +123,7 @@ export function downloadSubtitles(
   if (segs.length === 0 && fallbackText?.trim()) {
     segs = parseSubtitleText(fallbackText);
   }
-  const base = safeFilename(title || "subtitle");
+  const base = safeFilename(title || "subtitle", "subtitle");
   if (format === "srt") {
     const body =
       segs.length > 0 ? segmentsToSrt(segs) : `${fallbackText || ""}\n`;

@@ -36,11 +36,14 @@ export default function SummaryPanel({
   const [mindmap, setMindmap] = useState("");
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
       abortRef.current?.abort();
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
 
@@ -106,6 +109,19 @@ export default function SummaryPanel({
   const handleDownloadSubtitle = (format: SubtitleFormat) => {
     if (!subtitle.trim() && segments.length === 0) return;
     downloadSubtitles(segments, format, title || undefined, subtitle);
+  };
+
+  const handleCopySummary = async () => {
+    const text = summary.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
+    } catch {
+      window.alert("复制失败，请手动选择文本复制");
+    }
   };
 
   const tabs: { id: Tab; label: string; disabled?: boolean }[] = [
@@ -191,7 +207,18 @@ export default function SummaryPanel({
                   </p>
                 )}
                 {summary ? (
-                  <MarkdownContent content={summary} />
+                  <div className="space-y-2">
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleCopySummary}
+                        className="rounded-md border border-[#1677ff]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10"
+                      >
+                        {copied ? "已复制" : "复制摘要"}
+                      </button>
+                    </div>
+                    <MarkdownContent content={summary} />
+                  </div>
                 ) : (
                   !loading &&
                   !error && <p className="text-sm text-[#94a3b8]">暂无摘要</p>
@@ -229,7 +256,7 @@ export default function SummaryPanel({
 
             {tab === "mindmap" &&
               (mindmap ? (
-                <MindMapView markdown={mindmap} />
+                <MindMapView markdown={mindmap} title={title} />
               ) : (
                 <p className="text-sm text-[#94a3b8]">
                   {loading ? "思维导图生成中…" : "暂无思维导图"}

@@ -36,7 +36,7 @@
 |------|------|
 | B 站 | `view` 取 cid → `dm/view` JSON（遇 -429 退避重试）→ 字幕 JSON；失败再试 `player/v2` |
 | 其他 | yt-dlp `subtitles` / `automatic_captions` → VTT / json3 |
-| 无字幕 | 下载音频 + **faster-whisper** 转写（默认模型 `tiny`） |
+| 无字幕 | 下载音频 + **faster-whisper** 转写（默认模型 `tiny`，**自动检测语种**） |
 
 - 文本截断约 15000 字
 - 结果缓存到 Job：`subtitle_text` / `subtitles` / `subtitle_source`
@@ -59,7 +59,8 @@
 | `DEEPSEEK_API_KEY` | （空） | 必填 |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | 聊天模型 |
 | `WHISPER_MODEL` | tiny | faster-whisper 模型（tiny 更快，base/small 更准） |
-| `ASR_MAX_DURATION` | 1800 | 语音转写最长秒数 |
+| `ASR_LANGUAGE` | auto | 空/auto=自动检测；可强制 `en` / `zh`（勿对英文视频写死 zh） |
+| `ASR_MAX_DURATION` | 1800 | 单次 ASR 最长秒数；超过则只转写前 N 分钟 |
 | `HF_ENDPOINT` | https://hf-mirror.com | HuggingFace 镜像（拉取 Whisper 权重） |
 
 ## 前端

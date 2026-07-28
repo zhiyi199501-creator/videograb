@@ -33,8 +33,14 @@ _download_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
+
+
+def _is_youtube(url: str) -> bool:
+    u = (url or "").lower()
+    return "youtube.com" in u or "youtu.be" in u
+
 
 # 可选：为需要登录/风控的平台（B站、YouTube 会员视频等）提供 cookie。
 #   COOKIES_FILE: Netscape 格式 cookie 文件路径
@@ -56,10 +62,9 @@ def _cookie_opts() -> dict:
 def _base_opts(url: str = "") -> dict:
     """Shared yt-dlp options: retries + headers + multi player-client fallback.
 
-    - YouTube intermittently returns "The page needs to be reloaded" on
-      datacenter/unknown IPs; trying multiple player clients + retrying helps.
-    - Bilibili returns HTTP 412 (Precondition Failed) without a browser
-      User-Agent and a bilibili.com Referer, so we always send those headers.
+    - YouTube: prefer android client WITHOUT cookies. Cookie + web/tv often
+      forces SABR streams that 403 on download.
+    - Bilibili returns HTTP 412 without browser User-Agent + Referer.
     """
     headers = {"User-Agent": _USER_AGENT}
     if "bilibili.com" in url or "b23.tv" in url:
@@ -68,6 +73,7 @@ def _base_opts(url: str = "") -> dict:
     elif "douyin.com" in url or "iesdouyin.com" in url:
         headers["Referer"] = "https://www.douyin.com/"
 
+    is_yt = _is_youtube(url)
     opts: dict = {
         "quiet": True,
         "no_warnings": True,
@@ -77,11 +83,19 @@ def _base_opts(url: str = "") -> dict:
         "extractor_retries": 3,
         "http_headers": headers,
         "extractor_args": {
-            "youtube": {"player_client": ["tv", "ios", "web_safari", "web"]}
+            "youtube": {
+                "player_client": (
+                    ["android", "tv", "web_safari", "web"]
+                    if is_yt
+                    else ["tv", "ios", "web_safari", "web"]
+                )
+            }
         },
     }
 
-    opts.update(_cookie_opts())
+    # YouTube + Cookie 容易触发 SABR/403；B 站等仍需要 Cookie
+    if not is_yt:
+        opts.update(_cookie_opts())
     return opts
 
 
@@ -98,8 +112,12 @@ def _friendly_error(err: str) -> str:
             "该视频被平台风控拦截（HTTP 412）。B站等平台的取流接口需要登录 "
             "Cookie，请在服务端配置 COOKIES_FROM_BROWSER 或 COOKIES_FILE 后重试。"
         )
-    # YouTube 反爬：403 / SABR / 限流。当前服务器网络被目标站点拒绝提供视频数据，
-    # 常见于机房/被标记 IP。换网络或配置登录 Cookie 可提升成功率。
+    if "tunnel connection failed" in low or "proxyerror" in low:
+        return (
+            "当前网络代理无法访问该视频源（Proxy Tunnel 403）。"
+            "请关闭系统/终端代理后重试，或换一个可用节点。"
+        )
+    # YouTube 反爬：403 / SABR / 限流。常见于机房 IP 或错误的 client/Cookie 组合。
     if (
         "403" in err
         or "forbidden" in low
@@ -110,12 +128,12 @@ def _friendly_error(err: str) -> str:
     ):
         return (
             "该视频源拒绝了当前服务器的下载请求（反爬 / 地区限制）。"
-            "请稍后重试、更换网络环境，或在服务端配置登录 Cookie 后再试。"
+            "请稍后重试、更换网络环境；B站等平台可配置登录 Cookie。"
         )
     if "page needs to be reloaded" in low or "sign in to confirm" in low or "bot" in low:
         return (
-            "该视频被平台反爬限制。请稍后重试，或在服务端配置浏览器 Cookie "
-            "（COOKIES_FROM_BROWSER）以提升成功率。"
+            "该视频被平台反爬限制。请稍后重试；B站等平台可配置浏览器 Cookie "
+            "（COOKIES_FROM_BROWSER）。"
         )
     if "private" in low or "login" in low or "members-only" in low:
         return "该视频为私有/会员内容，需要登录 Cookie 才能下载。"
