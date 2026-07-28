@@ -36,11 +36,9 @@ def _to_response(job: dict) -> JobResponse:
 @router.post("/extract", response_model=JobResponse)
 @limiter.limit("60/hour")
 async def api_extract(request: Request, body: ExtractRequest, background_tasks: BackgroundTasks):
-    url = body.url.strip()
+    url = _normalize_url(body.url.strip())
     if not url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="Invalid URL")
-
-    url = _normalize_url(url)
     job_id = job_store.create(url)
     background_tasks.add_task(extract_info, job_id, url)
 

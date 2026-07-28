@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { extractUrl } from "@/lib/api";
+import { extractUrl, normalizeVideoUrl } from "@/lib/api";
 
 interface UrlInputBarProps {
   compact?: boolean;
@@ -16,7 +16,7 @@ export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = url.trim();
+    const trimmed = normalizeVideoUrl(url);
     if (!trimmed) {
       setError("请输入视频链接");
       return;
@@ -38,10 +38,14 @@ export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
       <form onSubmit={handleSubmit} className="mx-auto w-full max-w-xl">
         <div className="flex flex-col gap-2 rounded-full border border-white/80 bg-white/95 p-1.5 shadow-[0_8px_30px_-12px_rgba(22,119,255,0.22)] ring-1 ring-[#1677ff]/10 backdrop-blur-sm sm:flex-row sm:items-center sm:gap-0">
           <input
-            type="url"
+            type="text"
+            inputMode="url"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="粘贴视频链接，例如 https://www.bilibili.com/video/..."
+            placeholder="粘贴视频链接，例如 bilibili.com/video/BV..."
             className="flex-1 rounded-full bg-transparent px-5 py-3 text-sm text-[#020817] placeholder:text-[#94a3b8] outline-none"
             disabled={loading}
           />

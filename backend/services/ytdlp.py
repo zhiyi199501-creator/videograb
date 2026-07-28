@@ -153,6 +153,20 @@ def _friendly_error(err: str) -> str:
     return err.split("\n")[0][:200]
 
 
+def _ensure_url_scheme(url: str) -> str:
+    """无协议域名链接补上 https://，例如 bilibili.com/video/BVxxx?..."""
+    url = url.strip().strip("'\"")
+    if not url:
+        return url
+    # 已有协议（http / https / 其它）则不动
+    if re.match(r"^[a-z][a-z0-9+.\-]*:", url, re.IGNORECASE):
+        return url
+    # 形如 domain.tld/... 或 www.domain.tld
+    if re.match(r"^(?:www\.)?[a-z0-9.\-]+\.[a-z]{2,}(?:[/:?#]|$)", url, re.IGNORECASE):
+        return "https://" + url
+    return url
+
+
 def _normalize_url(url: str) -> str:
     """把平台分享页 / 弹窗页 URL 转成 yt-dlp 可识别的标准视频页。
 
@@ -160,8 +174,11 @@ def _normalize_url(url: str) -> str:
       https://www.douyin.com/jingxuan?modal_id=123
     yt-dlp 只认：
       https://www.douyin.com/video/123
+
+    也兼容无协议粘贴：
+      bilibili.com/video/BV1Npg96WEBd/?spm_id_from=...
     """
-    url = url.strip()
+    url = _ensure_url_scheme(url)
     m = re.search(
         r"(?:https?://)?(?:www\.)?douyin\.com/[^?\s]*\?(?:[^#\s]*&)?modal_id=(\d+)",
         url,
@@ -178,13 +195,14 @@ def _normalize_url(url: str) -> str:
     if m:
         return f"https://www.douyin.com/video/{m.group(1)}"
 
+    # 去掉 spm_id_from 等追踪参数，只保留 BV/av 路径
     m = re.search(
-        r"(https?://(?:www\.)?bilibili\.com/video/[aAbB][vV][^/?#&]+)",
+        r"(?:https?://)?(?:www\.)?bilibili\.com/video/([aAbB][vV][a-zA-Z0-9]+)",
         url,
         re.IGNORECASE,
     )
     if m:
-        return m.group(1)
+        return f"https://www.bilibili.com/video/{m.group(1)}"
 
     return url
 

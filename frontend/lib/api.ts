@@ -2,6 +2,17 @@
 // 需要直连后端时再设 NEXT_PUBLIC_API_URL（如 http://127.0.0.1:8000）。
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+/** 兼容无协议粘贴，如 bilibili.com/video/BVxxx?... → https://... */
+export function normalizeVideoUrl(raw: string): string {
+  let url = raw.trim().replace(/^['"]+|['"]+$/g, "");
+  if (!url) return url;
+  if (/^[a-z][a-z0-9+.\-]*:/i.test(url)) return url;
+  if (/^(?:www\.)?[a-z0-9.\-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(url)) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
 export interface FormatInfo {
   format_id: string;
   ext: string;
@@ -26,10 +37,11 @@ export interface JobResponse {
 }
 
 export async function extractUrl(url: string): Promise<JobResponse> {
+  const normalized = normalizeVideoUrl(url);
   const res = await fetch(`${API_BASE}/api/extract`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url: normalized }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "请求失败" }));
