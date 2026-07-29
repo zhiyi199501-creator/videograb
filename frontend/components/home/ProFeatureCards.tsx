@@ -27,11 +27,17 @@ const features = [
   },
 ];
 
-export default function ProFeatureCards() {
+interface ProFeatureCardsProps {
+  compact?: boolean;
+}
+
+export default function ProFeatureCards({
+  compact = false,
+}: ProFeatureCardsProps) {
   return (
-    <section className="px-4 py-6 sm:px-6">
+    <section className={`px-4 sm:px-6 ${compact ? "py-3" : "py-6"}`}>
       <div className="mx-auto max-w-2xl">
-        <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="mb-2 flex items-baseline justify-between gap-3">
           <h2 className="text-sm font-bold text-[#0f172a]">Pro 高级功能</h2>
           <Link
             href="/pricing"

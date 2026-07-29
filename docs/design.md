@@ -137,15 +137,36 @@ data: {"status":"downloading","progress":0.42}
 
 | 路径 | 组件 |
 |------|------|
-| `/` | Navbar, HeroSection, UrlInputBar, PlatformGrid（紧凑标签）, ProFeatureCards（紧凑列表）, Footer |
-| `/download/[id]` | FormatPicker, ProgressBar, MobileTip, SummaryPanel；下载完成后自动唤起保存 |
+| `/` | Navbar, HomeContent（居中搜索 + 平台标签）, Footer |
+| `/download/[id]` | 左右同屏：左 40% 视频信息/下载，右 60% SummaryPanel（解析后自动总结）；移动端上下堆叠 |
 | `/pricing` | 三档套餐卡片 |
+
+### 下载页同屏布局
+
+```
+Desktop (lg+)
+┌──────────────────────────────────────────────┐
+│ ← 返回                                        │
+│ ┌─────────────┬────────────────────────────┐ │
+│ │ 40% 视频信息 │ 60% AI 总结（自动触发）      │ │
+│ │ 缩略图/格式  │ 摘要/字幕/导图/问答         │ │
+│ │ 下载按钮     │ 重新生成（执行中禁用）       │ │
+│ └─────────────┴────────────────────────────┘ │
+└──────────────────────────────────────────────┘
+Mobile: 上下堆叠
+```
+
+### 首页紧凑 / 演示模式
+
+- 默认：标题 + 搜索框垂直居中，下方仅保留平台标签；弱化 Slogan 副文案
+- 连按三次 Enter（焦点不在输入框）：展开完整 Slogan 副文案
+- 首页不再展示 Pro 功能列表（定价见 `/pricing`）
 
 ### 响应式断点
 
-- `< 640px`：单列
-- `640–1024px`：双列
-- `> 1024px`：三列，max-width 1200px
+- `< 1024px`：下载页单列堆叠
+- `≥ 1024px`：下载页左右 40% / 60%
+- 首页 max-width 约 672px（输入区）；下载页 max-width 72rem（`max-w-6xl`）
 
 ## 6. 目录结构
 
@@ -179,7 +200,7 @@ downloadapp/
 
 ### 7.2 AI 视频总结（已实现）
 
-详见 [ai-summary.md](ai-summary.md)。用户在下载页**手动点击**「AI 视频总结」触发（不自动开始）。
+详见 [ai-summary.md](ai-summary.md)。下载页解析成功后**自动触发**「AI 视频总结」，可手动重新生成。
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -190,13 +211,21 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 
 字幕优先平台轨；无字幕时 `faster-whisper` ASR。环境变量：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`WHISPER_MODEL`、`HF_ENDPOINT`。
 
-前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。
+前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。下载页与总结同屏左右布局（40%/60%），解析后自动触发总结；首页紧凑首屏，连按三次 Enter 切换演示模式。
 
-### 7.3 DB 迁移路径
+### 7.3 用户 / 会员 / Stripe（已实现）
 
-- 当前：内存 Job + 文件系统
-- Phase 3：SQLite 存储 users、subscriptions、download_logs
+详见 [membership.md](membership.md)、[stripe-setup.md](stripe-setup.md)。
+
+- SQLite：`users` / `subscriptions` / `stripe_events` / `checkout_sessions`
+- JWT 登录；Stripe Checkout 月付 Pro；Webhook 幂等履约
+- AI 总结 / 问答需 Pro（`require_pro_user`）
+- Job 仍为内存；可后续挂 `user_id`
+
+### 7.4 DB 迁移路径（后续）
+
 - Job 表结构可迁移为 `jobs(id, user_id, url, status, ...)`
+- 下载日志 `download_logs`
 
 ## 8. 部署方案
 

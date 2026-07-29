@@ -7,12 +7,13 @@ import base64
 import json
 import logging
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from models.job import JobStatus
 from routers.api import limiter
+from services.auth import require_pro_user
 from services.summarizer import chat_events, summarize_events
 from services.ytdlp import job_store
 
@@ -57,7 +58,11 @@ def _job_or_404(job_id: str) -> dict:
 
 @router.get("/jobs/{job_id}/summarize")
 @limiter.limit("20/hour")
-async def api_summarize(request: Request, job_id: str):
+async def api_summarize(
+    request: Request,
+    job_id: str,
+    _user=Depends(require_pro_user),
+):
     job = _job_or_404(job_id)
     status = job.get("status")
     if status in (JobStatus.PENDING, JobStatus.EXTRACTING):
@@ -85,7 +90,12 @@ async def api_summarize(request: Request, job_id: str):
 
 @router.post("/jobs/{job_id}/chat")
 @limiter.limit("30/hour")
-async def api_chat(request: Request, job_id: str, body: ChatRequest):
+async def api_chat(
+    request: Request,
+    job_id: str,
+    body: ChatRequest,
+    _user=Depends(require_pro_user),
+):
     _job_or_404(job_id)
 
     async def event_stream():

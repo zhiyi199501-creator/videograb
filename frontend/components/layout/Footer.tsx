@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="mt-auto border-t border-[#e8eef5]/80 bg-white/70 backdrop-blur-sm">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <div className="mb-3 flex items-center gap-2">
@@ -20,9 +20,31 @@ export default function Footer() {
           <div>
             <h4 className="mb-3 text-sm font-bold text-[#0f172a]">产品</h4>
             <ul className="space-y-2 text-sm text-[#64748b]">
-              <li><Link href="/" className="hover:text-[#1677ff]">视频下载</Link></li>
-              <li><Link href="/pricing" className="hover:text-[#1677ff]">定价方案</Link></li>
-              <li><span className="text-[#94a3b8]">AI 总结（已上线）</span></li>
+              <li>
+                <Link href="/" className="hover:text-[#1677ff]" title="免费在线视频下载">
+                  视频下载
+                </Link>
+              </li>
+              <li>
+                <Link href="/#how-to-use" className="hover:text-[#1677ff]" title="如何使用 VideoGrab 下载视频">
+                  使用说明
+                </Link>
+              </li>
+              <li>
+                <Link href="/#comparison" className="hover:text-[#1677ff]" title="VideoGrab 与其他下载工具对比">
+                  工具对比
+                </Link>
+              </li>
+              <li>
+                <Link href="/#faq" className="hover:text-[#1677ff]" title="VideoGrab 常见问题">
+                  常见问题
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="hover:text-[#1677ff]" title="VideoGrab 定价方案">
+                  定价方案
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -36,7 +58,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-[#f0f1f2] pt-6 text-xs text-[#94a3b8] sm:flex-row">
+        <div className="mt-5 flex flex-col items-center justify-between gap-2 border-t border-[#f0f1f2] pt-4 text-xs text-[#94a3b8] sm:flex-row">
           <span>© 2026 VideoGrab. 基于 yt-dlp 开源项目构建。</span>
           <span>沪ICP备XXXXXXXX号（占位）</span>
         </div>

@@ -2,6 +2,17 @@
 // 需要直连后端时再设 NEXT_PUBLIC_API_URL（如 http://127.0.0.1:8000）。
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+/** 兼容无协议粘贴，如 bilibili.com/video/BVxxx?... → https://... */
+export function normalizeVideoUrl(raw: string): string {
+  let url = raw.trim().replace(/^['"]+|['"]+$/g, "");
+  if (!url) return url;
+  if (/^[a-z][a-z0-9+.\-]*:/i.test(url)) return url;
+  if (/^(?:www\.)?[a-z0-9.\-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(url)) {
+    return `https://${url}`;
+  }
+  return url;
+}
+
 export interface FormatInfo {
   format_id: string;
   ext: string;
@@ -26,10 +37,11 @@ export interface JobResponse {
 }
 
 export async function extractUrl(url: string): Promise<JobResponse> {
+  const normalized = normalizeVideoUrl(url);
   const res = await fetch(`${API_BASE}/api/extract`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url: normalized }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "请求失败" }));
@@ -245,9 +257,16 @@ export function subscribeSummarize(
   onEvent: (ev: SummarizeEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  return fetch(`${API_BASE}/api/jobs/${jobId}/summarize`, { signal }).then(
-    (res) => consumeSse(res, onEvent, signal)
-  );
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vg_access_token")
+      : null;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(`${API_BASE}/api/jobs/${jobId}/summarize`, {
+    signal,
+    headers,
+  }).then((res) => consumeSse(res, onEvent, signal));
 }
 
 export function askAboutVideo(
@@ -256,9 +275,17 @@ export function askAboutVideo(
   onEvent: (ev: SummarizeEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vg_access_token")
+      : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(`${API_BASE}/api/jobs/${jobId}/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ question }),
     signal,
   }).then((res) => consumeSse(res, onEvent, signal));

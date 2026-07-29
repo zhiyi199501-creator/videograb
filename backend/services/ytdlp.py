@@ -28,28 +28,43 @@ DOWNLOAD_TIMEOUT = int(os.environ.get("DOWNLOAD_TIMEOUT", "600"))
 class DownloadTimeout(Exception):
     """下载超过整体时间预算时抛出，用于主动中止卡住/被限速的任务。"""
 
-# 可选：为需要登录/风控的平台（B站、YouTube 会员视频等）提供 cookie。
-#   COOKIES_FILE: Netscape 格式 cookie 文件路径
-#   COOKIES_FROM_BROWSER: 从本机浏览器读取，如 "chrome"/"edge"/"firefox"/"safari"
-COOKIES_FILE = os.environ.get("COOKIES_FILE", "").strip()
-COOKIES_FROM_BROWSER = os.environ.get("COOKIES_FROM_BROWSER", "").strip()
 
 _download_semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-
 _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
+
+
+def _is_youtube(url: str) -> bool:
+    u = (url or "").lower()
+    return "youtube.com" in u or "youtu.be" in u
+
+
+# 可选：为需要登录/风控的平台（B站、YouTube 会员视频等）提供 cookie。
+#   COOKIES_FILE: Netscape 格式 cookie 文件路径
+#   COOKIES_FROM_BROWSER: 从本机浏览器读取，如 "chrome"/"edge"/"firefox"/"safari"
+def _cookie_opts() -> dict:
+    cookies_file = os.environ.get("COOKIES_FILE", "").strip()
+    cookies_from_browser = os.environ.get("COOKIES_FROM_BROWSER", "").strip()
+    if cookies_file and os.path.exists(cookies_file):
+        return {"cookiefile": cookies_file}
+    if cookies_from_browser:
+        # 支持 "chrome" 或 "chrome:Profile 1"
+        if ":" in cookies_from_browser:
+            browser, profile = cookies_from_browser.split(":", 1)
+            return {"cookiesfrombrowser": (browser.strip(), profile.strip())}
+        return {"cookiesfrombrowser": (cookies_from_browser,)}
+    return {}
 
 
 def _base_opts(url: str = "") -> dict:
     """Shared yt-dlp options: retries + headers + multi player-client fallback.
 
-    - YouTube intermittently returns "The page needs to be reloaded" on
-      datacenter/unknown IPs; trying multiple player clients + retrying helps.
-    - Bilibili returns HTTP 412 (Precondition Failed) without a browser
-      User-Agent and a bilibili.com Referer, so we always send those headers.
+    - YouTube: prefer android client WITHOUT cookies. Cookie + web/tv often
+      forces SABR streams that 403 on download.
+    - Bilibili returns HTTP 412 without browser User-Agent + Referer.
     """
     headers = {"User-Agent": _USER_AGENT}
     if "bilibili.com" in url or "b23.tv" in url:
@@ -58,6 +73,7 @@ def _base_opts(url: str = "") -> dict:
     elif "douyin.com" in url or "iesdouyin.com" in url:
         headers["Referer"] = "https://www.douyin.com/"
 
+    is_yt = _is_youtube(url)
     opts: dict = {
         "quiet": True,
         "no_warnings": True,
@@ -67,16 +83,19 @@ def _base_opts(url: str = "") -> dict:
         "extractor_retries": 3,
         "http_headers": headers,
         "extractor_args": {
-            "youtube": {"player_client": ["tv", "ios", "web_safari", "web"]}
+            "youtube": {
+                "player_client": (
+                    ["android", "tv", "web_safari", "web"]
+                    if is_yt
+                    else ["tv", "ios", "web_safari", "web"]
+                )
+            }
         },
     }
 
-    # 注入 cookie（解决 B站 412、YouTube 会员/年龄限制等风控）
-    if COOKIES_FILE and os.path.exists(COOKIES_FILE):
-        opts["cookiefile"] = COOKIES_FILE
-    elif COOKIES_FROM_BROWSER:
-        opts["cookiesfrombrowser"] = (COOKIES_FROM_BROWSER,)
-
+    # YouTube + Cookie 容易触发 SABR/403；B 站等仍需要 Cookie
+    if not is_yt:
+        opts.update(_cookie_opts())
     return opts
 
 
@@ -93,8 +112,12 @@ def _friendly_error(err: str) -> str:
             "该视频被平台风控拦截（HTTP 412）。B站等平台的取流接口需要登录 "
             "Cookie，请在服务端配置 COOKIES_FROM_BROWSER 或 COOKIES_FILE 后重试。"
         )
-    # YouTube 反爬：403 / SABR / 限流。当前服务器网络被目标站点拒绝提供视频数据，
-    # 常见于机房/被标记 IP。换网络或配置登录 Cookie 可提升成功率。
+    if "tunnel connection failed" in low or "proxyerror" in low:
+        return (
+            "当前网络代理无法访问该视频源（Proxy Tunnel 403）。"
+            "请关闭系统/终端代理后重试，或换一个可用节点。"
+        )
+    # YouTube 反爬：403 / SABR / 限流。常见于机房 IP 或错误的 client/Cookie 组合。
     if (
         "403" in err
         or "forbidden" in low
@@ -105,12 +128,12 @@ def _friendly_error(err: str) -> str:
     ):
         return (
             "该视频源拒绝了当前服务器的下载请求（反爬 / 地区限制）。"
-            "请稍后重试、更换网络环境，或在服务端配置登录 Cookie 后再试。"
+            "请稍后重试、更换网络环境；B站等平台可配置登录 Cookie。"
         )
     if "page needs to be reloaded" in low or "sign in to confirm" in low or "bot" in low:
         return (
-            "该视频被平台反爬限制。请稍后重试，或在服务端配置浏览器 Cookie "
-            "（COOKIES_FROM_BROWSER）以提升成功率。"
+            "该视频被平台反爬限制。请稍后重试；B站等平台可配置浏览器 Cookie "
+            "（COOKIES_FROM_BROWSER）。"
         )
     if "private" in low or "login" in low or "members-only" in low:
         return "该视频为私有/会员内容，需要登录 Cookie 才能下载。"
@@ -130,6 +153,20 @@ def _friendly_error(err: str) -> str:
     return err.split("\n")[0][:200]
 
 
+def _ensure_url_scheme(url: str) -> str:
+    """无协议域名链接补上 https://，例如 bilibili.com/video/BVxxx?..."""
+    url = url.strip().strip("'\"")
+    if not url:
+        return url
+    # 已有协议（http / https / 其它）则不动
+    if re.match(r"^[a-z][a-z0-9+.\-]*:", url, re.IGNORECASE):
+        return url
+    # 形如 domain.tld/... 或 www.domain.tld
+    if re.match(r"^(?:www\.)?[a-z0-9.\-]+\.[a-z]{2,}(?:[/:?#]|$)", url, re.IGNORECASE):
+        return "https://" + url
+    return url
+
+
 def _normalize_url(url: str) -> str:
     """把平台分享页 / 弹窗页 URL 转成 yt-dlp 可识别的标准视频页。
 
@@ -137,8 +174,11 @@ def _normalize_url(url: str) -> str:
       https://www.douyin.com/jingxuan?modal_id=123
     yt-dlp 只认：
       https://www.douyin.com/video/123
+
+    也兼容无协议粘贴：
+      bilibili.com/video/BV1Npg96WEBd/?spm_id_from=...
     """
-    url = url.strip()
+    url = _ensure_url_scheme(url)
     m = re.search(
         r"(?:https?://)?(?:www\.)?douyin\.com/[^?\s]*\?(?:[^#\s]*&)?modal_id=(\d+)",
         url,
@@ -155,13 +195,14 @@ def _normalize_url(url: str) -> str:
     if m:
         return f"https://www.douyin.com/video/{m.group(1)}"
 
+    # 去掉 spm_id_from 等追踪参数，只保留 BV/av 路径
     m = re.search(
-        r"(https?://(?:www\.)?bilibili\.com/video/[aAbB][vV][^/?#&]+)",
+        r"(?:https?://)?(?:www\.)?bilibili\.com/video/([aAbB][vV][a-zA-Z0-9]+)",
         url,
         re.IGNORECASE,
     )
     if m:
-        return m.group(1)
+        return f"https://www.bilibili.com/video/{m.group(1)}"
 
     return url
 

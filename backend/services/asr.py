@@ -20,8 +20,15 @@ if not os.environ.get("HF_ENDPOINT"):
     os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "tiny").strip() or "tiny"
-# 超过此时长（秒）的视频不做 ASR，避免过慢
+# 单次 ASR 最长秒数；超过则只转写前 N 分钟（可通过环境变量调大）
 ASR_MAX_DURATION = int(os.environ.get("ASR_MAX_DURATION", "1800"))
+# 语音语种：空 / auto = 自动检测；可设 en / zh 等强制指定
+_ASR_LANGUAGE_RAW = os.environ.get("ASR_LANGUAGE", "").strip().lower()
+ASR_LANGUAGE: Optional[str] = (
+    None
+    if not _ASR_LANGUAGE_RAW or _ASR_LANGUAGE_RAW in ("auto", "detect")
+    else _ASR_LANGUAGE_RAW
+)
 
 _model = None
 
@@ -42,10 +49,48 @@ def _get_model():
     return _model
 
 
-def _download_audio(url: str, out_dir: Path) -> Path:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    outtmpl = str(out_dir / "asr.%(ext)s")
+def _transcribe_kwargs() -> dict:
+    """构建 whisper.transcribe 参数：默认自动语种，避免英文视频被强行按中文识别。"""
+    kwargs: dict = {"vad_filter": True}
+    if ASR_LANGUAGE:
+        kwargs["language"] = ASR_LANGUAGE
+        if ASR_LANGUAGE in ("zh", "zh-cn", "zh-hans", "chinese"):
+            kwargs["initial_prompt"] = "以下是普通话的简体中文字幕。"
+    # language=None → faster-whisper 自动检测（英/中等）
+    return kwargs
+
+
+def _probe_duration(url: str) -> float:
     opts = {
+        **_base_opts(url),
+        "skip_download": True,
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(url, download=False) or {}
+    return float(info.get("duration") or 0)
+
+
+def _download_audio(url: str, out_dir: Path) -> tuple[Path, bool, float]:
+    """下载音频。超长时只截取前 ASR_MAX_DURATION 秒。
+
+    Returns: (audio_path, truncated, full_duration_seconds)
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    duration = _probe_duration(url)
+    truncated = bool(duration and duration > ASR_MAX_DURATION)
+    if truncated:
+        logger.info(
+            "ASR truncate: duration=%.0fs > limit=%ss, only first %s min",
+            duration,
+            ASR_MAX_DURATION,
+            ASR_MAX_DURATION // 60,
+        )
+
+    outtmpl = str(out_dir / "asr.%(ext)s")
+    opts: dict = {
         **_base_opts(url),
         "format": "bestaudio/best",
         "outtmpl": outtmpl,
@@ -60,22 +105,25 @@ def _download_audio(url: str, out_dir: Path) -> Path:
             }
         ],
     }
+    if truncated:
+        end = float(ASR_MAX_DURATION)
+
+        def _ranges(_info, _ydl):
+            return [{"start_time": 0.0, "end_time": end}]
+
+        opts["download_ranges"] = _ranges
+        opts["force_keyframes_at_cuts"] = True
+
     with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        duration = info.get("duration") or 0
-        if duration and float(duration) > ASR_MAX_DURATION:
-            raise SubtitleError(
-                f"视频过长（约 {int(float(duration) // 60)} 分钟），"
-                f"语音转写上限为 {ASR_MAX_DURATION // 60} 分钟"
-            )
+        ydl.extract_info(url, download=True)
 
     mp3 = out_dir / "asr.mp3"
     if mp3.exists():
-        return mp3
+        return mp3, truncated, duration
     files = list(out_dir.glob("asr.*"))
     if not files:
         raise SubtitleError("音频提取失败，无法语音转写")
-    return files[0]
+    return files[0], truncated, duration
 
 
 def transcribe_url(url: str, work_dir: Optional[str] = None) -> dict:
@@ -84,16 +132,22 @@ def transcribe_url(url: str, work_dir: Optional[str] = None) -> dict:
     parent = Path(work_dir) if work_dir else Path(TEMP_DIR) / "asr"
     parent.mkdir(parents=True, exist_ok=True)
 
+    truncated = False
+    duration = 0.0
+
     with tempfile.TemporaryDirectory(prefix="asr_", dir=str(parent)) as tmp:
         tmp_path = Path(tmp)
-        audio_path = _download_audio(url, tmp_path)
+        audio_path, truncated, duration = _download_audio(url, tmp_path)
         model = _get_model()
-        segments_iter, _info = model.transcribe(
-            str(audio_path),
-            language="zh",
-            vad_filter=True,
-            initial_prompt="以下是普通话的简体中文字幕。",
+        tx_opts = _transcribe_kwargs()
+        logger.info(
+            "ASR transcribe language=%s",
+            tx_opts.get("language") or "auto",
         )
+        segments_iter, info = model.transcribe(str(audio_path), **tx_opts)
+        detected = getattr(info, "language", None) or tx_opts.get("language")
+        if detected:
+            logger.info("ASR detected language=%s", detected)
         segments: list[dict] = []
         lines: list[str] = []
         for seg in segments_iter:
@@ -110,6 +164,13 @@ def transcribe_url(url: str, work_dir: Optional[str] = None) -> dict:
 
     if not segments:
         raise SubtitleError("语音转写结果为空，无法总结该视频")
+
+    if truncated:
+        note = (
+            f"…（视频约 {int(duration // 60)} 分钟，已仅转写前 "
+            f"{ASR_MAX_DURATION // 60} 分钟；如需全文可在服务端调大 ASR_MAX_DURATION）"
+        )
+        lines.append(note)
 
     text = "\n".join(lines)
     if len(text) > MAX_SUBTITLE_CHARS:

@@ -6,11 +6,13 @@
 
 - 粘贴链接一键解析，选择清晰度/格式后下载
 - 实时下载进度（SSE 推送）；下载完成后自动唤起浏览器保存
-- **AI 视频总结**（手动触发）：字幕提取 / 无字幕语音转写 → DeepSeek 流式摘要 → 思维导图 → 智能问答
+- **AI 视频总结**（解析后自动触发，可重新生成）：字幕提取 / 无字幕语音转写 → DeepSeek 流式摘要 → 思维导图 → 智能问答
   - Markdown 精美排版；思维导图全屏与 PNG/SVG 导出；字幕下载 SRT / VTT / TXT
+  - 下载页与总结左右同屏；首页紧凑首屏（连按三次 Enter 展开演示 Slogan）
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无数据库，内存 Job + 临时文件，2 小时 TTL 自动清理
 - IP 限流（60 次/小时）防滥用
+- **用户登录 + Stripe Pro 会员**（AI 总结为 Pro 专属；见 docs/membership.md）
 - Pro 功能占位（字幕翻译 / 批量 4K）与定价页
 
 ## 技术栈
@@ -19,7 +21,7 @@
 |----|------|
 | 前端 | Next.js 16 + Tailwind CSS + marked + typography + markmap |
 | 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg + DeepSeek + faster-whisper |
-| 状态 | 内存 Job Registry + `/tmp/videos` |
+| 状态 | 内存 Job Registry + `/tmp/videos`；用户/订阅用 SQLite |
 | 部署 | Docker Compose |
 
 ## 项目结构
@@ -76,11 +78,17 @@ docker compose up --build
 | `TEMP_DIR` | /tmp/videos | 临时文件目录 |
 | `CORS_ORIGINS` | http://localhost:3000 | 允许的前端域名 |
 | `NEXT_PUBLIC_API_URL` | http://localhost:8000 | 前端调用的后端地址 |
+| `NEXT_PUBLIC_SITE_URL` | https://videograb.lianxi.com | 正式站点域名（SEO canonical / sitemap / OG） |
 | `DEEPSEEK_API_KEY` | （空） | AI 总结必填，见 `backend/.env.example` |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | DeepSeek 模型 ID |
 | `WHISPER_MODEL` | tiny | 无字幕时 ASR 模型 |
 | `ASR_MAX_DURATION` | 1800 | ASR 最长秒数 |
-| `HF_ENDPOINT` | https://hf-mirror.com | Whisper 权重下载镜像 |
+| `JWT_SECRET` | （开发默认弱密钥） | 生产必改 |
+| `STRIPE_SECRET_KEY` | （空） | Stripe Secret Key |
+| `STRIPE_WEBHOOK_SECRET` | （空） | Webhook 签名密钥 |
+| `STRIPE_PRICE_PRO` | （空） | Pro 月付 Price ID |
+| `FRONTEND_URL` | http://localhost:3000 | Checkout 回跳域名 |
+| `DATABASE_PATH` | backend/data/app.db | SQLite 路径 |
 
 后端本地开发请复制环境变量文件：
 
@@ -100,8 +108,15 @@ cp backend/.env.example backend/.env
 | GET | `/api/jobs/{id}/file` | 下载文件（attachment） |
 | GET | `/api/jobs/{id}/summarize` | SSE：字幕 + AI 摘要 + 思维导图 |
 | POST | `/api/jobs/{id}/chat` | SSE：基于字幕的 AI 问答 |
+| POST | `/api/auth/register` | 注册 |
+| POST | `/api/auth/login` | 登录 |
+| GET | `/api/auth/me` | 当前用户与会员状态 |
+| POST | `/api/billing/checkout` | 创建 Stripe Checkout |
+| POST | `/api/billing/portal` | Stripe 账单门户 |
+| POST | `/api/billing/webhook` | Stripe Webhook |
 | DELETE | `/api/jobs/{id}` | 清理任务与文件 |
 
+会员与支付详见 [docs/membership.md](docs/membership.md)、[docs/stripe-setup.md](docs/stripe-setup.md)。
 详见 [docs/design.md](docs/design.md)、[docs/ai-summary.md](docs/ai-summary.md)。
 
 ## 生产部署

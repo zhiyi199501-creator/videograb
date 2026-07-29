@@ -18,7 +18,7 @@ export default function MobileTip() {
   if (!show) return null;
 
   return (
-    <div className="mb-4 rounded-xl border border-[#ffe58f] bg-[#fffbe6] px-4 py-3 text-sm text-[#ad6800]">
+    <div className="mb-2 rounded-xl border border-[#ffe58f] bg-[#fffbe6] px-4 py-2.5 text-sm text-[#ad6800]">
       <strong>提示：</strong>
       当前为应用内置浏览器，下载可能受限。请点击右上角「···」选择
       「在 Safari / Chrome 中打开」以获得最佳下载体验。

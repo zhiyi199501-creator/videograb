@@ -59,13 +59,11 @@ export default function DownloadPage() {
     selectedFormatRef.current = selectedFormat;
   }, [selectedFormat]);
 
-  // 切换任务时重置自动保存标记
   useEffect(() => {
     autoSavedRef.current = false;
     setAutoSaved(false);
   }, [jobId]);
 
-  // 服务端下载完成后，自动触发浏览器保存
   useEffect(() => {
     if (phase !== "complete" || autoSavedRef.current) return;
     autoSavedRef.current = true;
@@ -130,7 +128,6 @@ export default function DownloadPage() {
     const init = async () => {
       try {
         const current = await pollOnce();
-        // ready/complete/failed 仍保留轮询，下载阶段靠轮询兜底（SSE 经代理可能缓冲/断开）
         if (
           current.status === "extracting" ||
           current.status === "pending" ||
@@ -147,7 +144,6 @@ export default function DownloadPage() {
               latest.status === "complete" ||
               latest.status === "failed"
             ) {
-              // 解析完成可停 SSE；下载完成也停
               if (latest.status !== "ready") {
                 unsub?.();
                 unsub = undefined;
@@ -180,7 +176,6 @@ export default function DownloadPage() {
 
     try {
       await startDownload(jobId, selectedFormat);
-      // 立即拉一次状态；后续由 useEffect 的 interval 持续同步
       const current = await getJob(jobId);
       setJob(current);
       setProgress((prev) => Math.max(prev, current.progress));
@@ -197,130 +192,147 @@ export default function DownloadPage() {
     }
   };
 
+  const showSplit =
+    phase === "ready" || phase === "downloading" || phase === "complete";
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-6xl px-3 py-3 sm:px-5 sm:py-4">
       <MobileTip />
 
       <Link
         href="/"
-        className="mb-6 inline-flex items-center gap-1 text-sm text-[#64748b] hover:text-[#1677ff]"
+        className="mb-3 inline-flex items-center gap-1 text-xs text-[#64748b] hover:text-[#1677ff] sm:text-sm"
       >
         ← 返回首页
       </Link>
 
       {phase === "extracting" && (
-        <div className="rounded-xl bg-white p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+        <div className="rounded-xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-8">
           <div className="animate-pulse space-y-4">
-            <div className="mx-auto h-40 w-full max-w-sm rounded-xl bg-[#f0f1f2]" />
+            <div className="mx-auto h-36 w-full max-w-sm rounded-xl bg-[#f0f1f2]" />
             <div className="mx-auto h-4 w-3/4 rounded bg-[#f0f1f2]" />
             <div className="mx-auto h-4 w-1/2 rounded bg-[#f0f1f2]" />
           </div>
-          <p className="mt-6 text-center text-sm text-[#64748b]">
+          <p className="mt-5 text-center text-sm text-[#64748b]">
             正在解析视频信息...
           </p>
-          <div className="mt-4">
+          <div className="mt-3">
             <ProgressBar progress={progress || 0.1} />
           </div>
         </div>
       )}
 
-      {phase === "ready" && job && (
-        <div className="rounded-xl bg-white p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
-          <div className="flex flex-col gap-6 sm:flex-row">
-            {!thumbError ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={getThumbnailUrl(jobId)}
-                alt={job.title || "缩略图"}
-                onError={() => setThumbError(true)}
-                className="h-44 w-full shrink-0 rounded-xl object-cover sm:h-36 sm:w-48"
-              />
-            ) : (
-              <div className="flex h-44 w-full shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1677ff]/10 to-[#4096ff]/5 sm:h-36 sm:w-48">
-                <span className="text-4xl opacity-60">🎬</span>
+      {showSplit && (
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+          {/* 左栏 ~40%：视频信息 / 下载 */}
+          <div className="w-full shrink-0 lg:w-[40%]">
+            {phase === "ready" && job && (
+              <div className="rounded-xl bg-white p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  {!thumbError ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={getThumbnailUrl(jobId)}
+                      alt={job.title || "缩略图"}
+                      onError={() => setThumbError(true)}
+                      className="h-36 w-full shrink-0 rounded-lg object-cover sm:h-28 sm:w-40 lg:h-32 lg:w-full xl:h-28 xl:w-40"
+                    />
+                  ) : (
+                    <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1677ff]/10 to-[#4096ff]/5 sm:h-28 sm:w-40 lg:h-32 lg:w-full xl:h-28 xl:w-40">
+                      <span className="text-3xl opacity-60">🎬</span>
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h1 className="line-clamp-2 text-sm font-bold text-[#0f172a] sm:text-base">
+                      {job.title}
+                    </h1>
+                    <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-[#94a3b8]">
+                      {job.uploader && <span>{job.uploader}</span>}
+                      {job.duration != null && (
+                        <span>· {formatDuration(job.duration)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <FormatPicker
+                    formats={job.formats as FormatInfo[]}
+                    selected={selectedFormat}
+                    onSelect={setSelectedFormat}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={downloading || !selectedFormat}
+                  className="mt-4 w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] disabled:opacity-60"
+                >
+                  {downloading ? "准备下载..." : "开始下载"}
+                </button>
               </div>
             )}
-            <div className="flex-1">
-              <h1 className="line-clamp-2 text-base font-bold text-[#0f172a]">
-                {job.title}
-              </h1>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs text-[#94a3b8]">
-                {job.uploader && <span>{job.uploader}</span>}
-                {job.duration != null && (
-                  <span>· {formatDuration(job.duration)}</span>
-                )}
+
+            {phase === "downloading" && (
+              <div className="rounded-xl bg-white p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+                <h2 className="mb-3 line-clamp-2 text-center text-sm font-bold text-[#0f172a]">
+                  {job?.title || "正在下载"}
+                </h2>
+                <ProgressBar
+                  progress={Math.max(progress, 0.05)}
+                  label="下载进度"
+                />
+                <p className="mt-3 text-center text-xs text-[#94a3b8]">
+                  请保持页面打开，完成后将自动保存到本地
+                </p>
               </div>
-            </div>
+            )}
+
+            {phase === "complete" && (
+              <div className="rounded-xl bg-white p-5 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-2xl">
+                  ✅
+                </div>
+                <h2 className="text-base font-bold text-[#0f172a]">
+                  {autoSaved ? "已开始保存！" : "下载完成！"}
+                </h2>
+                <p className="mt-1.5 line-clamp-2 text-sm text-[#64748b]">
+                  {job?.title || job?.filename}
+                </p>
+                <p className="mt-1 text-xs text-[#94a3b8]">
+                  {autoSaved
+                    ? "若浏览器未弹出保存，请点击下方按钮重试"
+                    : "正在唤起保存…"}
+                </p>
+                <a
+                  href={getFileUrl(jobId)}
+                  download={job?.filename || "video.mp4"}
+                  className="mt-4 inline-block w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff]"
+                >
+                  {autoSaved ? "再次保存到手机 / 电脑" : "保存到手机 / 电脑"}
+                </a>
+                <Link
+                  href="/"
+                  className="mt-3 block text-sm text-[#1677ff] hover:underline"
+                >
+                  继续下载其他视频
+                </Link>
+              </div>
+            )}
           </div>
 
-          <div className="mt-6">
-            <FormatPicker
-              formats={job.formats as FormatInfo[]}
-              selected={selectedFormat}
-              onSelect={setSelectedFormat}
+          {/* 右栏 ~60%：AI 总结（解析后自动触发） */}
+          <div className="min-h-[420px] w-full lg:min-h-[520px] lg:w-[60%]">
+            <SummaryPanel
+              jobId={jobId}
+              title={job?.title}
+              autoStart
+              className="h-full"
             />
           </div>
-
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={downloading || !selectedFormat}
-            className="mt-6 w-full rounded-full bg-[#1677ff] py-3 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] disabled:opacity-60"
-          >
-            {downloading ? "准备下载..." : "开始下载"}
-          </button>
         </div>
       )}
-
-      {phase === "downloading" && (
-        <div className="rounded-xl bg-white p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
-          <h2 className="mb-4 text-center text-base font-bold text-[#0f172a]">
-            {job?.title || "正在下载"}
-          </h2>
-          <ProgressBar progress={Math.max(progress, 0.05)} label="下载进度" />
-          <p className="mt-4 text-center text-xs text-[#94a3b8]">
-            请保持页面打开，完成后将自动保存到本地
-          </p>
-        </div>
-      )}
-
-      {phase === "complete" && (
-        <div className="rounded-xl bg-white p-8 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-3xl">
-            ✅
-          </div>
-          <h2 className="text-lg font-bold text-[#0f172a]">
-            {autoSaved ? "已开始保存！" : "下载完成！"}
-          </h2>
-          <p className="mt-2 line-clamp-2 text-sm text-[#64748b]">
-            {job?.title || job?.filename}
-          </p>
-          <p className="mt-2 text-xs text-[#94a3b8]">
-            {autoSaved
-              ? "若浏览器未弹出保存，请点击下方按钮重试"
-              : "正在唤起保存…"}
-          </p>
-          <a
-            href={getFileUrl(jobId)}
-            download={job?.filename || "video.mp4"}
-            className="mt-6 inline-block w-full rounded-full bg-[#1677ff] py-3 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] sm:w-auto sm:px-12"
-          >
-            {autoSaved ? "再次保存到手机 / 电脑" : "保存到手机 / 电脑"}
-          </a>
-          <Link
-            href="/"
-            className="mt-4 block text-sm text-[#1677ff] hover:underline"
-          >
-            继续下载其他视频
-          </Link>
-        </div>
-      )}
-
-      {(phase === "ready" ||
-        phase === "downloading" ||
-        phase === "complete") && (
-          <SummaryPanel jobId={jobId} title={job?.title} />
-        )}
 
       {phase === "failed" && (
         <div className="rounded-xl bg-white p-8 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
