@@ -1,6 +1,6 @@
 # VideoGrab — 万能视频下载网站
 
-基于 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 的万能视频下载网站，支持 YouTube、B站、抖音、TikTok 等 1000+ 平台，手机也能下。前端采用清爽卡片风 + 付费转化设计，后端为轻量 FastAPI 薄封装（无数据库）。
+基于 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 的万能视频下载网站，支持 YouTube、B站、抖音、TikTok 等 1000+ 平台，手机也能下。前端采用清爽卡片风 + 付费转化设计；后端为轻量 FastAPI（下载 Job 在内存，用户/订阅用 SQLite）。
 
 ## 功能特性
 
@@ -10,10 +10,10 @@
   - Markdown 精美排版；思维导图全屏与 PNG/SVG 导出；字幕下载 SRT / VTT / TXT
   - 下载页与总结左右同屏；首页紧凑首屏（连按三次 Enter 展开演示 Slogan）
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
-- 无数据库，内存 Job + 临时文件，2 小时 TTL 自动清理
-- IP 限流（60 次/小时）防滥用
-- **用户登录 + Stripe Pro 会员**（AI 总结为 Pro 专属；见 docs/membership.md）
-- Pro 功能占位（字幕翻译 / 批量 4K）与定价页
+- 无独立下载数据库：内存 Job + 临时文件，2 小时 TTL 自动清理；用户/订阅另用 SQLite
+- IP 限流（解析 60 次/小时）防滥用
+- **用户登录 + Stripe Pro 会员**（登录免费 AI 3 次，Pro ¥9.9/月无限；见 docs/membership.md）
+- 定价页 Free / Pro（Team 未做）
 
 ## 技术栈
 
@@ -28,6 +28,8 @@
 
 ```
 downloadapp/
+├── AGENTS.md          # Agent 指引（怎么跑 / 现役产品事实）
+├── dev.sh             # 本地一键启动前后端
 ├── docs/              # 需求分析 + 方案设计文档（扩展前必读）
 ├── frontend/          # Next.js 前端
 ├── backend/           # FastAPI 后端
@@ -41,7 +43,20 @@ downloadapp/
 - Node.js 20+、Python 3.10+、ffmpeg
 - AI 总结需 [DeepSeek API Key](https://platform.deepseek.com/api_keys)；无字幕视频首次转写会下载 Whisper 模型
 
-### 后端
+### 一键启动
+
+```bash
+./dev.sh
+```
+
+会自动激活 `backend/.venv`、按需装依赖，并同时启动前后端。Ctrl+C 一起停。
+
+- 前端: http://localhost:3000
+- 后端: http://localhost:8000
+
+### 分开启动（可选）
+
+**后端**
 
 ```bash
 cd backend
@@ -51,15 +66,13 @@ pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-### 前端
+**前端**
 
 ```bash
 cd frontend
 npm install                # 若默认源慢，可用: npm install --registry=https://registry.npmmirror.com
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
-
-访问 http://localhost:3000
 
 ## Docker 一键启动
 

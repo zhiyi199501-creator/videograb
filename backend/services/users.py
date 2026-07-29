@@ -10,6 +10,9 @@ from typing import Any
 
 from db import get_db
 
+# 登录用户免费 AI 总结次数（非 Pro）
+AI_FREE_LIMIT = 3
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -131,6 +134,47 @@ def is_pro_user(user_id: str) -> bool:
     if period_end is not None and int(period_end) + 86400 < int(time.time()):
         return False
     return True
+
+
+def get_ai_free_used(user_id: str) -> int:
+    user = get_user_by_id(user_id)
+    if not user:
+        return 0
+    try:
+        return max(0, int(user.get("ai_free_used") or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def get_ai_free_remaining(user_id: str) -> int:
+    if is_pro_user(user_id):
+        return AI_FREE_LIMIT  # Pro 不消耗免费额度，返回满额便于展示
+    return max(0, AI_FREE_LIMIT - get_ai_free_used(user_id))
+
+
+def can_use_ai(user_id: str) -> bool:
+    if is_pro_user(user_id):
+        return True
+    return get_ai_free_used(user_id) < AI_FREE_LIMIT
+
+
+def consume_ai_free_credit(user_id: str) -> bool:
+    """非 Pro 用户消耗 1 次免费额度。成功返回 True；已用尽或 Pro 不扣次。
+
+    Pro 直接返回 True（不写库）。
+    """
+    if is_pro_user(user_id):
+        return True
+    with get_db() as conn:
+        cur = conn.execute(
+            """
+            UPDATE users
+            SET ai_free_used = ai_free_used + 1
+            WHERE id = ? AND ai_free_used < ?
+            """,
+            (user_id, AI_FREE_LIMIT),
+        )
+        return cur.rowcount == 1
 
 
 def try_record_event(event_id: str, event_type: str) -> bool:

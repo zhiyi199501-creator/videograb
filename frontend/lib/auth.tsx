@@ -16,6 +16,10 @@ export interface AuthUser {
   id: string;
   email: string;
   is_pro: boolean;
+  can_use_ai?: boolean;
+  ai_free_limit?: number;
+  ai_free_used?: number;
+  ai_free_remaining?: number | null;
   subscription: {
     plan?: string | null;
     status?: string | null;

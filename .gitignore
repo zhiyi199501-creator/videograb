@@ -23,5 +23,9 @@ backend/data/
 # OS
 .DS_Store
 
+# Local research / scratch (not product)
+.firecrawl/
+downloads/
+
 # Logs
 *.log

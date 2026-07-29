@@ -41,6 +41,7 @@ def init_db() -> None:
                 email TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
                 stripe_customer_id TEXT,
+                ai_free_used INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
             );
 
@@ -71,3 +72,13 @@ def init_db() -> None:
                 ON users(stripe_customer_id);
             """
         )
+        # 兼容已有库：补齐免费额度字段
+        cols = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(users)").fetchall()
+        }
+        if "ai_free_used" not in cols:
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN ai_free_used INTEGER NOT NULL DEFAULT 0"
+            )
+

@@ -34,7 +34,7 @@ export const PRICING_TITLE =
   "定价方案 - VideoGrab | 免费与 Pro 视频下载套餐对比";
 
 export const PRICING_DESCRIPTION =
-  "查看 VideoGrab 免费版与 Pro / Team 套餐对比：每日解析次数、清晰度上限、AI 视频总结、批量下载等能力一览，从免费版开始即可下载 1000+ 平台视频。";
+  "查看 VideoGrab 免费版与 Pro 套餐对比：每日解析、AI 视频总结免费试用与无限额度等能力一览，从免费版开始即可下载 1000+ 平台视频。";
 
 export const PRICING_KEYWORDS = [
   "VideoGrab定价",

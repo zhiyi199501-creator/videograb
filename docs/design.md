@@ -20,9 +20,9 @@
 
 | 层 | 选型 |
 |----|------|
-| 前端 | Next.js 15 + Tailwind CSS |
-| 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg |
-| 状态 | 内存 dict + `/tmp/videos/{jobId}/` |
+| 前端 | Next.js 16 + Tailwind CSS + marked + markmap |
+| 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg + DeepSeek + faster-whisper |
+| 状态 | 内存 Job + `/tmp/videos/{jobId}/`；用户/订阅 SQLite |
 | 部署 | Docker Compose |
 
 ## 2. 核心业务流程
@@ -138,8 +138,10 @@ data: {"status":"downloading","progress":0.42}
 | 路径 | 组件 |
 |------|------|
 | `/` | Navbar, HomeContent（居中搜索 + 平台标签）, Footer |
-| `/download/[id]` | 左右同屏：左 40% 视频信息/下载，右 60% SummaryPanel（解析后自动总结）；移动端上下堆叠 |
-| `/pricing` | 三档套餐卡片 |
+| `/download/[id]` | 左右同屏：左 40% 视频信息/下载，右 60% SummaryPanel（有 AI 额度时自动总结）；移动端上下堆叠 |
+| `/login` `/register` | 邮箱密码登录注册 |
+| `/pricing/success` `/pricing/cancel` | Stripe 回跳页 |
+| `/pricing` | Free / Pro 两档对比（Team 未做） |
 
 ### 下载页同屏布局
 
@@ -148,7 +150,7 @@ Desktop (lg+)
 ┌──────────────────────────────────────────────┐
 │ ← 返回                                        │
 │ ┌─────────────┬────────────────────────────┐ │
-│ │ 40% 视频信息 │ 60% AI 总结（自动触发）      │ │
+│ │ 40% 视频信息 │ 60% AI 总结（有额度则自动） │ │
 │ │ 缩略图/格式  │ 摘要/字幕/导图/问答         │ │
 │ │ 下载按钮     │ 重新生成（执行中禁用）       │ │
 │ └─────────────┴────────────────────────────┘ │
@@ -172,21 +174,17 @@ Mobile: 上下堆叠
 
 ```
 downloadapp/
-├── docs/
-│   ├── requirements.md
-│   └── design.md
-├── frontend/
+├── docs/                 # requirements / design / ai-summary / membership / stripe-setup
+├── frontend/             # Next.js（含 Dockerfile）
 │   ├── app/
 │   ├── components/
 │   └── lib/
-├── backend/
-│   ├── main.py
-│   ├── services/ytdlp.py
+├── backend/              # FastAPI（含 Dockerfile）
+│   ├── main.py / db.py
 │   ├── models/job.py
-│   └── routers/api.py
+│   ├── routers/          # api / summarize / auth / billing
+│   └── services/         # ytdlp / summarizer / auth / users / billing …
 ├── docker-compose.yml
-├── Dockerfile.backend
-├── Dockerfile.frontend
 └── README.md
 ```
 
@@ -194,13 +192,13 @@ downloadapp/
 
 ### 7.1 付费钩子
 
-- `ProFeatureCards` 组件预留 `onUpgrade` 回调
-- 后端可扩展 `require_pro: bool` 字段限制 4K/批量
-- 定价页 `/pricing` 已占位，后续接入支付网关
+- 定价页 `/pricing` + Stripe Checkout / Customer Portal 已接入（见 membership.md）
+- 后端可扩展更高清晰度 / 批量等 Pro 能力（当前 Pro 主要权益为无限 AI）
+- 首页 `ProFeatureCards` 仍可作转化入口
 
 ### 7.2 AI 视频总结（已实现）
 
-详见 [ai-summary.md](ai-summary.md)。下载页解析成功后**自动触发**「AI 视频总结」，可手动重新生成。
+详见 [ai-summary.md](ai-summary.md)。需登录；登录用户免费 3 次，Pro 无限。有额度时下载页可自动触发，可手动重新生成。
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -211,15 +209,15 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 
 字幕优先平台轨；无字幕时 `faster-whisper` ASR。环境变量：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`WHISPER_MODEL`、`HF_ENDPOINT`。
 
-前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。下载页与总结同屏左右布局（40%/60%），解析后自动触发总结；首页紧凑首屏，连按三次 Enter 切换演示模式。
+前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。下载页与总结同屏左右布局（40%/60%）；首页紧凑首屏，连按三次 Enter 切换演示模式。
 
 ### 7.3 用户 / 会员 / Stripe（已实现）
 
 详见 [membership.md](membership.md)、[stripe-setup.md](stripe-setup.md)。
 
-- SQLite：`users` / `subscriptions` / `stripe_events` / `checkout_sessions`
-- JWT 登录；Stripe Checkout 月付 Pro；Webhook 幂等履约
-- AI 总结 / 问答需 Pro（`require_pro_user`）
+- SQLite：`users`（含 `ai_free_used`）/ `subscriptions` / `stripe_events` / `checkout_sessions`
+- JWT 登录；Stripe Checkout 月付 Pro（¥9.9）；Webhook 幂等履约
+- 登录用户免费 AI 总结 3 次；用尽后需 Pro（`require_ai_access` / `require_ai_access_and_consume`）
 - Job 仍为内存；可后续挂 `user_id`
 
 ### 7.4 DB 迁移路径（后续）
@@ -235,7 +233,7 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 |------|------|------|
 | MAX_CONCURRENT | 3 | 最大并发下载 |
 | JOB_TTL_HOURS | 2 | Job 过期时间 |
-| RATE_LIMIT | 10/hour | IP 解析限流 |
+| （硬编码） | 60/hour | `POST /api/extract` IP 限流；总结/问答另有 20/30/hour |
 | TEMP_DIR | /tmp/videos | 临时文件目录 |
 | CORS_ORIGINS | http://localhost:3000 | 前端域名 |
 | DEEPSEEK_API_KEY | （空） | AI 总结必填 |
