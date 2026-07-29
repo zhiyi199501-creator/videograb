@@ -7,9 +7,9 @@
 | 项 | 说明 |
 |----|------|
 | 登录 | 邮箱 + 密码，JWT，SQLite |
-| 套餐 | 仅 **Pro**，¥29/月（Stripe Recurring Price，货币以 Dashboard 创建为准） |
+| 套餐 | 仅 **Pro**，¥9.9/月（Stripe Recurring Price，需在 Dashboard 创建对应价格） |
 | 支付 | Stripe Checkout（托管收银台），`mode=subscription` |
-| 权益 | **非 Pro 不可使用 AI 视频总结 / 问答**；下载等其它功能仍可用 |
+| 权益 | 登录用户免费 AI 总结 **3 次**；Pro 无限；下载等其它功能仍可用 |
 | Team | 暂不做 |
 | 取消/改卡 | Customer Portal（可选入口） |
 

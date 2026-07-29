@@ -18,7 +18,7 @@
    - **Secret key**：`sk_test_…` → 只放后端 `.env`，永远不要提交到 Git、不要给前端  
    - Publishable key：`pk_test_…`（本期 Checkout 托管页可不使用）
 
-> 若你的主体在中国大陆，开户/结算可能受限；测试模式通常仍可练手。货币（CNY/USD）以你账号实际支持为准；网站文案可继续写 ¥29，Dashboard 里创建对应货币的 Price 即可。
+> 若你的主体在中国大陆，开户/结算可能受限；测试模式通常仍可练手。货币（CNY/USD）以你账号实际支持为准；网站文案为 **¥9.9/月**，请在 Dashboard 创建对应价格并更新 `STRIPE_PRICE_PRO`。
 
 ---
 
@@ -28,7 +28,7 @@
 2. Name：`VideoGrab Pro`  
 3. Pricing：
    - Recurring  
-   - Price：`29`（若账号支持 CNY 选 `CNY`；否则先用 `USD 4.99` 等测试价）  
+   - Price：`9.9`（若账号支持 CNY 选 `CNY`；否则先用等价测试价）  
    - Billing period：**Monthly**  
 4. 保存后，点开价格，复制 **Price ID**（形如 `price_1ABC…`）  
    → 填入后端环境变量 `STRIPE_PRICE_PRO`
@@ -125,7 +125,7 @@ Ready! Your webhook signing secret is whsec_xxxxx
 
 4. 支付成功后应回到 `/pricing/success`  
 5. 看终端 3：应出现 `checkout.session.completed` 等事件且 HTTP 200  
-6. 打开下载页：AI 总结应对 Pro 可用；退出登录或换未付费账号应被拒绝并引导升级  
+6. 打开下载页：登录用户可免费总结 3 次；用尽后需 Pro；Pro 用户不限次数  
 
 ### 常用失败场景测试卡
 

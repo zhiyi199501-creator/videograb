@@ -4,7 +4,7 @@ const features = [
   {
     title: "AI 视频总结",
     desc: "摘要 · 导图 · 问答",
-    price: "¥29",
+    price: "¥9.9",
     badge: "已上线",
     featured: false,
     icon: "✨",
@@ -20,7 +20,7 @@ const features = [
   {
     title: "Pro 全能套餐",
     desc: "批量 · 4K · 无限次",
-    price: "¥29",
+    price: "¥9.9",
     badge: "限时",
     featured: true,
     icon: "⚡",

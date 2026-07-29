@@ -12,7 +12,7 @@
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无数据库，内存 Job + 临时文件，2 小时 TTL 自动清理
 - IP 限流（60 次/小时）防滥用
-- **用户登录 + Stripe Pro 会员**（AI 总结为 Pro 专属；见 docs/membership.md）
+- **用户登录 + Stripe Pro 会员**（登录免费 AI 3 次，Pro ¥9.9/月无限；见 docs/membership.md）
 - Pro 功能占位（字幕翻译 / 批量 4K）与定价页
 
 ## 技术栈

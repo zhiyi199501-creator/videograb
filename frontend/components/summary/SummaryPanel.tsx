@@ -28,8 +28,17 @@ export default function SummaryPanel({
   autoStart = false,
   className = "",
 }: SummaryPanelProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshMe } = useAuth();
   const isPro = !!user?.is_pro;
+  const canUseAi =
+    !!user &&
+    (typeof user.can_use_ai === "boolean"
+      ? user.can_use_ai
+      : isPro ||
+        (typeof user.ai_free_remaining === "number" &&
+          user.ai_free_remaining > 0));
+  const freeRemaining =
+    typeof user?.ai_free_remaining === "number" ? user.ai_free_remaining : null;
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("summary");
   const [status, setStatus] = useState("");
@@ -52,7 +61,7 @@ export default function SummaryPanel({
   }, []);
 
   const startSummarize = async () => {
-    if (!isPro || loading) return;
+    if (!canUseAi || loading) return;
     setOpen(true);
     setError("");
     setStatus("准备中…");
@@ -95,19 +104,24 @@ export default function SummaryPanel({
         },
         ac.signal
       );
+      // 非 Pro 扣次后刷新剩余次数
+      if (!isPro) {
+        await refreshMe().catch(() => undefined);
+      }
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
       setError(err instanceof Error ? err.message : "总结失败");
+      await refreshMe().catch(() => undefined);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (authLoading || !autoStart || !isPro) return;
+    if (authLoading || !autoStart || !canUseAi) return;
     void startSummarize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart / isPro 变化自动触发
-  }, [autoStart, jobId, isPro, authLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart / canUseAi 变化自动触发
+  }, [autoStart, jobId, canUseAi, authLoading]);
 
   const handleDownloadSubtitle = (format: SubtitleFormat) => {
     if (!subtitle.trim() && segments.length === 0) return;
@@ -152,15 +166,17 @@ export default function SummaryPanel({
     );
   }
 
-  if (!isPro) {
+  if (!canUseAi) {
     return (
       <div className={`w-full ${className}`}>
         <div className="rounded-xl border border-[#1677ff]/20 bg-gradient-to-b from-[#1677ff]/5 to-white p-5 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
           <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
-            AI 视频总结 · Pro
+            AI 视频总结
           </h2>
           <p className="mt-2 text-sm text-[#64748b]">
-            字幕提取、智能摘要、思维导图与问答已纳入 Pro 会员。
+            {user
+              ? "免费 3 次已用完。升级 Pro（¥9.9/月）可无限使用摘要、导图与问答。"
+              : "登录后可免费体验 3 次 AI 总结；升级 Pro 无限次。"}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {user ? (
@@ -168,7 +184,7 @@ export default function SummaryPanel({
                 href="/pricing"
                 className="rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff]"
               >
-                升级 Pro
+                升级 Pro · ¥9.9/月
               </Link>
             ) : (
               <>
@@ -176,7 +192,7 @@ export default function SummaryPanel({
                   href="/login?next=/pricing"
                   className="rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff]"
                 >
-                  登录并升级
+                  登录免费试用
                 </Link>
                 <Link
                   href="/pricing"
@@ -199,10 +215,17 @@ export default function SummaryPanel({
           type="button"
           onClick={startSummarize}
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-[#1677ff]/30 bg-[#1677ff]/5 py-3 text-sm font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full flex-col items-center justify-center gap-1 rounded-full border border-[#1677ff]/30 bg-[#1677ff]/5 py-3 text-sm font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span>✨</span>
-          {actionLabel}
+          <span className="flex items-center gap-2">
+            <span>✨</span>
+            {actionLabel}
+          </span>
+          {!isPro && freeRemaining !== null && (
+            <span className="text-xs font-normal text-[#64748b]">
+              免费剩余 {freeRemaining} 次
+            </span>
+          )}
         </button>
       ) : (
         <div className="flex h-full w-full flex-col rounded-xl border border-[#eef0f3] bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-4">
@@ -210,6 +233,11 @@ export default function SummaryPanel({
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
                 AI 视频总结
+                {!isPro && freeRemaining !== null && (
+                  <span className="ml-2 text-xs font-normal text-[#64748b]">
+                    免费剩余 {freeRemaining} 次
+                  </span>
+                )}
               </h2>
               {status && (
                 <p className="mt-0.5 truncate text-xs text-[#64748b]">
@@ -220,7 +248,7 @@ export default function SummaryPanel({
             <button
               type="button"
               onClick={startSummarize}
-              disabled={loading}
+              disabled={loading || (!isPro && freeRemaining === 0)}
               className="shrink-0 rounded-full border border-[#1677ff]/25 bg-[#1677ff]/5 px-3 py-1 text-xs font-medium text-[#1677ff] hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {actionLabel}

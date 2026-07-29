@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from models.job import JobStatus
 from routers.api import limiter
-from services.auth import require_pro_user
+from services.auth import require_ai_access, require_ai_access_and_consume
 from services.summarizer import chat_events, summarize_events
 from services.ytdlp import job_store
 
@@ -61,7 +61,7 @@ def _job_or_404(job_id: str) -> dict:
 async def api_summarize(
     request: Request,
     job_id: str,
-    _user=Depends(require_pro_user),
+    _user=Depends(require_ai_access_and_consume),
 ):
     job = _job_or_404(job_id)
     status = job.get("status")
@@ -94,7 +94,7 @@ async def api_chat(
     request: Request,
     job_id: str,
     body: ChatRequest,
-    _user=Depends(require_pro_user),
+    _user=Depends(require_ai_access),
 ):
     _job_or_404(job_id)
 

@@ -218,8 +218,8 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 详见 [membership.md](membership.md)、[stripe-setup.md](stripe-setup.md)。
 
 - SQLite：`users` / `subscriptions` / `stripe_events` / `checkout_sessions`
-- JWT 登录；Stripe Checkout 月付 Pro；Webhook 幂等履约
-- AI 总结 / 问答需 Pro（`require_pro_user`）
+- JWT 登录；Stripe Checkout 月付 Pro（¥9.9）；Webhook 幂等履约
+- 登录用户免费 AI 总结 3 次；用尽后需 Pro（`require_ai_access`）
 - Job 仍为内存；可后续挂 `user_id`
 
 ### 7.4 DB 迁移路径（后续）
