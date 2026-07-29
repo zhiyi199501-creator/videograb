@@ -1,6 +1,6 @@
 # 会员购买与 Stripe 支付方案
 
-> 已确认决策：登录（1A）+ 月付订阅（2A）+ 仅 Pro（3A）+ CNY 定价/Price 环境变量（4）+ 限制 AI 总结（5B）+ 本地 Stripe CLI 测试（6A）。
+> 已确认决策（2026-07）：登录（1A）+ 月付订阅（2A）+ 仅 Pro 套餐（3A，无 Team）+ CNY/Price 环境变量（4）+ AI 登录免费 3 次、Pro 无限（5B 演进）+ 本地 Stripe CLI 测试（6A）。
 
 ## 1. 产品范围（本期）
 
@@ -10,7 +10,7 @@
 | 套餐 | 仅 **Pro**，¥9.9/月（Stripe Recurring Price，需在 Dashboard 创建对应价格） |
 | 支付 | Stripe Checkout（托管收银台），`mode=subscription` |
 | 权益 | 登录用户免费 AI 总结 **3 次**；Pro 无限；下载等其它功能仍可用 |
-| Team | 暂不做 |
+| Team | 不做（定价页仅 Free / Pro） |
 | 取消/改卡 | Customer Portal（可选入口） |
 
 ## 2. 业务流程
@@ -38,6 +38,7 @@
 | email | 唯一，小写 |
 | password_hash | bcrypt |
 | stripe_customer_id | 可空 |
+| ai_free_used | INTEGER，非 Pro 已用免费 AI 次数（默认 0） |
 | created_at | ISO 时间 |
 
 ### subscriptions
@@ -83,7 +84,10 @@
 | POST | `/api/billing/checkout` | JWT | 返回 `{url}` |
 | POST | `/api/billing/portal` | JWT | 返回 Customer Portal `{url}` |
 | POST | `/api/billing/webhook` | Stripe 签名 | 原始 body 验签 |
-| GET/POST | summarize / chat | JWT + Pro | 非 Pro → 403 |
+| GET | `/api/jobs/{id}/summarize` | JWT + AI 额度 | 非 Pro 成功开始时扣 1 次免费额度；用尽 → 403 |
+| POST | `/api/jobs/{id}/chat` | JWT + AI 额度 | 校验额度但不扣次；用尽 → 403 |
+
+**AI 额度**：`can_use_ai` = Pro（`active`/`past_due` 且未过宽限期）**或** `ai_free_used < 3`。依赖 `require_ai_access` / `require_ai_access_and_consume`（旧名 `require_pro_user` 已改为走额度逻辑）。
 
 ## 5. 安全与幂等
 
@@ -121,9 +125,9 @@
 
 - `/login`、`/register`
 - Navbar 登录态 / 退出；Pro 角标
-- `/pricing`：Pro 可购买；已是 Pro 显示「当前方案」
+- `/pricing`：Free / Pro；已是 Pro 显示「当前方案」
 - `/pricing/success`、`/pricing/cancel`
-- 下载页 AI 总结：非 Pro 展示升级引导，不自动触发
+- 下载页 AI 总结：有额度（含免费剩余次数）时可自动触发；无额度展示登录/升级引导并显示剩余次数
 
 ## 9. 本地测试（无公网域名）
 

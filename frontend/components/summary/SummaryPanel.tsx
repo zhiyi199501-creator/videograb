@@ -17,7 +17,7 @@ type Tab = "summary" | "subtitle" | "mindmap" | "chat";
 interface SummaryPanelProps {
   jobId: string;
   title?: string | null;
-  /** 挂载后自动开始总结（仅 Pro 生效） */
+  /** 挂载后自动开始总结（需登录且 can_use_ai） */
   autoStart?: boolean;
   className?: string;
 }
