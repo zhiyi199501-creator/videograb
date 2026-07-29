@@ -41,22 +41,7 @@ const plans = [
     ],
     highlighted: true,
   },
-  {
-    id: "team",
-    name: "Team",
-    price: "¥99",
-    period: "/月",
-    original: "¥299/月",
-    desc: "适合团队/工作室",
-    features: [
-      "Pro 全部功能",
-      "5 个子账号",
-      "API 接口访问",
-      "专属客服支持",
-    ],
-    highlighted: false,
-  },
-];
+] as const;
 
 export default function PricingContent() {
   const { user, loading } = useAuth();
@@ -96,17 +81,21 @@ export default function PricingContent() {
   return (
     <>
       <Navbar />
-      <main className="flex-1 px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-3xl font-black text-[#0f172a] sm:text-4xl">
+      <main className="relative flex-1 overflow-hidden px-4 py-12 sm:px-6 sm:py-16">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_rgba(22,119,255,0.08),_transparent_55%)]"
+        />
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="text-3xl font-black tracking-tight text-[#0f172a] sm:text-4xl">
             选择适合你的
             <span className="text-[#1677ff]">下载方案</span>
           </h1>
-          <p className="mt-3 text-sm text-[#64748b]">
-            从免费版开始，升级 Pro 解锁 AI 视频总结
+          <p className="mt-3 text-sm text-[#64748b] sm:text-base">
+            免费下载随时用；登录可试用 AI 总结，升级 Pro 不限次数
           </p>
           {!loading && user?.is_pro && (
-            <p className="mt-2 text-sm font-medium text-[#1677ff]">
+            <p className="mt-3 inline-flex rounded-full bg-[#1677ff]/10 px-3 py-1 text-sm font-medium text-[#1677ff]">
               当前账号已是 Pro 会员
             </p>
           )}
@@ -118,17 +107,16 @@ export default function PricingContent() {
           </p>
         )}
 
-        <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-6 sm:mt-12 md:grid-cols-2 md:items-stretch">
           {plans.map((plan) => {
             const isProCard = plan.id === "pro";
-            const isTeam = plan.id === "team";
             let cta = "当前方案";
             let disabled = true;
             let onClick: (() => void) | undefined;
 
             if (plan.id === "free") {
-              cta = user ? "当前方案" : "免费开始";
-              disabled = !!user;
+              cta = user?.is_pro ? "返回下载" : user ? "当前方案" : "免费开始";
+              disabled = !!user && !user.is_pro;
               onClick = () => router.push("/");
             } else if (isProCard) {
               if (user?.is_pro) {
@@ -140,18 +128,15 @@ export default function PricingContent() {
                 disabled = busy !== null || loading;
                 onClick = onUpgrade;
               }
-            } else if (isTeam) {
-              cta = "即将上线";
-              disabled = true;
             }
 
             return (
               <div
                 key={plan.name}
-                className={`relative rounded-xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] ${
+                className={`relative flex flex-col rounded-2xl p-6 sm:p-7 ${
                   plan.highlighted
-                    ? "border-2 border-[#1677ff] bg-gradient-to-b from-[#1677ff]/5 to-white"
-                    : "border border-[#f0f1f2] bg-white"
+                    ? "border-2 border-[#1677ff] bg-gradient-to-b from-[#1677ff]/[0.06] to-white shadow-[0_12px_40px_-12px_rgba(22,119,255,0.35)]"
+                    : "border border-[#e8eef5] bg-white/90 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]"
                 }`}
               >
                 {plan.highlighted && (
@@ -161,24 +146,24 @@ export default function PricingContent() {
                 )}
                 <h3 className="text-lg font-bold text-[#0f172a]">{plan.name}</h3>
                 <p className="mt-1 text-xs text-[#64748b]">{plan.desc}</p>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-[#0f172a]">
+                <div className="mt-5 flex items-baseline gap-1">
+                  <span className="text-4xl font-black tracking-tight text-[#0f172a]">
                     {plan.price}
                   </span>
                   <span className="text-sm text-[#64748b]">{plan.period}</span>
                 </div>
-                {plan.original && (
+                {"original" in plan && plan.original && (
                   <p className="mt-1 text-xs text-[#94a3b8] line-through">
                     原价 {plan.original}
                   </p>
                 )}
-                <ul className="mt-6 space-y-2.5">
+                <ul className="mt-6 flex-1 space-y-2.5">
                   {plan.features.map((f) => (
                     <li
                       key={f}
-                      className="flex items-center gap-2 text-sm text-[#020817]"
+                      className="flex items-start gap-2 text-sm leading-snug text-[#020817]"
                     >
-                      <span className="text-[#1677ff]">✓</span>
+                      <span className="mt-0.5 text-[#1677ff]">✓</span>
                       {f}
                     </li>
                   ))}
@@ -187,10 +172,10 @@ export default function PricingContent() {
                   type="button"
                   disabled={disabled}
                   onClick={onClick}
-                  className={`mt-6 w-full rounded-full py-2.5 text-sm font-medium transition-colors ${
+                  className={`mt-8 w-full rounded-full py-2.5 text-sm font-medium transition-colors ${
                     plan.highlighted
                       ? "bg-[#1677ff] text-white hover:bg-[#4096ff] disabled:opacity-60"
-                      : "border border-[#f0f1f2] text-[#020817] hover:border-[#1677ff] disabled:opacity-60"
+                      : "border border-[#e2e8f0] text-[#020817] hover:border-[#1677ff] disabled:opacity-60"
                   }`}
                 >
                   {cta}
