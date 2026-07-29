@@ -28,6 +28,8 @@
 
 ```
 downloadapp/
+├── AGENTS.md          # Agent 指引（怎么跑 / 现役产品事实）
+├── dev.sh             # 本地一键启动前后端
 ├── docs/              # 需求分析 + 方案设计文档（扩展前必读）
 ├── frontend/          # Next.js 前端
 ├── backend/           # FastAPI 后端

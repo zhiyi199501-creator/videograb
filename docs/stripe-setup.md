@@ -75,24 +75,16 @@ STRIPE_WEBHOOK_SECRET=whsec_先留空等listen
 
 ## 5. 启动项目 + 转发 Webhook
 
-**终端 1 — 后端**
+**终端 1 — 前后端（推荐一键）**
 
 ```bash
-cd backend
-source .venv/bin/activate   # 若已建虚拟环境
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# 在仓库根目录
+./dev.sh
 ```
 
-**终端 2 — 前端**
+若需分开启动，见根目录 README「分开启动」：后端 `uvicorn …:8000`，前端 `NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev`。
 
-```bash
-cd frontend
-npm install
-NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
-```
-
-**终端 3 — Stripe CLI 转发（关键）**
+**终端 2 — Stripe CLI 转发（关键）**
 
 ```bash
 stripe listen --forward-to localhost:8000/api/billing/webhook
@@ -124,7 +116,7 @@ Ready! Your webhook signing secret is whsec_xxxxx
 | 邮编 | 任意（如 `10000`） |
 
 4. 支付成功后应回到 `/pricing/success`  
-5. 看终端 3：应出现 `checkout.session.completed` 等事件且 HTTP 200  
+5. 看 Stripe CLI 终端（终端 2）：应出现 `checkout.session.completed` 等事件且 HTTP 200  
 6. 打开下载页：登录用户可免费总结 3 次；用尽后需 Pro；Pro 用户不限次数  
 
 ### 常用失败场景测试卡

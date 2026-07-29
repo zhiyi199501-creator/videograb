@@ -5,17 +5,14 @@
 ## 怎么跑
 
 ```bash
-# 后端（需 ffmpeg；AI 需 backend/.env 的 DEEPSEEK_API_KEY）
-cd backend && source .venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000
-
-# 前端
-cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
-# http://localhost:3000
+./dev.sh
+# 前端 http://localhost:3000 · 后端 http://localhost:8000 · Ctrl+C 一起停
+# 需 ffmpeg；AI 需 backend/.env 的 DEEPSEEK_API_KEY（无 .env 时脚本会从 .env.example 复制）
 
 # 或：docker compose up --build
 ```
 
-Stripe 本地测 Webhook：见 `docs/stripe-setup.md`（`stripe listen --forward-to localhost:8000/api/billing/webhook`）。
+Stripe 本地测 Webhook：见 `docs/stripe-setup.md`（`stripe listen --forward-to localhost:8000/api/billing/webhook`）。分开起前后端的命令见 README「分开启动」。
 
 ## 技术栈
 
