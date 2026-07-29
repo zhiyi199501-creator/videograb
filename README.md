@@ -41,7 +41,20 @@ downloadapp/
 - Node.js 20+、Python 3.10+、ffmpeg
 - AI 总结需 [DeepSeek API Key](https://platform.deepseek.com/api_keys)；无字幕视频首次转写会下载 Whisper 模型
 
-### 后端
+### 一键启动
+
+```bash
+./dev.sh
+```
+
+会自动激活 `backend/.venv`、按需装依赖，并同时启动前后端。Ctrl+C 一起停。
+
+- 前端: http://localhost:3000
+- 后端: http://localhost:8000
+
+### 分开启动（可选）
+
+**后端**
 
 ```bash
 cd backend
@@ -51,15 +64,13 @@ pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-### 前端
+**前端**
 
 ```bash
 cd frontend
 npm install                # 若默认源慢，可用: npm install --registry=https://registry.npmmirror.com
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
-
-访问 http://localhost:3000
 
 ## Docker 一键启动
 
