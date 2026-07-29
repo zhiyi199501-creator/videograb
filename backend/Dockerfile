@@ -13,7 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENV TEMP_DIR=/tmp/videos
-RUN mkdir -p /tmp/videos
+ENV DATABASE_PATH=/app/data/app.db
+RUN mkdir -p /tmp/videos /app/data
 
 EXPOSE 8000
 

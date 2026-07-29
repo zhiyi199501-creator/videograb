@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import JsonLd from "@/components/seo/JsonLd";
+import { AuthProvider } from "@/lib/auth";
 import {
   HOME_DESCRIPTION,
   HOME_KEYWORDS,
@@ -79,7 +80,9 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${jakarta.variable} flex min-h-screen flex-col font-sans text-[#020817] antialiased`}
       >
-        <Suspense>{children}</Suspense>
+        <AuthProvider>
+          <Suspense>{children}</Suspense>
+        </AuthProvider>
       </body>
     </html>
   );

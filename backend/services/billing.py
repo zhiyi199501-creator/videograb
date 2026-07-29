@@ -1,0 +1,292 @@
+"""Stripe Checkout / Portal / Webhook 履约。"""
+
+from __future__ import annotations
+
+import logging
+import os
+from datetime import date
+from typing import Any, Optional
+
+import stripe
+from fastapi import HTTPException
+
+from services import users as user_store
+
+logger = logging.getLogger(__name__)
+
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+STRIPE_PRICE_PRO = os.environ.get("STRIPE_PRICE_PRO", "")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+
+
+def _stripe() -> None:
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="未配置 STRIPE_SECRET_KEY，无法发起支付",
+        )
+    stripe.api_key = STRIPE_SECRET_KEY
+
+
+def _ensure_customer(user: dict[str, Any]) -> str:
+    _stripe()
+    existing = user.get("stripe_customer_id")
+    if existing:
+        return existing
+    customer = stripe.Customer.create(
+        email=user["email"],
+        metadata={"user_id": user["id"]},
+        idempotency_key=f"customer:{user['id']}",
+    )
+    user_store.set_stripe_customer_id(user["id"], customer.id)
+    return customer.id
+
+
+def create_checkout_session(user: dict[str, Any]) -> str:
+    _stripe()
+    if not STRIPE_PRICE_PRO:
+        raise HTTPException(
+            status_code=503,
+            detail="未配置 STRIPE_PRICE_PRO，请先在 Stripe 创建 Pro 价格",
+        )
+    if user_store.is_pro_user(user["id"]):
+        raise HTTPException(status_code=400, detail="你已是 Pro 会员")
+
+    customer_id = _ensure_customer(user)
+    idem_key = f"checkout:{user['id']}:pro:{date.today().isoformat()}"
+
+    session = stripe.checkout.Session.create(
+        mode="subscription",
+        customer=customer_id,
+        client_reference_id=user["id"],
+        line_items=[{"price": STRIPE_PRICE_PRO, "quantity": 1}],
+        success_url=f"{FRONTEND_URL}/pricing/success?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{FRONTEND_URL}/pricing/cancel",
+        metadata={"user_id": user["id"], "plan": "pro"},
+        subscription_data={"metadata": {"user_id": user["id"], "plan": "pro"}},
+        allow_promotion_codes=True,
+        idempotency_key=idem_key,
+    )
+    if not session.url:
+        raise HTTPException(status_code=500, detail="创建支付会话失败")
+    return session.url
+
+
+def create_portal_session(user: dict[str, Any]) -> str:
+    _stripe()
+    customer_id = user.get("stripe_customer_id")
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="尚无账单信息，请先订阅 Pro")
+    portal = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=f"{FRONTEND_URL}/pricing",
+    )
+    if not portal.url:
+        raise HTTPException(status_code=500, detail="创建账单门户失败")
+    return portal.url
+
+
+def construct_event(payload: bytes, sig_header: Optional[str]) -> stripe.Event:
+    _stripe()
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="未配置 STRIPE_WEBHOOK_SECRET")
+    if not sig_header:
+        raise HTTPException(status_code=400, detail="缺少 Stripe-Signature")
+    try:
+        return stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="无效 Webhook 载荷") from exc
+    except stripe.SignatureVerificationError as exc:
+        raise HTTPException(status_code=400, detail="Webhook 签名校验失败") from exc
+
+
+def _resolve_user_id_from_session(session: dict[str, Any]) -> str | None:
+    meta = session.get("metadata") or {}
+    user_id = meta.get("user_id") or session.get("client_reference_id")
+    if user_id:
+        return str(user_id)
+    customer_id = session.get("customer")
+    if customer_id:
+        user = user_store.get_user_by_stripe_customer(str(customer_id))
+        if user:
+            return user["id"]
+    return None
+
+
+def _period_end_from_subscription(sub: Any) -> int | None:
+    if sub is None:
+        return None
+    if isinstance(sub, dict):
+        return sub.get("current_period_end")
+    return getattr(sub, "current_period_end", None)
+
+
+def _status_from_subscription(sub: Any) -> str:
+    raw = ""
+    if isinstance(sub, dict):
+        raw = str(sub.get("status") or "")
+    else:
+        raw = str(getattr(sub, "status", "") or "")
+    mapping = {
+        "active": "active",
+        "trialing": "active",
+        "past_due": "past_due",
+        "canceled": "canceled",
+        "unpaid": "past_due",
+        "incomplete": "inactive",
+        "incomplete_expired": "canceled",
+        "paused": "inactive",
+    }
+    return mapping.get(raw, "inactive")
+
+
+def _activate_from_checkout(session: dict[str, Any]) -> None:
+    user_id = _resolve_user_id_from_session(session)
+    if not user_id:
+        logger.warning("checkout.session.completed missing user_id: %s", session.get("id"))
+        return
+
+    session_id = session.get("id")
+    if session_id and not user_store.try_record_checkout_session(str(session_id), user_id):
+        logger.info("Checkout session already fulfilled: %s", session_id)
+        return
+
+    customer_id = session.get("customer")
+    if customer_id:
+        user = user_store.get_user_by_id(user_id)
+        if user and not user.get("stripe_customer_id"):
+            user_store.set_stripe_customer_id(user_id, str(customer_id))
+
+    subscription_id = session.get("subscription")
+    period_end = None
+    price_id = STRIPE_PRICE_PRO or None
+    status = "active"
+
+    if subscription_id:
+        sub = stripe.Subscription.retrieve(str(subscription_id))
+        status = _status_from_subscription(sub)
+        period_end = _period_end_from_subscription(sub)
+        try:
+            items = sub["items"]["data"] if isinstance(sub, dict) else sub["items"]["data"]
+            if items:
+                price = items[0].get("price") if isinstance(items[0], dict) else items[0].price
+                if price:
+                    price_id = price.get("id") if isinstance(price, dict) else getattr(price, "id", price_id)
+        except Exception:
+            logger.exception("Failed to read subscription price")
+
+    user_store.upsert_subscription(
+        user_id,
+        plan="pro",
+        status=status if status != "inactive" else "active",
+        stripe_subscription_id=str(subscription_id) if subscription_id else None,
+        stripe_price_id=price_id,
+        current_period_end=int(period_end) if period_end else None,
+    )
+    logger.info("Activated Pro for user %s via checkout %s", user_id, session_id)
+
+
+def _sync_subscription(sub_obj: Any) -> None:
+    if isinstance(sub_obj, dict):
+        sub = sub_obj
+    else:
+        sub = sub_obj
+
+    meta = (sub.get("metadata") if isinstance(sub, dict) else getattr(sub, "metadata", None)) or {}
+    user_id = meta.get("user_id") if isinstance(meta, dict) else None
+    customer_id = sub.get("customer") if isinstance(sub, dict) else getattr(sub, "customer", None)
+
+    if not user_id and customer_id:
+        user = user_store.get_user_by_stripe_customer(str(customer_id))
+        user_id = user["id"] if user else None
+
+    if not user_id:
+        logger.warning("subscription event missing user_id")
+        return
+
+    sub_id = sub.get("id") if isinstance(sub, dict) else getattr(sub, "id", None)
+    status = _status_from_subscription(sub)
+    period_end = _period_end_from_subscription(sub)
+    price_id = None
+    try:
+        items = sub["items"]["data"] if isinstance(sub, dict) else sub["items"]["data"]
+        if items:
+            price = items[0].get("price") if isinstance(items[0], dict) else items[0].price
+            if price:
+                price_id = price.get("id") if isinstance(price, dict) else getattr(price, "id", None)
+    except Exception:
+        pass
+
+    user_store.upsert_subscription(
+        str(user_id),
+        plan="pro",
+        status=status,
+        stripe_subscription_id=str(sub_id) if sub_id else None,
+        stripe_price_id=price_id,
+        current_period_end=int(period_end) if period_end else None,
+    )
+
+
+def handle_stripe_event(event: stripe.Event) -> None:
+    event_id = event["id"]
+    event_type = event["type"]
+
+    if not user_store.try_record_event(event_id, event_type):
+        logger.info("Skip duplicate Stripe event %s", event_id)
+        return
+
+    data_object = event["data"]["object"]
+
+    if event_type == "checkout.session.completed":
+        if data_object.get("mode") == "subscription" or data_object.get("subscription"):
+            _activate_from_checkout(data_object)
+        return
+
+    if event_type in (
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+        "customer.subscription.created",
+    ):
+        if event_type == "customer.subscription.deleted":
+            # 强制标为 canceled
+            if isinstance(data_object, dict):
+                data_object = {**data_object, "status": "canceled"}
+        _sync_subscription(data_object)
+        return
+
+    if event_type == "invoice.paid":
+        sub_id = data_object.get("subscription")
+        if sub_id:
+            sub = stripe.Subscription.retrieve(str(sub_id))
+            _sync_subscription(sub)
+        return
+
+    if event_type == "invoice.payment_failed":
+        sub_id = data_object.get("subscription")
+        if sub_id:
+            sub = stripe.Subscription.retrieve(str(sub_id))
+            # 标记 past_due
+            if not isinstance(sub, dict):
+                # StripeObject 可当 dict 用
+                pass
+            _sync_subscription(sub)
+            user_id = None
+            meta = getattr(sub, "metadata", None) or {}
+            if isinstance(meta, dict):
+                user_id = meta.get("user_id")
+            customer_id = getattr(sub, "customer", None)
+            if not user_id and customer_id:
+                user = user_store.get_user_by_stripe_customer(str(customer_id))
+                user_id = user["id"] if user else None
+            if user_id:
+                user_store.upsert_subscription(
+                    str(user_id),
+                    status="past_due",
+                    stripe_subscription_id=str(sub_id),
+                )
+        return
+
+    logger.info("Unhandled Stripe event type: %s", event_type)

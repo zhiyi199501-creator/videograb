@@ -213,11 +213,19 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 
 前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。下载页与总结同屏左右布局（40%/60%），解析后自动触发总结；首页紧凑首屏，连按三次 Enter 切换演示模式。
 
-### 7.3 DB 迁移路径
+### 7.3 用户 / 会员 / Stripe（已实现）
 
-- 当前：内存 Job + 文件系统
-- Phase 3：SQLite 存储 users、subscriptions、download_logs
+详见 [membership.md](membership.md)、[stripe-setup.md](stripe-setup.md)。
+
+- SQLite：`users` / `subscriptions` / `stripe_events` / `checkout_sessions`
+- JWT 登录；Stripe Checkout 月付 Pro；Webhook 幂等履约
+- AI 总结 / 问答需 Pro（`require_pro_user`）
+- Job 仍为内存；可后续挂 `user_id`
+
+### 7.4 DB 迁移路径（后续）
+
 - Job 表结构可迁移为 `jobs(id, user_id, url, status, ...)`
+- 下载日志 `download_logs`
 
 ## 8. 部署方案
 

@@ -12,7 +12,10 @@ from slowapi.errors import RateLimitExceeded
 # 加载 backend/.env（DeepSeek API Key 等），不覆盖已有环境变量
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
+from db import init_db
 from routers.api import limiter, router
+from routers.auth import router as auth_router
+from routers.billing import router as billing_router
 from routers.summarize import router as summarize_router
 from services.ytdlp import job_store
 
@@ -49,6 +52,8 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(summarize_router)
+app.include_router(auth_router)
+app.include_router(billing_router)
 
 
 @app.get("/health")
@@ -66,4 +71,6 @@ async def cleanup_loop():
 
 @app.on_event("startup")
 async def startup():
+    init_db()
+    logger.info("SQLite ready")
     asyncio.create_task(cleanup_loop())

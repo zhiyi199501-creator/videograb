@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SubtitleSegment, subscribeSummarize } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import {
   SubtitleFormat,
   downloadSubtitles,
@@ -15,7 +17,7 @@ type Tab = "summary" | "subtitle" | "mindmap" | "chat";
 interface SummaryPanelProps {
   jobId: string;
   title?: string | null;
-  /** 挂载后自动开始总结 */
+  /** 挂载后自动开始总结（仅 Pro 生效） */
   autoStart?: boolean;
   className?: string;
 }
@@ -26,7 +28,9 @@ export default function SummaryPanel({
   autoStart = false,
   className = "",
 }: SummaryPanelProps) {
-  const [open, setOpen] = useState(autoStart);
+  const { user, loading: authLoading } = useAuth();
+  const isPro = !!user?.is_pro;
+  const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("summary");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +52,7 @@ export default function SummaryPanel({
   }, []);
 
   const startSummarize = async () => {
-    if (loading) return;
+    if (!isPro || loading) return;
     setOpen(true);
     setError("");
     setStatus("准备中…");
@@ -99,12 +103,11 @@ export default function SummaryPanel({
     }
   };
 
-  // 解析完成后自动触发（job 切换时重新触发）
   useEffect(() => {
-    if (!autoStart) return;
+    if (authLoading || !autoStart || !isPro) return;
     void startSummarize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart 变化自动触发
-  }, [autoStart, jobId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart / isPro 变化自动触发
+  }, [autoStart, jobId, isPro, authLoading]);
 
   const handleDownloadSubtitle = (format: SubtitleFormat) => {
     if (!subtitle.trim() && segments.length === 0) return;
@@ -138,6 +141,56 @@ export default function SummaryPanel({
       : open
         ? "开始总结"
         : "AI 视频总结";
+
+  if (authLoading) {
+    return (
+      <div className={`w-full ${className}`}>
+        <div className="rounded-xl border border-[#eef0f3] bg-white p-4 text-sm text-[#94a3b8]">
+          加载会员状态…
+        </div>
+      </div>
+    );
+  }
+
+  if (!isPro) {
+    return (
+      <div className={`w-full ${className}`}>
+        <div className="rounded-xl border border-[#1677ff]/20 bg-gradient-to-b from-[#1677ff]/5 to-white p-5 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+          <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
+            AI 视频总结 · Pro
+          </h2>
+          <p className="mt-2 text-sm text-[#64748b]">
+            字幕提取、智能摘要、思维导图与问答已纳入 Pro 会员。
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {user ? (
+              <Link
+                href="/pricing"
+                className="rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff]"
+              >
+                升级 Pro
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login?next=/pricing"
+                  className="rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff]"
+                >
+                  登录并升级
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="rounded-full border border-[#1677ff]/30 px-5 py-2 text-sm font-medium text-[#1677ff]"
+                >
+                  查看定价
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`w-full ${className}`}>

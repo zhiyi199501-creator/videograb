@@ -63,14 +63,15 @@
 | F2.3 | 下载历史 | localStorage 存储，无 DB |
 | F2.4 | 深色模式 | 主题切换 |
 
-### Phase 3 — 商业化（后续）
+### Phase 3 — 商业化
 
 | ID | 功能 | 说明 |
 |----|------|------|
-| F3.1 | 用户登录 | JWT + SQLite |
-| F3.2 | 付费套餐 | 次数/清晰度限制，Stripe 或微信支付 |
-| F3.3 | AI 视频总结 | 解析后自动触发；字幕或 ASR + DeepSeek SSE + markmap + 问答；同屏布局；Markdown / 导图导出 / 字幕下载（见 docs/ai-summary.md） |
-| F3.4 | 字幕翻译 | yt-dlp 提取字幕 + 翻译 API |
+| F3.1 | 用户登录 | ✅ JWT + SQLite（邮箱密码） |
+| F3.2 | 付费套餐 | ✅ Stripe Checkout 月付 Pro；Webhook 履约；见 docs/membership.md |
+| F3.3 | AI 视频总结 | ✅ 已实现；**现为 Pro 专属**（非会员引导升级） |
+| F3.4 | 字幕翻译 | yt-dlp 提取字幕 + 翻译 API（未做） |
+| F3.5 | Team 套餐 | 占位，未接入支付 |
 
 ## 4. 非功能需求
 

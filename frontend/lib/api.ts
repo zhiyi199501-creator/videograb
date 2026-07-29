@@ -257,9 +257,16 @@ export function subscribeSummarize(
   onEvent: (ev: SummarizeEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
-  return fetch(`${API_BASE}/api/jobs/${jobId}/summarize`, { signal }).then(
-    (res) => consumeSse(res, onEvent, signal)
-  );
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vg_access_token")
+      : null;
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(`${API_BASE}/api/jobs/${jobId}/summarize`, {
+    signal,
+    headers,
+  }).then((res) => consumeSse(res, onEvent, signal));
 }
 
 export function askAboutVideo(
@@ -268,9 +275,17 @@ export function askAboutVideo(
   onEvent: (ev: SummarizeEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vg_access_token")
+      : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(`${API_BASE}/api/jobs/${jobId}/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ question }),
     signal,
   }).then((res) => consumeSse(res, onEvent, signal));
