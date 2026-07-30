@@ -173,7 +173,7 @@ Mobile: 上下堆叠
 ## 6. 目录结构
 
 ```
-downloadapp/
+videograb/
 ├── docs/                 # requirements / design / ai-summary / membership / stripe-setup
 ├── frontend/             # Next.js（含 Dockerfile）
 │   ├── app/

@@ -33,6 +33,12 @@ Stripe 本地测 Webhook：见 `docs/stripe-setup.md`（`stripe listen --forward
 - 解析 IP 限流：**60/hour**（代码硬编码，非 env）
 - Job TTL 默认 2h；不持久化视频
 
+## 本地坑（易复发）
+
+- 仓库路径搬迁后若 `backend/.venv` 的 shebang 仍指向旧路径 → 删掉重建：`rm -rf backend/.venv && ./dev.sh`
+- 跳转 `/download/[id]` 失败或 Turbopack `Next.js package not found` → `rm -rf frontend/.next` 后重启 `./dev.sh`，浏览器硬刷新
+- 本机若仍是 Python 3.9，yt-dlp 会告警；README/Docker 目标为 3.10+（镜像 3.12）
+
 ## 当前状态 / 下一步
 
 - 已上：下载、AI 总结、登录、Stripe Pro、SEO

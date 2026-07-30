@@ -25,6 +25,7 @@ backend/data/
 
 # Local research / scratch (not product)
 .firecrawl/
+.playwright-cli/
 downloads/
 
 # Logs
