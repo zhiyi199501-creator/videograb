@@ -157,6 +157,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 | `FRONTEND_URL` | http://localhost:3000 | Checkout 回跳域名 |
 | `DATABASE_PATH` | backend/data/app.db | SQLite 路径 |
 | `COOKIES_FILE` | （Docker：`/secrets/cookies.txt`） | B站/抖音风控；运维上传见 `docs/deploy-online-guide.md` §14.2 |
+| `HF_ENDPOINT` | （空=官方 Hub） | 仅国内设 `https://hf-mirror.com`；海外机勿设 |
+| `DEEPSEEK_COMPLETE_TIMEOUT` | 120 | 思维导图非流式最长等待秒数 |
 
 后端本地开发请复制环境变量文件：
 

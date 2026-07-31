@@ -64,7 +64,7 @@
 | type | 事件类型 |
 | processed_at | 处理时间 |
 
-用于 Webhook **幂等**：同一 `event.id` 只处理一次。
+用于 Webhook **幂等**：同一 `event.id` 先占位；履约失败会删除该记录以便 Stripe 重试。处理前将 StripeObject 转为普通 dict（不可对 StripeObject 调 `.get()`）。
 
 ### checkout_sessions（可选履约去重）
 

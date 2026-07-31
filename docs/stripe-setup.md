@@ -140,21 +140,25 @@ stripe trigger checkout.session.completed
 
 ---
 
-## 8. 生产上线检查清单（以后）
+## 8. 生产上线检查清单
+
+当前线上 `videograb.codedance.work` 已接 **Test Mode** Webhook（`/api/billing/webhook`）。正式收款前再完成：
 
 - [ ] 关闭 Test mode，使用 `sk_live_` / 正式 Price  
-- [ ] 在 Dashboard → Developers → Webhooks 添加正式 URL：`https://你的域名/api/billing/webhook`  
+- [ ] Dashboard Webhooks 改为/新增 Live URL：`https://videograb.codedance.work/api/billing/webhook`  
 - [ ] 勾选：`checkout.session.completed`、`customer.subscription.*`、`invoice.paid`、`invoice.payment_failed`  
-- [ ] 使用 Dashboard 提供的正式 `whsec_`（不再依赖 CLI）  
-- [ ] `JWT_SECRET` 使用强随机值；HTTPS 全站强制  
-- [ ] 确认成功/取消 URL 为正式前端域名  
+- [ ] 使用 Dashboard 的 Live `whsec_`（勿把本机 `stripe listen` 的 whsec 当生产）  
+- [ ] `JWT_SECRET` 强随机；HTTPS 全站强制  
+- [ ] 成功/取消 URL 为正式前端域名  
+
+**Q 补充（支付成功仍非 Pro）**：查后端 webhook 日志；履约失败时幂等记录应被删除并可重试。勿对 StripeObject 假设有 `.get()`（代码已 `_as_dict`）。
 
 ---
 
 ## 9. 常见问题
 
 **Q: 支付成功了但还不是 Pro？**  
-A: 多半是 Webhook 没到或验签失败。确认 `stripe listen` 在跑、`STRIPE_WEBHOOK_SECRET` 与 listen 打印一致、后端已重启。
+A: 多半是 Webhook 没到、验签失败，或履约异常后被幂等跳过。生产看 backend webhook 日志；本地确认 `stripe listen` 与 `STRIPE_WEBHOOK_SECRET` 一致。
 
 **Q: 验签失败？**  
 A: 必须用原始请求 body；不要用会改写 body 的中间件先解析 JSON。本项目 webhook 路由已按此实现。
