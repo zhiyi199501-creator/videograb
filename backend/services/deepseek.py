@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from collections.abc import AsyncIterator
@@ -10,6 +11,10 @@ from typing import Optional
 from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
+
+# 非流式 complete 默认可能卡很久；导图阶段若无心跳易被代理掐断 SSE
+_COMPLETE_TIMEOUT = float(os.environ.get("DEEPSEEK_COMPLETE_TIMEOUT", "120"))
+_HTTP_TIMEOUT = float(os.environ.get("DEEPSEEK_HTTP_TIMEOUT", "120"))
 
 def _api_key() -> str:
     return os.environ.get("DEEPSEEK_API_KEY", "").strip()
@@ -59,7 +64,11 @@ def _require_client() -> AsyncOpenAI:
         raise DeepSeekError(
             "未配置 DEEPSEEK_API_KEY。请在 backend/.env 中设置后重启服务。"
         )
-    return AsyncOpenAI(api_key=key, base_url=_base_url())
+    return AsyncOpenAI(
+        api_key=key,
+        base_url=_base_url(),
+        timeout=_HTTP_TIMEOUT,
+    )
 
 
 async def stream_chat(
@@ -101,13 +110,20 @@ async def complete_chat(
 ) -> str:
     client = _require_client()
     try:
-        resp = await client.chat.completions.create(
-            model=_model(),
-            messages=messages,
-            stream=False,
-            temperature=temperature,
+        resp = await asyncio.wait_for(
+            client.chat.completions.create(
+                model=_model(),
+                messages=messages,
+                stream=False,
+                temperature=temperature,
+            ),
+            timeout=_COMPLETE_TIMEOUT,
         )
         return (resp.choices[0].message.content or "").strip()
+    except asyncio.TimeoutError as e:
+        raise DeepSeekError(
+            f"DeepSeek 响应超时（>{int(_COMPLETE_TIMEOUT)}s），请稍后重试"
+        ) from e
     except DeepSeekError:
         raise
     except Exception as e:

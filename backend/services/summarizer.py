@@ -124,6 +124,38 @@ async def _ensure_subtitles_with_heartbeat(
     yield {"event": "_result", "data": result}
 
 
+async def _await_with_heartbeat(
+    coro,
+    *,
+    status_prefix: str,
+) -> AsyncIterator[dict]:
+    """在长耗时 await 期间推送 status/ping，避免 SSE 空闲被代理掐断。"""
+    task = asyncio.ensure_future(coro)
+    started = time.time()
+    try:
+        while True:
+            done, _ = await asyncio.wait({task}, timeout=2.0)
+            if done:
+                break
+            elapsed = int(time.time() - started)
+            yield {
+                "event": "status",
+                "data": {
+                    "message": f"{status_prefix}（已等待 {elapsed}s，请勿关闭页面）"
+                },
+            }
+            yield {"event": "ping", "data": {"t": time.time()}}
+        yield {"event": "_result", "data": task.result()}
+    except Exception:
+        if not task.done():
+            task.cancel()
+            try:
+                await task
+            except Exception:
+                pass
+        raise
+
+
 async def summarize_events(job_id: str) -> AsyncIterator[dict]:
     job = job_store.get(job_id)
     if not job:
@@ -172,9 +204,16 @@ async def summarize_events(job_id: str) -> AsyncIterator[dict]:
         job_store.update(job_id, summary=summary)
 
         yield {"event": "status", "data": {"message": "正在生成思维导图…"}}
-        mindmap = await deepseek.generate_mindmap(
-            summary or subs["text"][:3000], title=title
-        )
+        mindmap = ""
+        async for item in _await_with_heartbeat(
+            deepseek.generate_mindmap(summary or subs["text"][:3000], title=title),
+            status_prefix="正在生成思维导图",
+        ):
+            if item["event"] == "_result":
+                mindmap = item["data"] or ""
+            else:
+                yield item
+
         job_store.update(job_id, mindmap=mindmap)
         yield {"event": "mindmap", "data": {"markdown": mindmap}}
 
