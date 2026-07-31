@@ -207,7 +207,7 @@ videograb/
 
 Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summary`、`mindmap`。
 
-字幕优先平台轨；无字幕时 `faster-whisper` ASR。环境变量：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`WHISPER_MODEL`、`HF_ENDPOINT`。
+字幕优先平台轨；无字幕时 `faster-whisper` ASR（Compose 卷 `hf-cache` 持久化权重）。环境变量：`DEEPSEEK_API_KEY`、`DEEPSEEK_MODEL`、`WHISPER_MODEL`；海外默认官方 Hub，`HF_ENDPOINT` 仅国内镜像时设置。
 
 前端扩展：`marked` + `@tailwindcss/typography` 渲染摘要；思维导图全屏与完整 PNG/SVG 导出；字幕下载 SRT/VTT/TXT。SSE 文本字段附 Base64 防字符丢失。下载页与总结同屏左右布局（40%/60%）；首页紧凑首屏，连按三次 Enter 切换演示模式。
 
@@ -239,7 +239,8 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 | DEEPSEEK_API_KEY | （空） | AI 总结必填 |
 | DEEPSEEK_MODEL | deepseek-v4-flash | DeepSeek 模型 |
 | WHISPER_MODEL | tiny | 无字幕 ASR 模型 |
-| HF_ENDPOINT | https://hf-mirror.com | Whisper 权重镜像 |
+| HF_ENDPOINT | （空=官方 Hub） | 仅国内可设 `https://hf-mirror.com`；海外机勿设 |
+| COOKIES_FILE | （Docker：`/secrets/cookies.txt`） | B站/抖音；见 `scripts/upload-cookies.sh` |
 | BACKEND_URL | http://backend:8000（Docker）/ http://127.0.0.1:8000（本地 Next 默认） | Next rewrites 代理目标；**构建时写入** |
 | NEXT_PUBLIC_API_URL | （空） | 留空走同源 `/api`；勿在生产 Docker 写 localhost |
 | NEXT_PUBLIC_SITE_URL | 占位域名 | SEO；生产用 `docker-compose.prod.yml` 覆盖 |
