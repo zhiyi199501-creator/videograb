@@ -267,6 +267,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 - 正式站点示例：`https://videograb.codedance.work`
 - 保姆级步骤：`docs/deploy-online-guide.md`
 - 密钥只放 `backend/.env`；换域名改 `docker-compose.prod.yml` + `.env` 后重建前端
+- 合入 `main`：PR + CI（`frontend` / `backend` / `docker`）；本地与门禁命令见根 README「测试与 CI」。合入 ≠ 已部署，服务器用 `./scripts/redeploy.sh --pull`
 
 ## 9. yt-dlp 封装要点
 

@@ -9,4 +9,6 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
 
+检查：`npm run lint && npm run typecheck && npm test`（完整 CI 说明见根 README「测试与 CI」）。
+
 开发预览 AI 总结 UI：`/dev/summary-preview`。
