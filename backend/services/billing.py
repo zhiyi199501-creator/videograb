@@ -19,12 +19,25 @@ STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PRICE_PRO = os.environ.get("STRIPE_PRICE_PRO", "")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
 
+_PLACEHOLDER_VALUES = {
+    "",
+    "sk_test_xxx",
+    "whsec_xxx",
+    "price_xxx",
+    "sk_live_xxx",
+}
+
+
+def _is_placeholder(value: str) -> bool:
+    v = (value or "").strip()
+    return v in _PLACEHOLDER_VALUES or v.endswith("_xxx")
+
 
 def _stripe() -> None:
-    if not STRIPE_SECRET_KEY:
+    if _is_placeholder(STRIPE_SECRET_KEY):
         raise HTTPException(
             status_code=503,
-            detail="未配置 STRIPE_SECRET_KEY，无法发起支付",
+            detail="未配置有效的 STRIPE_SECRET_KEY（生产仍是示例占位符），无法发起支付",
         )
     stripe.api_key = STRIPE_SECRET_KEY
 
@@ -45,29 +58,45 @@ def _ensure_customer(user: dict[str, Any]) -> str:
 
 def create_checkout_session(user: dict[str, Any]) -> str:
     _stripe()
-    if not STRIPE_PRICE_PRO:
+    if _is_placeholder(STRIPE_PRICE_PRO):
         raise HTTPException(
             status_code=503,
-            detail="未配置 STRIPE_PRICE_PRO，请先在 Stripe 创建 Pro 价格",
+            detail="未配置有效的 STRIPE_PRICE_PRO（仍是示例占位符），请先在 Stripe 创建 Pro 价格",
         )
     if user_store.is_pro_user(user["id"]):
         raise HTTPException(status_code=400, detail="你已是 Pro 会员")
 
-    customer_id = _ensure_customer(user)
-    idem_key = f"checkout:{user['id']}:pro:{date.today().isoformat()}"
+    try:
+        customer_id = _ensure_customer(user)
+        idem_key = f"checkout:{user['id']}:pro:{date.today().isoformat()}"
 
-    session = stripe.checkout.Session.create(
-        mode="subscription",
-        customer=customer_id,
-        client_reference_id=user["id"],
-        line_items=[{"price": STRIPE_PRICE_PRO, "quantity": 1}],
-        success_url=f"{FRONTEND_URL}/pricing/success?session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{FRONTEND_URL}/pricing/cancel",
-        metadata={"user_id": user["id"], "plan": "pro"},
-        subscription_data={"metadata": {"user_id": user["id"], "plan": "pro"}},
-        allow_promotion_codes=True,
-        idempotency_key=idem_key,
-    )
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            customer=customer_id,
+            client_reference_id=user["id"],
+            line_items=[{"price": STRIPE_PRICE_PRO, "quantity": 1}],
+            success_url=f"{FRONTEND_URL}/pricing/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{FRONTEND_URL}/pricing/cancel",
+            metadata={"user_id": user["id"], "plan": "pro"},
+            subscription_data={"metadata": {"user_id": user["id"], "plan": "pro"}},
+            allow_promotion_codes=True,
+            idempotency_key=idem_key,
+        )
+    except HTTPException:
+        raise
+    except stripe.AuthenticationError as exc:
+        logger.exception("Stripe auth failed during checkout")
+        raise HTTPException(
+            status_code=503,
+            detail="Stripe API Key 无效，请检查生产环境 STRIPE_SECRET_KEY",
+        ) from exc
+    except stripe.StripeError as exc:
+        logger.exception("Stripe checkout failed")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Stripe 创建支付失败: {exc.user_message or str(exc)}",
+        ) from exc
+
     if not session.url:
         raise HTTPException(status_code=500, detail="创建支付会话失败")
     return session.url
@@ -89,8 +118,11 @@ def create_portal_session(user: dict[str, Any]) -> str:
 
 def construct_event(payload: bytes, sig_header: Optional[str]) -> stripe.Event:
     _stripe()
-    if not STRIPE_WEBHOOK_SECRET:
-        raise HTTPException(status_code=503, detail="未配置 STRIPE_WEBHOOK_SECRET")
+    if _is_placeholder(STRIPE_WEBHOOK_SECRET):
+        raise HTTPException(
+            status_code=503,
+            detail="未配置有效的 STRIPE_WEBHOOK_SECRET（仍是示例占位符）",
+        )
     if not sig_header:
         raise HTTPException(status_code=400, detail="缺少 Stripe-Signature")
     try:
