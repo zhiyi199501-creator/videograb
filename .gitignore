@@ -18,6 +18,11 @@ video-temp/
 .env.local
 backend/.env
 
+# yt-dlp cookies（运维上传；等同登录凭证，勿提交）
+secrets/cookies.txt
+cookies.txt
+**/cookies.txt
+
 # SQLite
 backend/data/
 

@@ -9,10 +9,7 @@ services:
     environment:
       - FRONTEND_URL=https://videograb.codedance.work
       - CORS_ORIGINS=https://videograb.codedance.work,https://www.videograb.codedance.work,http://frontend:3000
-      # 若使用 cookies 文件，取消下一行注释，并确保已挂载 ./cookies.txt
-      # - COOKIES_FILE=/cookies/cookies.txt
-    # volumes:
-    #   - ./cookies.txt:/cookies/cookies.txt:ro
+      # COOKIES_FILE 与 secrets 挂载见 docker-compose.yml；上传见 scripts/upload-cookies.sh
 
   frontend:
     build:

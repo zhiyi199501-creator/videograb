@@ -31,7 +31,8 @@ videograb/
 ├── AGENTS.md                 # Agent 指引（怎么跑 / 现役产品事实）
 ├── dev.sh                    # 本地一键启动前后端
 ├── docs/                     # 需求 / 设计 / 会员 / 上线教程等（扩展前必读）
-├── scripts/                  # 服务器初始化 / 重建 / 重载 HTTPS 脚本
+├── scripts/                  # 服务器初始化 / 重建 / Cookie 上传 / HTTPS
+├── secrets/                  # 运维 Cookie 等（cookies.txt 勿提交）
 ├── frontend/                 # Next.js 前端
 ├── backend/                  # FastAPI 后端
 ├── docker-compose.yml        # Docker 通用默认
@@ -155,6 +156,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 | `STRIPE_PRICE_PRO` | （空） | Pro 月付 Price ID |
 | `FRONTEND_URL` | http://localhost:3000 | Checkout 回跳域名 |
 | `DATABASE_PATH` | backend/data/app.db | SQLite 路径 |
+| `COOKIES_FILE` | （Docker：`/secrets/cookies.txt`） | B站/抖音风控；运维上传见 `docs/deploy-online-guide.md` §14.2 |
 
 后端本地开发请复制环境变量文件：
 
