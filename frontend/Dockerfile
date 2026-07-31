@@ -6,11 +6,16 @@ COPY package*.json ./
 RUN npm config set registry https://registry.npmmirror.com && npm install --no-audit --no-fund
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+# 默认留空：浏览器走同源 /api。需要直连后端时再在 compose 里传入。
+ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 ARG NEXT_PUBLIC_SITE_URL=https://videograb.lianxi.com
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
+# Next.js rewrites 在 build 时读取 BACKEND_URL；Docker Compose 内应为 http://backend:8000
+ARG BACKEND_URL=http://backend:8000
+ENV BACKEND_URL=$BACKEND_URL
 
 RUN npm run build
 

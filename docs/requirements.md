@@ -97,7 +97,7 @@
 2. 手机 Safari：B站 URL → 完成下载保存
 3. UI：导航/Hero/URL 输入/平台卡片/Pro 卡片/下载页/定价页/Footer 完整，风格一致
 4. 文档：requirements.md、design.md 完整可读
-5. 部署：`docker compose up` 一键启动
+5. 部署：`docker compose up` 可本地一键启动；生产见 `docs/deploy-online-guide.md`（`docker-compose.yml` + `docker-compose.prod.yml` + Caddy HTTPS）
 
 ## 7. 术语表
 

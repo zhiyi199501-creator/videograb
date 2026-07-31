@@ -76,11 +76,21 @@ NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 
 ## Docker 一键启动
 
+本地 / 通用默认：
+
 ```bash
 docker compose up --build
 # 前端: http://localhost:3000
 # 后端: http://localhost:8000
 ```
+
+生产（叠加域名等覆盖，见 `docker-compose.prod.yml`）：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+更完整的海外上线步骤见 [docs/deploy-online-guide.md](docs/deploy-online-guide.md)。
 
 ## 环境变量
 
@@ -90,8 +100,9 @@ docker compose up --build
 | `JOB_TTL_HOURS` | 2 | Job 过期时间 |
 | `TEMP_DIR` | /tmp/videos | 临时文件目录 |
 | `CORS_ORIGINS` | http://localhost:3000 | 允许的前端域名 |
-| `NEXT_PUBLIC_API_URL` | http://localhost:8000 | 前端调用的后端地址 |
-| `NEXT_PUBLIC_SITE_URL` | https://videograb.lianxi.com | 正式站点域名（SEO canonical / sitemap / OG） |
+| `NEXT_PUBLIC_API_URL` | （空，同源 `/api`） | 前端 API 基址；Docker 生产建议留空，由 Next rewrites 代理 |
+| `NEXT_PUBLIC_SITE_URL` | https://videograb.lianxi.com | 站点域名（SEO canonical / sitemap / OG）；生产用 `docker-compose.prod.yml` 覆盖 |
+| `BACKEND_URL` | http://backend:8000 | Next 服务端代理目标（构建时写入）；勿写成容器内的 127.0.0.1 |
 | `DEEPSEEK_API_KEY` | （空） | AI 总结必填，见 `backend/.env.example` |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | DeepSeek 模型 ID |
 | `WHISPER_MODEL` | tiny | 无字幕时 ASR 模型 |
@@ -135,8 +146,10 @@ cp backend/.env.example backend/.env
 ## 生产部署
 
 - 云 VPS（2C4G+）+ Docker Compose
-- Caddy / Nginx 反向代理 + HTTPS，支持大文件 Range 请求
-- 按需配置限流与 TTL 环境变量
+- 使用 `docker-compose.yml` + `docker-compose.prod.yml`（域名 / CORS / FRONTEND_URL）
+- Caddy / Nginx 反向代理 + HTTPS，支持大文件 Range 请求与 SSE
+- 按需配置限流与 TTL；密钥只放 `backend/.env`，勿提交 Git
+- 详细步骤：[docs/deploy-online-guide.md](docs/deploy-online-guide.md)
 
 ## 免责声明
 

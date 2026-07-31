@@ -29,12 +29,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8000
+        # 留空：浏览器走同源 /api，由 Next rewrites 代理到后端（避免 localhost 混用）
+        - NEXT_PUBLIC_API_URL=
         - NEXT_PUBLIC_SITE_URL=https://videograb.lianxi.com
+        # 构建时写入 rewrites 目标；Compose 网络内服务名是 backend
+        - BACKEND_URL=http://backend:8000
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=
       - NEXT_PUBLIC_SITE_URL=https://videograb.lianxi.com
       - BACKEND_URL=http://backend:8000
     depends_on:

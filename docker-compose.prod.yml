@@ -1,0 +1,26 @@
+# 生产覆盖配置（不要把密钥写进本文件）
+# 用法（服务器）：
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# 换域名时只改本文件 + backend/.env 的 FRONTEND_URL，然后重建。
+
+services:
+  backend:
+    environment:
+      - FRONTEND_URL=https://videograb.codedance.work
+      - CORS_ORIGINS=https://videograb.codedance.work,https://www.videograb.codedance.work,http://frontend:3000
+      # 若使用 cookies 文件，取消下一行注释，并确保已挂载 ./cookies.txt
+      # - COOKIES_FILE=/cookies/cookies.txt
+    # volumes:
+    #   - ./cookies.txt:/cookies/cookies.txt:ro
+
+  frontend:
+    build:
+      args:
+        - NEXT_PUBLIC_API_URL=
+        - NEXT_PUBLIC_SITE_URL=https://videograb.codedance.work
+        - BACKEND_URL=http://backend:8000
+    environment:
+      - NEXT_PUBLIC_API_URL=
+      - NEXT_PUBLIC_SITE_URL=https://videograb.codedance.work
+      - BACKEND_URL=http://backend:8000

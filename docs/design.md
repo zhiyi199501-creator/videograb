@@ -235,13 +235,18 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 | JOB_TTL_HOURS | 2 | Job 过期时间 |
 | （硬编码） | 60/hour | `POST /api/extract` IP 限流；总结/问答另有 20/30/hour |
 | TEMP_DIR | /tmp/videos | 临时文件目录 |
-| CORS_ORIGINS | http://localhost:3000 | 前端域名 |
+| CORS_ORIGINS | http://localhost:3000 | 前端域名；生产由 `docker-compose.prod.yml` 覆盖 |
 | DEEPSEEK_API_KEY | （空） | AI 总结必填 |
 | DEEPSEEK_MODEL | deepseek-v4-flash | DeepSeek 模型 |
 | WHISPER_MODEL | tiny | 无字幕 ASR 模型 |
 | HF_ENDPOINT | https://hf-mirror.com | Whisper 权重镜像 |
+| BACKEND_URL | http://backend:8000（Docker）/ http://127.0.0.1:8000（本地 Next 默认） | Next rewrites 代理目标；**构建时写入** |
+| NEXT_PUBLIC_API_URL | （空） | 留空走同源 `/api`；勿在生产 Docker 写 localhost |
+| NEXT_PUBLIC_SITE_URL | 占位域名 | SEO；生产用 `docker-compose.prod.yml` 覆盖 |
 
 ### Docker Compose
+
+本地 / 通用：
 
 ```bash
 docker compose up --build
@@ -249,11 +254,19 @@ docker compose up --build
 # backend:  http://localhost:8000
 ```
 
+生产（域名覆盖）：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
 ### 生产部署
 
-- 云 VPS 2C4G+
-- Caddy/Nginx 反向代理 + HTTPS
-- 环境变量配置限流与 TTL
+- 云 VPS 2C4G+（海外节点免 ICP；本项目示例：新加坡）
+- Caddy/Nginx 反向代理 + HTTPS（SSE 需关缓冲、拉长超时）
+- 正式站点示例：`https://videograb.codedance.work`
+- 保姆级步骤：`docs/deploy-online-guide.md`
+- 密钥只放 `backend/.env`；换域名改 `docker-compose.prod.yml` + `.env` 后重建前端
 
 ## 9. yt-dlp 封装要点
 
