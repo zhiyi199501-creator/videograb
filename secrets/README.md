@@ -16,6 +16,7 @@ chmod 600 ./secrets/cookies.txt
 4. 重启 backend 容器（或跑 `./scripts/upload-cookies.sh`）。
 
 Docker 会把本目录只读挂到容器 `/secrets`，并设置 `COOKIES_FILE=/secrets/cookies.txt`。  
+yt-dlp 需要回写 Cookie 时，后端会自动复制到可写临时目录，不会改本文件。  
 文件不存在时下载仍可用，只是 B站/抖音更容易被风控。
 
 详见 `docs/deploy-online-guide.md`「B站 / 抖音 Cookie 运维」。

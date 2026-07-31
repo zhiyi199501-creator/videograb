@@ -533,12 +533,12 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 ## 14.2 B站 / 抖音 Cookie 运维
 
-生产容器**没有**本机 Chrome，不要设 `COOKIES_FROM_BROWSER`。正确做法：运维导出 Netscape `cookies.txt`，放到服务器 `secrets/cookies.txt`（只读挂载进容器 `/secrets/cookies.txt`）。
+生产容器**没有**本机 Chrome，不要设 `COOKIES_FROM_BROWSER`。正确做法：运维导出 Netscape `cookies.txt`，放到服务器 `secrets/cookies.txt`（只读挂载进容器 `/secrets/cookies.txt`；yt-dlp 回写时后端会自动复制到可写临时文件）。
 
 Compose 已默认：
 
 - 环境变量 `COOKIES_FILE=/secrets/cookies.txt`
-- 卷 `./secrets:/secrets:ro`
+- 卷 `./secrets:/secrets:ro`（保持只读；勿改成让进程直接改 secrets）
 
 文件不存在时下载仍可用，只是 B站/抖音更容易 412。
 

@@ -48,15 +48,39 @@ def _is_youtube(url: str) -> bool:
 _cookie_opts_logged = False
 
 
+def _writable_cookiefile(src: str) -> str:
+    """yt-dlp 会回写 cookiefile；secrets 只读挂载时复制到 TEMP_DIR 可写副本。"""
+    if os.access(src, os.W_OK):
+        return src
+    dest_dir = Path(TEMP_DIR) / "cookies"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / "cookies.txt"
+    src_mtime = os.path.getmtime(src)
+    if not dest.is_file() or os.path.getmtime(dest) < src_mtime:
+        shutil.copy2(src, dest)
+        # 确保副本可写（copy2 可能保留只读 mode）
+        os.chmod(dest, 0o600)
+    return str(dest)
+
+
 def _cookie_opts() -> dict:
     global _cookie_opts_logged
     cookies_file = os.environ.get("COOKIES_FILE", "").strip()
     cookies_from_browser = os.environ.get("COOKIES_FROM_BROWSER", "").strip()
     if cookies_file and os.path.exists(cookies_file) and os.path.isfile(cookies_file):
+        try:
+            cookiefile = _writable_cookiefile(cookies_file)
+        except OSError as exc:
+            logger.warning("failed to prepare cookiefile from %s: %s", cookies_file, exc)
+            return {}
         if not _cookie_opts_logged:
-            logger.info("yt-dlp cookiefile enabled: %s", cookies_file)
+            logger.info(
+                "yt-dlp cookiefile enabled: %s (runtime %s)",
+                cookies_file,
+                cookiefile,
+            )
             _cookie_opts_logged = True
-        return {"cookiefile": cookies_file}
+        return {"cookiefile": cookiefile}
     if cookies_from_browser:
         # 支持 "chrome" 或 "chrome:Profile 1"
         if not _cookie_opts_logged:

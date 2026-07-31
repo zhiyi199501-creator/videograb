@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from services.ytdlp import (
     JobStore,
@@ -6,6 +7,7 @@ from services.ytdlp import (
     _friendly_error,
     _normalize_url,
     _sanitize_filename,
+    _writable_cookiefile,
 )
 
 
@@ -38,6 +40,34 @@ def test_friendly_error_maps_known_cases():
     assert "风控" in _friendly_error("HTTP Error 412: Precondition Failed")
     assert "不可用" in _friendly_error("Video unavailable")
     assert "私有" in _friendly_error("This video is private")
+
+
+def test_writable_cookiefile_copies_readonly_source(tmp_path, monkeypatch):
+    temp_dir = tmp_path / "videos"
+    temp_dir.mkdir()
+    monkeypatch.setenv("TEMP_DIR", str(temp_dir))
+    monkeypatch.setattr("services.ytdlp.TEMP_DIR", str(temp_dir))
+
+    src = tmp_path / "secrets-cookies.txt"
+    src.write_text("# Netscape HTTP Cookie File\n.bilibili.com\tTRUE\t/\tFALSE\t0\tSESSDATA\tx\n")
+    src.chmod(0o444)
+
+    dest = Path(_writable_cookiefile(str(src)))
+    assert dest != src
+    assert dest.is_file()
+    assert dest.read_text() == src.read_text()
+    assert dest.stat().st_mode & 0o200  # writable
+
+
+def test_writable_cookiefile_reuses_writable_source(tmp_path, monkeypatch):
+    temp_dir = tmp_path / "videos"
+    temp_dir.mkdir()
+    monkeypatch.setattr("services.ytdlp.TEMP_DIR", str(temp_dir))
+
+    src = tmp_path / "cookies.txt"
+    src.write_text("# Netscape\n")
+    src.chmod(0o600)
+    assert _writable_cookiefile(str(src)) == str(src)
 
 
 def test_job_store_ttl_cleanup():
