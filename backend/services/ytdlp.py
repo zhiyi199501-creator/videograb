@@ -141,11 +141,19 @@ def _base_opts(url: str = "") -> dict:
 
 def _friendly_error(err: str) -> str:
     """把 yt-dlp 原始报错转成对用户友好的中文提示。"""
+    # 去掉终端 ANSI 颜色码，避免前端直接展示 \x1b[0;31m
+    err = re.sub(r"\x1b\[[0-9;]*m", "", err or "")
     low = err.lower()
     if "download exceeded" in low and "budget" in low:
         return (
             "下载超时：视频源速度过慢或被限速，已自动中止。"
             "请稍后重试、更换网络环境，或选择更低的清晰度。"
+        )
+    if "fresh cookies" in low or ("douyin" in low and "cookie" in low):
+        return (
+            "抖音需要较新的浏览器 Cookie（不一定要登录）。"
+            "请在本机 Chrome 打开 douyin.com 后重试；或导出含 douyin.com 的 "
+            "Netscape cookies.txt，配置 COOKIES_FILE / COOKIES_FROM_BROWSER。"
         )
     if "412" in err or "precondition failed" in low:
         return (
@@ -303,6 +311,38 @@ def _download_thumbnail_file(job_id: str, thumb_url: str, page_url: str) -> Opti
 
 def _sanitize_filename(name: str) -> str:
     return re.sub(r'[<>:"/\\|?*]', "_", name)[:200]
+
+
+_MEDIA_EXTS = {
+    ".mp4",
+    ".mkv",
+    ".webm",
+    ".m4a",
+    ".mp3",
+    ".opus",
+    ".ogg",
+    ".flac",
+    ".wav",
+    ".mov",
+    ".flv",
+}
+
+
+def _pick_downloaded_file(out_dir: Path) -> Path:
+    """在任务目录里选真正的下载成品，避开解析阶段写入的 thumb.* 封面。"""
+    files = [
+        f
+        for f in out_dir.iterdir()
+        if f.is_file()
+        and not f.name.endswith(".part")
+        and not f.name.startswith("thumb.")
+    ]
+    if not files:
+        raise RuntimeError("Download completed but no file found")
+
+    media = [f for f in files if f.suffix.lower() in _MEDIA_EXTS]
+    pool = media or files
+    return max(pool, key=lambda f: f.stat().st_size)
 
 
 def _is_skipped_format(fmt: dict) -> bool:
@@ -729,11 +769,7 @@ async def download_video(job_id: str, format_id: Optional[str] = None) -> None:
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.download([url])
 
-        files = list(out_dir.glob("*"))
-        files = [f for f in files if f.is_file() and not f.name.endswith(".part")]
-        if not files:
-            raise RuntimeError("Download completed but no file found")
-        return str(files[0])
+        return str(_pick_downloaded_file(out_dir))
 
     def _download_with_fallback() -> str:
         try:

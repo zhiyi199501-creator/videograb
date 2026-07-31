@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 from services.ytdlp import (
     JobStore,
     _ensure_url_scheme,
     _friendly_error,
     _normalize_url,
+    _pick_downloaded_file,
     _sanitize_filename,
     _writable_cookiefile,
 )
@@ -36,10 +39,36 @@ def test_sanitize_filename():
     assert len(_sanitize_filename("x" * 300)) == 200
 
 
+def test_pick_downloaded_file_skips_thumbnail(tmp_path):
+    (tmp_path / "thumb.jpg").write_bytes(b"x" * 1000)
+    video = tmp_path / "demo title.mp4"
+    video.write_bytes(b"y" * 50_000)
+    assert _pick_downloaded_file(tmp_path) == video
+
+
+def test_pick_downloaded_file_prefers_largest_media(tmp_path):
+    (tmp_path / "thumb.webp").write_bytes(b"t" * 8000)
+    small = tmp_path / "a.m4a"
+    small.write_bytes(b"a" * 1000)
+    big = tmp_path / "b.mp4"
+    big.write_bytes(b"b" * 9000)
+    assert _pick_downloaded_file(tmp_path) == big
+
+
+def test_pick_downloaded_file_empty_raises(tmp_path):
+    (tmp_path / "thumb.jpg").write_bytes(b"x" * 100)
+    with pytest.raises(RuntimeError, match="no file found"):
+        _pick_downloaded_file(tmp_path)
+
+
 def test_friendly_error_maps_known_cases():
     assert "风控" in _friendly_error("HTTP Error 412: Precondition Failed")
     assert "不可用" in _friendly_error("Video unavailable")
     assert "私有" in _friendly_error("This video is private")
+    assert "抖音" in _friendly_error(
+        "\x1b[0;31mERROR:\x1b[0m [Douyin] 123: Fresh cookies (not necessarily logged in) are needed"
+    )
+    assert "\x1b" not in _friendly_error("\x1b[0;31mboom\x1b[0m unavailable")
 
 
 def test_writable_cookiefile_copies_readonly_source(tmp_path, monkeypatch):
