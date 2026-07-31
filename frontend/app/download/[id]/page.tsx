@@ -17,6 +17,7 @@ import {
   startDownload,
   subscribeJobEvents,
 } from "@/lib/api";
+import { mergeJobProgress } from "@/lib/jobProgress";
 
 type Phase = "extracting" | "ready" | "downloading" | "complete" | "failed";
 
@@ -54,6 +55,9 @@ export default function DownloadPage() {
   const [autoSaved, setAutoSaved] = useState(false);
   const selectedFormatRef = useRef("");
   const autoSavedRef = useRef(false);
+  const unsubRef = useRef<(() => void) | undefined>(undefined);
+  const cancelledRef = useRef(false);
+  const downloadStartedRef = useRef(false);
 
   useEffect(() => {
     selectedFormatRef.current = selectedFormat;
@@ -62,6 +66,7 @@ export default function DownloadPage() {
   useEffect(() => {
     autoSavedRef.current = false;
     setAutoSaved(false);
+    downloadStartedRef.current = false;
   }, [jobId]);
 
   useEffect(() => {
@@ -82,14 +87,26 @@ export default function DownloadPage() {
   }, [phase, jobId, job?.filename]);
 
   useEffect(() => {
-    let cancelled = false;
-    let unsub: (() => void) | undefined;
+    cancelledRef.current = false;
     let interval: ReturnType<typeof setInterval> | undefined;
 
     const applyJob = (current: JobResponse) => {
-      if (cancelled) return;
+      if (cancelledRef.current) return;
+      // 已点「开始下载」后，轮询可能仍短暂返回 ready/progress=1，勿把进度和阶段打回去
+      if (downloadStartedRef.current && current.status === "ready") {
+        setJob(current);
+        return;
+      }
+      if (
+        current.status === "complete" ||
+        current.status === "failed"
+      ) {
+        downloadStartedRef.current = false;
+      }
       setJob(current);
-      setProgress((prev) => Math.max(prev, current.progress));
+      setProgress((prev) =>
+        mergeJobProgress(prev, current.progress, current.status)
+      );
       const next = statusToPhase(current.status);
       if (next) setPhase(next);
       if (current.status === "failed") {
@@ -111,10 +128,12 @@ export default function DownloadPage() {
     };
 
     const startWatching = () => {
-      unsub?.();
-      unsub = subscribeJobEvents(jobId, (data) => {
-        if (cancelled) return;
-        setProgress((prev) => Math.max(prev, data.progress));
+      unsubRef.current?.();
+      unsubRef.current = subscribeJobEvents(jobId, (data) => {
+        if (cancelledRef.current) return;
+        setProgress((prev) =>
+          mergeJobProgress(prev, data.progress, data.status)
+        );
         const next = statusToPhase(data.status);
         if (next) setPhase(next);
         if (data.status === "ready" || data.status === "complete") {
@@ -145,8 +164,8 @@ export default function DownloadPage() {
               latest.status === "failed"
             ) {
               if (latest.status !== "ready") {
-                unsub?.();
-                unsub = undefined;
+                unsubRef.current?.();
+                unsubRef.current = undefined;
               }
             }
           } catch {
@@ -154,7 +173,7 @@ export default function DownloadPage() {
           }
         }, 400);
       } catch (err) {
-        if (cancelled) return;
+        if (cancelledRef.current) return;
         setPhase("failed");
         setError(err instanceof Error ? err.message : "加载失败");
       }
@@ -162,13 +181,15 @@ export default function DownloadPage() {
 
     init();
     return () => {
-      cancelled = true;
-      unsub?.();
+      cancelledRef.current = true;
+      unsubRef.current?.();
+      unsubRef.current = undefined;
       if (interval) clearInterval(interval);
     };
   }, [jobId]);
 
   const handleDownload = async () => {
+    downloadStartedRef.current = true;
     setDownloading(true);
     setError("");
     setPhase("downloading");
@@ -176,15 +197,43 @@ export default function DownloadPage() {
 
     try {
       await startDownload(jobId, selectedFormat);
+      unsubRef.current?.();
+      unsubRef.current = subscribeJobEvents(jobId, (data) => {
+        if (cancelledRef.current) return;
+        setProgress((prev) =>
+          mergeJobProgress(prev, data.progress, data.status)
+        );
+        const next = statusToPhase(data.status);
+        if (next) setPhase(next);
+        if (data.status === "complete") {
+          downloadStartedRef.current = false;
+          getJob(jobId)
+            .then((current) => {
+              if (cancelledRef.current) return;
+              setJob(current);
+              setProgress((prev) =>
+                mergeJobProgress(prev, current.progress, current.status)
+              );
+            })
+            .catch(() => undefined);
+        } else if (data.status === "failed") {
+          downloadStartedRef.current = false;
+          setError(data.error || "下载失败");
+        }
+      });
       const current = await getJob(jobId);
       setJob(current);
-      setProgress((prev) => Math.max(prev, current.progress));
+      setProgress((prev) =>
+        mergeJobProgress(prev, current.progress, current.status)
+      );
       const next = statusToPhase(current.status);
       if (next) setPhase(next);
       if (current.status === "failed") {
+        downloadStartedRef.current = false;
         setError(current.error || "下载失败");
       }
     } catch (err) {
+      downloadStartedRef.current = false;
       setPhase("failed");
       setError(err instanceof Error ? err.message : "下载失败");
     } finally {
@@ -284,7 +333,7 @@ export default function DownloadPage() {
                   label="下载进度"
                 />
                 <p className="mt-3 text-center text-xs text-[#94a3b8]">
-                  请保持页面打开，完成后将自动保存到本地
+                  进度为服务器拉取视频；完成后浏览器还会再传到本机，请保持页面打开
                 </p>
               </div>
             )}
