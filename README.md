@@ -76,6 +76,48 @@ npm install                # 若默认源慢，可用: npm install --registry=ht
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
 
+## 测试与 CI
+
+合入 `main` 须走 **Pull Request**，且 GitHub Actions 三门禁全绿：`frontend` / `backend` / `docker`。
+
+默认 CI **不**跑真实 yt-dlp 下载、Whisper ASR、Stripe Checkout 或 DeepSeek 调用（避免密钥依赖与 flaky）。
+
+### 本地：后端
+
+```bash
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+JWT_SECRET=ci-test-secret-min-32-chars-long!! pytest -q
+```
+
+### 本地：前端
+
+```bash
+cd frontend
+npm ci
+npm run lint
+npm run typecheck
+npm test
+NEXT_PUBLIC_API_URL= NEXT_PUBLIC_SITE_URL=https://example.com BACKEND_URL=http://127.0.0.1:8000 npm run build
+```
+
+### CI 覆盖范围
+
+| Job | 内容 |
+|-----|------|
+| `frontend` | Node 20：`lint` → `typecheck` → Vitest → `build` |
+| `backend` | Python 3.12：pytest（auth / users / JobStore URL 助手 / 字幕解析 / webhook 幂等） |
+| `docker` | `docker compose build`（用 `.env.example` 生成临时 `.env`） |
+
+合入门禁（需仓库管理员在本机执行一次）：
+
+```bash
+./scripts/enable-main-branch-protection.sh
+```
+
+会要求：PR 合入 `main`、管理员也不可绕过、禁止 force push / 删除，且 `frontend` / `backend` / `docker` 必须通过。
+
 ## Docker 一键启动
 
 本地 / 通用默认：

@@ -4,7 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /** 兼容无协议粘贴，如 bilibili.com/video/BVxxx?... → https://... */
 export function normalizeVideoUrl(raw: string): string {
-  let url = raw.trim().replace(/^['"]+|['"]+$/g, "");
+  const url = raw.trim().replace(/^['"]+|['"]+$/g, "");
   if (!url) return url;
   if (/^[a-z][a-z0-9+.\-]*:/i.test(url)) return url;
   if (/^(?:www\.)?[a-z0-9.\-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(url)) {
@@ -210,7 +210,7 @@ async function consumeSse(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  let currentEvent = "message";
+  const currentEvent = "message";
 
   const flushBlock = (block: string) => {
     const lines = block.split("\n");
