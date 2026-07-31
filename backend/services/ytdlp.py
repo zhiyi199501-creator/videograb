@@ -42,20 +42,36 @@ def _is_youtube(url: str) -> bool:
     return "youtube.com" in u or "youtu.be" in u
 
 
-# 可选：为需要登录/风控的平台（B站、YouTube 会员视频等）提供 cookie。
-#   COOKIES_FILE: Netscape 格式 cookie 文件路径
-#   COOKIES_FROM_BROWSER: 从本机浏览器读取，如 "chrome"/"edge"/"firefox"/"safari"
+# 可选：为需要登录/风控的平台（B站、抖音等）提供 cookie。
+#   COOKIES_FILE: Netscape 格式 cookie 文件路径（生产推荐：运维上传 secrets/cookies.txt）
+#   COOKIES_FROM_BROWSER: 从本机浏览器读取，如 "chrome"/"edge"/"firefox"/"safari"（仅本地）
+_cookie_opts_logged = False
+
+
 def _cookie_opts() -> dict:
+    global _cookie_opts_logged
     cookies_file = os.environ.get("COOKIES_FILE", "").strip()
     cookies_from_browser = os.environ.get("COOKIES_FROM_BROWSER", "").strip()
-    if cookies_file and os.path.exists(cookies_file):
+    if cookies_file and os.path.exists(cookies_file) and os.path.isfile(cookies_file):
+        if not _cookie_opts_logged:
+            logger.info("yt-dlp cookiefile enabled: %s", cookies_file)
+            _cookie_opts_logged = True
         return {"cookiefile": cookies_file}
     if cookies_from_browser:
         # 支持 "chrome" 或 "chrome:Profile 1"
+        if not _cookie_opts_logged:
+            logger.info("yt-dlp cookiesfrombrowser enabled: %s", cookies_from_browser)
+            _cookie_opts_logged = True
         if ":" in cookies_from_browser:
             browser, profile = cookies_from_browser.split(":", 1)
             return {"cookiesfrombrowser": (browser.strip(), profile.strip())}
         return {"cookiesfrombrowser": (cookies_from_browser,)}
+    if cookies_file and not _cookie_opts_logged:
+        logger.info(
+            "COOKIES_FILE=%s set but file missing; Bilibili/Douyin may hit 412",
+            cookies_file,
+        )
+        _cookie_opts_logged = True
     return {}
 
 
@@ -109,8 +125,8 @@ def _friendly_error(err: str) -> str:
         )
     if "412" in err or "precondition failed" in low:
         return (
-            "该视频被平台风控拦截（HTTP 412）。B站等平台的取流接口需要登录 "
-            "Cookie，请在服务端配置 COOKIES_FROM_BROWSER 或 COOKIES_FILE 后重试。"
+            "该视频被平台风控拦截（HTTP 412）。B站等平台需要登录 Cookie；"
+            "请运维配置 secrets/cookies.txt（见部署文档 Cookie 运维）后重试。"
         )
     if "tunnel connection failed" in low or "proxyerror" in low:
         return (

@@ -30,7 +30,8 @@
 - `backend/routers/`：`api` 下载、`summarize` AI、`auth`、`billing`；`backend/tests/` 单测
 - `frontend/components/summary/`：AI 面板；定价仅 Free/Pro（无 Team）；`frontend/lib/*.test.ts` 单测
 - `.github/workflows/ci.yml`：`frontend` / `backend` / `docker`；合入 `main` 须 PR 且三检全绿
-- 密钥只放 `backend/.env`（参考 `.env.example`），勿提交；cookies 勿提交
+- 密钥只放 `backend/.env`（参考 `.env.example`），勿提交；`secrets/cookies.txt` 勿提交
+- B站/抖音 Cookie：运维导出 Netscape → `./scripts/upload-cookies.sh` → `secrets/cookies.txt`（compose 挂 `/secrets`）；见 `docs/deploy-online-guide.md` §14.2
 
 ## 现役产品事实（易过期处）
 
@@ -47,12 +48,12 @@
 - 仓库路径搬迁后若 `backend/.venv` 的 shebang 仍指向旧路径 → `rm -rf backend/.venv && ./dev.sh`
 - 跳转 `/download/[id]` 失败或 Turbopack `Next.js package not found` → `rm -rf frontend/.next` 后重启 `./dev.sh`，浏览器硬刷新
 - 本机若仍是 Python 3.9，yt-dlp 会告警；README/Docker/CI 目标为 3.12（镜像与 Actions）
-- 生产容器内勿用 `COOKIES_FROM_BROWSER=chrome`；B站/抖音需 `COOKIES_FILE`
+- 生产容器内勿用 `COOKIES_FROM_BROWSER=chrome`；B站/抖音用 `secrets/cookies.txt` + `COOKIES_FILE`（`upload-cookies.sh`）
 
 ## 当前状态 / 下一步
 
 - 已上（产品）：下载、AI 总结、登录、Stripe Pro、SEO、海外 Docker + HTTPS 子域名
-- 已上（工程）：pytest / Vitest / GitHub Actions CI、`main` 分支保护（2026-07-31）
+- 已上（工程）：pytest / Vitest / GitHub Actions CI、`main` 分支保护（2026-07-31）；B站/抖音 Cookie 运维上传（`secrets/` + `scripts/upload-cookies.sh`）
 - 生产代码相对 `origin/main` 可能滞后一拍：合入 ≠ 已部署；改运行态后服务器执行 `./scripts/redeploy.sh --pull`
-- 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；B站/抖音 Cookie 运维方案；公开 `/health` 反代（非必须）
+- 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；公开 `/health` 反代（非必须）
 - 扩展前先读对应 `docs/*`；以代码为准修正文档，勿双写矛盾说法

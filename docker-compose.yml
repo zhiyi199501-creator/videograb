@@ -12,8 +12,9 @@ services:
       - DATABASE_PATH=/app/data/app.db
       - FRONTEND_URL=http://localhost:3000
       - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000
-      # B站等平台需要登录 Cookie。本地开发可挂载 Netscape 格式 cookies 文件：
-      # - COOKIES_FILE=/cookies/cookies.txt
+      # B站/抖音风控：把 Netscape cookies 放到仓库根 secrets/cookies.txt（勿提交）
+      # 文件不存在时 yt-dlp 会自动跳过，无需改 compose
+      - COOKIES_FILE=/secrets/cookies.txt
       # AI 总结：复制 backend/.env.example 为 backend/.env 并填写 DEEPSEEK_API_KEY
       # Stripe：在 backend/.env 填写 STRIPE_* / JWT_SECRET
     env_file:
@@ -21,7 +22,7 @@ services:
     volumes:
       - video-temp:/tmp/videos
       - backend-data:/app/data
-      # - ./cookies.txt:/cookies/cookies.txt:ro
+      - ./secrets:/secrets:ro
     restart: unless-stopped
 
   frontend:

@@ -21,9 +21,10 @@
 
 **不在本文范围（可后做）：**
 
-- B站 / 抖音 Cookie 配置（平台风控）
 - Stripe 正式收款
 - ICP 备案（海外机 + 海外域名通常不需要）
+
+B站 / 抖音 Cookie 运维见下文「B站 / 抖音 Cookie 运维」。
 
 ---
 
@@ -457,6 +458,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 - [ ] `backend/.env` 未提交到 Git  
 - [ ] `JWT_SECRET` 已不是开发默认值  
 - [ ] 防火墙不必长期开放 3000/8000  
+- [ ] （可选）B站/抖音：已上传 `secrets/cookies.txt` 且未进 Git  
 
 ---
 
@@ -475,6 +477,13 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate backend
+```
+
+只更新了 Cookie（本机已有导出文件）：
+
+```bash
+# 在开发机执行（会 scp 到服务器并 recreate backend，无需全量 rebuild）
+./scripts/upload-cookies.sh ~/Downloads/cookies.txt ubuntu@你的服务器IP
 ```
 
 改了 `NEXT_PUBLIC_*` 或 `BACKEND_URL` / `docker-compose.prod.yml`：
@@ -522,6 +531,51 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 ---
 
+## 14.2 B站 / 抖音 Cookie 运维
+
+生产容器**没有**本机 Chrome，不要设 `COOKIES_FROM_BROWSER`。正确做法：运维导出 Netscape `cookies.txt`，放到服务器 `secrets/cookies.txt`（只读挂载进容器 `/secrets/cookies.txt`）。
+
+Compose 已默认：
+
+- 环境变量 `COOKIES_FILE=/secrets/cookies.txt`
+- 卷 `./secrets:/secrets:ro`
+
+文件不存在时下载仍可用，只是 B站/抖音更容易 412。
+
+### 步骤
+
+1. **专用小号**登录 B站（和/或抖音），避免用主账号。
+2. 浏览器安装可导出 **Netscape** 格式的扩展（如 Chrome「Get cookies.txt LOCALLY」），导出为 `cookies.txt`（不要 JSON）。
+3. **先保证服务器已拉到含 secrets 挂载的代码**，再上传：
+
+```bash
+# 本机执行（替换 IP）
+./scripts/upload-cookies.sh ~/Downloads/cookies.txt ubuntu@你的服务器IP
+```
+
+脚本会：`scp` → `chmod 600` → `docker compose ... up -d --force-recreate --no-deps backend`，并检查容器内文件是否存在。
+
+或在服务器上手动：
+
+```bash
+cd /opt/videograb
+mkdir -p secrets && chmod 700 secrets
+# 把 cookies.txt 拷到 secrets/cookies.txt 后：
+chmod 600 secrets/cookies.txt
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate --no-deps backend
+```
+
+4. 用一条 B站公开视频测解析。后端日志应出现 `yt-dlp cookiefile enabled: /secrets/cookies.txt`。
+
+### 注意
+
+- `secrets/cookies.txt` **等同登录凭证**，已在 `.gitignore`，勿提交、勿贴到聊天/工单。
+- Cookie 会过期；再次 412 时重新导出并跑 upload 脚本即可（无需全量 rebuild）。
+- YouTube 路径**不会**使用该 Cookie（避免 SABR/403）；仅非 YouTube 平台启用。
+- 账号若因机房 IP 被风控，换小号或接受部分平台不可用。
+
+---
+
 ## 15. 常见问题速查
 
 ### Q0: `git pull` 报 local changes would be overwritten / 缺少 `docker-compose.prod.yml`
@@ -557,12 +611,12 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec frontend pr
 
 ### Q3: B站 / 抖音提示 HTTP 412 或需要 Cookie
 
-这是平台风控，不是服务器挂了。  
-海外站可先跳过；需要时再配置 `COOKIES_FILE`（不要用容器内不存在的 Chrome cookie 目录）。
+这是平台风控，不是服务器挂了。按 [14.2 B站 / 抖音 Cookie 运维](#142-b站--抖音-cookie-运维) 上传 Netscape `cookies.txt` 即可。  
+不要用容器内的 `COOKIES_FROM_BROWSER=chrome`（容器没有浏览器用户数据）。
 
 ### Q4: `COOKIES_FROM_BROWSER=chrome` 报找不到 `/root/.config/google-chrome`
 
-服务器容器里没有浏览器用户数据。请改用上传 `cookies.txt` 的方案（本文暂略，产品稳定后再做）。
+服务器容器里没有浏览器。请改用运维上传 `secrets/cookies.txt`（见 [14.2](#142-b站--抖音-cookie-运维)），并确保 `backend/.env` 里**不要**设置 `COOKIES_FROM_BROWSER`。
 
 ### Q5: 一个域名能挂多个项目吗？
 
@@ -676,6 +730,7 @@ echo "  docker compose logs -f --tail=100"
 | 4 | 安装 Docker | `docker compose version` 有输出 |
 | 5 | clone 代码到 `/opt/videograb` | 目录有 `docker-compose.yml` |
 | 6 | 配置 `backend/.env` | 有 JWT / 可选 DeepSeek |
+| 6b | （可选）上传 B站 Cookie | `secrets/cookies.txt` 存在且 600 |
 | 7 | 确认 `docker-compose.prod.yml` + Dockerfile `BACKEND_URL` | 域名与代理正确 |
 | 8 | `docker compose -f ... -f ...prod.yml up -d --build` | 两个容器 Up |
 | 9 | 装 Caddy，反代 80→3000 | `http://IP` 可开 |
