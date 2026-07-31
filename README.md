@@ -28,12 +28,14 @@
 
 ```
 videograb/
-├── AGENTS.md          # Agent 指引（怎么跑 / 现役产品事实）
-├── dev.sh             # 本地一键启动前后端
-├── docs/              # 需求分析 + 方案设计文档（扩展前必读）
-├── frontend/          # Next.js 前端
-├── backend/           # FastAPI 后端
-└── docker-compose.yml
+├── AGENTS.md                 # Agent 指引（怎么跑 / 现役产品事实）
+├── dev.sh                    # 本地一键启动前后端
+├── docs/                     # 需求 / 设计 / 会员 / 上线教程等（扩展前必读）
+├── scripts/                  # 服务器初始化 / 重建 / 重载 HTTPS 脚本
+├── frontend/                 # Next.js 前端
+├── backend/                  # FastAPI 后端
+├── docker-compose.yml        # Docker 通用默认
+└── docker-compose.prod.yml   # 生产覆盖（正式域名 / CORS / FRONTEND_URL）
 ```
 
 ## 本地开发
@@ -141,7 +143,7 @@ cp backend/.env.example backend/.env
 | DELETE | `/api/jobs/{id}` | 清理任务与文件 |
 
 会员与支付详见 [docs/membership.md](docs/membership.md)、[docs/stripe-setup.md](docs/stripe-setup.md)。
-详见 [docs/design.md](docs/design.md)、[docs/ai-summary.md](docs/ai-summary.md)。
+详见 [docs/design.md](docs/design.md)、[docs/ai-summary.md](docs/ai-summary.md)、[docs/deploy-online-guide.md](docs/deploy-online-guide.md)。
 
 ## 生产部署
 

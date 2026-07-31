@@ -483,9 +483,50 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-re
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --force-recreate frontend
 ```
 
+### 14.1 服务器有手改文件，`git pull` 失败时
+
+若提示类似：
+
+```text
+error: Your local changes to the following files would be overwritten by merge:
+  docker-compose.yml
+  frontend/Dockerfile
+```
+
+说明服务器上还有未提交的手改，而 GitHub 已包含正式修复。**通常应丢弃服务器手改、以仓库为准**（密钥在 `backend/.env`，一般不被 Git 跟踪，不会被清掉）。
+
+**推荐（只丢弃冲突文件）：**
+
+```bash
+cd /opt/videograb
+git checkout -- docker-compose.yml frontend/Dockerfile
+# 若还有其它被提示的冲突文件，一并 checkout
+git pull
+ls docker-compose.prod.yml   # 确认生产覆盖文件已存在
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+**更强对齐（清掉全部未提交改动，慎用）：**
+
+```bash
+cd /opt/videograb
+ls backend/.env              # 先确认 .env 还在
+git fetch origin
+git reset --hard origin/main
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
+
+> `reset --hard` 会丢掉服务器上所有未提交改动。执行前确认没有还没备份的自定义修改；`.env` / `cookies.txt` 若不在 Git 里，一般仍会保留。
+
+若 `git pull` 成功但报 `open .../docker-compose.prod.yml: no such file`，说明还没拉到含该文件的提交，先按上面方式对齐到 `origin/main` 再启动。
+
 ---
 
 ## 15. 常见问题速查
+
+### Q0: `git pull` 报 local changes would be overwritten / 缺少 `docker-compose.prod.yml`
+
+见上文 [14.1](#141-服务器有手改文件git-pull-失败时)：先丢掉服务器手改再 pull，再用双文件 compose 启动。
 
 ### Q1: 页面能开，点解析报 `Failed to fetch`
 
