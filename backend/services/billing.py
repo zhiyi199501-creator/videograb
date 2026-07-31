@@ -135,8 +135,30 @@ def construct_event(payload: bytes, sig_header: Optional[str]) -> stripe.Event:
         raise HTTPException(status_code=400, detail="Webhook 签名校验失败") from exc
 
 
+def _as_dict(obj: Any) -> dict[str, Any]:
+    """StripeObject 不支持 .get()；统一转成普通 dict 再履约。"""
+    if obj is None:
+        return {}
+    if isinstance(obj, dict):
+        return obj
+    to_dict_recursive = getattr(obj, "to_dict_recursive", None)
+    if callable(to_dict_recursive):
+        data = to_dict_recursive()
+        return data if isinstance(data, dict) else {}
+    to_dict = getattr(obj, "to_dict", None)
+    if callable(to_dict):
+        data = to_dict()
+        return data if isinstance(data, dict) else {}
+    try:
+        return dict(obj)
+    except Exception:
+        return {}
+
+
 def _resolve_user_id_from_session(session: dict[str, Any]) -> str | None:
     meta = session.get("metadata") or {}
+    if not isinstance(meta, dict):
+        meta = _as_dict(meta)
     user_id = meta.get("user_id") or session.get("client_reference_id")
     if user_id:
         return str(user_id)
@@ -176,6 +198,7 @@ def _status_from_subscription(sub: Any) -> str:
 
 
 def _activate_from_checkout(session: dict[str, Any]) -> None:
+    session = _as_dict(session)
     user_id = _resolve_user_id_from_session(session)
     if not user_id:
         logger.warning("checkout.session.completed missing user_id: %s", session.get("id"))
@@ -198,15 +221,15 @@ def _activate_from_checkout(session: dict[str, Any]) -> None:
     status = "active"
 
     if subscription_id:
-        sub = stripe.Subscription.retrieve(str(subscription_id))
+        sub = _as_dict(stripe.Subscription.retrieve(str(subscription_id)))
         status = _status_from_subscription(sub)
         period_end = _period_end_from_subscription(sub)
         try:
-            items = sub["items"]["data"] if isinstance(sub, dict) else sub["items"]["data"]
+            items = (sub.get("items") or {}).get("data") or []
             if items:
-                price = items[0].get("price") if isinstance(items[0], dict) else items[0].price
-                if price:
-                    price_id = price.get("id") if isinstance(price, dict) else getattr(price, "id", price_id)
+                price = items[0].get("price") if isinstance(items[0], dict) else None
+                if isinstance(price, dict) and price.get("id"):
+                    price_id = price.get("id")
         except Exception:
             logger.exception("Failed to read subscription price")
 
@@ -222,14 +245,13 @@ def _activate_from_checkout(session: dict[str, Any]) -> None:
 
 
 def _sync_subscription(sub_obj: Any) -> None:
-    if isinstance(sub_obj, dict):
-        sub = sub_obj
-    else:
-        sub = sub_obj
+    sub = _as_dict(sub_obj)
 
-    meta = (sub.get("metadata") if isinstance(sub, dict) else getattr(sub, "metadata", None)) or {}
-    user_id = meta.get("user_id") if isinstance(meta, dict) else None
-    customer_id = sub.get("customer") if isinstance(sub, dict) else getattr(sub, "customer", None)
+    meta = sub.get("metadata") or {}
+    if not isinstance(meta, dict):
+        meta = _as_dict(meta)
+    user_id = meta.get("user_id")
+    customer_id = sub.get("customer")
 
     if not user_id and customer_id:
         user = user_store.get_user_by_stripe_customer(str(customer_id))
@@ -239,16 +261,18 @@ def _sync_subscription(sub_obj: Any) -> None:
         logger.warning("subscription event missing user_id")
         return
 
-    sub_id = sub.get("id") if isinstance(sub, dict) else getattr(sub, "id", None)
+    sub_id = sub.get("id")
     status = _status_from_subscription(sub)
     period_end = _period_end_from_subscription(sub)
     price_id = None
     try:
-        items = sub["items"]["data"] if isinstance(sub, dict) else sub["items"]["data"]
+        items = (sub.get("items") or {}).get("data") or []
         if items:
-            price = items[0].get("price") if isinstance(items[0], dict) else items[0].price
-            if price:
-                price_id = price.get("id") if isinstance(price, dict) else getattr(price, "id", None)
+            price = items[0].get("price") if isinstance(items[0], dict) else None
+            if isinstance(price, dict):
+                price_id = price.get("id")
+            elif price:
+                price_id = getattr(price, "id", None)
     except Exception:
         pass
 
@@ -262,63 +286,70 @@ def _sync_subscription(sub_obj: Any) -> None:
     )
 
 
-def handle_stripe_event(event: stripe.Event) -> None:
-    event_id = event["id"]
-    event_type = event["type"]
+def handle_stripe_event(event: stripe.Event | dict[str, Any]) -> None:
+    event_map = _as_dict(event)
+    event_id = event_map.get("id")
+    event_type = event_map.get("type")
+    if not event_id or not event_type:
+        logger.warning("Stripe event missing id/type: %s", event_map)
+        return
 
-    if not user_store.try_record_event(event_id, event_type):
+    if not user_store.try_record_event(str(event_id), str(event_type)):
         logger.info("Skip duplicate Stripe event %s", event_id)
         return
 
-    data_object = event["data"]["object"]
+    try:
+        data = _as_dict(event_map.get("data"))
+        data_object = _as_dict(data.get("object"))
 
-    if event_type == "checkout.session.completed":
-        if data_object.get("mode") == "subscription" or data_object.get("subscription"):
-            _activate_from_checkout(data_object)
-        return
+        if event_type == "checkout.session.completed":
+            if data_object.get("mode") == "subscription" or data_object.get(
+                "subscription"
+            ):
+                _activate_from_checkout(data_object)
+            return
 
-    if event_type in (
-        "customer.subscription.updated",
-        "customer.subscription.deleted",
-        "customer.subscription.created",
-    ):
-        if event_type == "customer.subscription.deleted":
-            # 强制标为 canceled
-            if isinstance(data_object, dict):
+        if event_type in (
+            "customer.subscription.updated",
+            "customer.subscription.deleted",
+            "customer.subscription.created",
+        ):
+            if event_type == "customer.subscription.deleted":
                 data_object = {**data_object, "status": "canceled"}
-        _sync_subscription(data_object)
-        return
+            _sync_subscription(data_object)
+            return
 
-    if event_type == "invoice.paid":
-        sub_id = data_object.get("subscription")
-        if sub_id:
-            sub = stripe.Subscription.retrieve(str(sub_id))
-            _sync_subscription(sub)
-        return
+        if event_type == "invoice.paid":
+            sub_id = data_object.get("subscription")
+            if sub_id:
+                sub = stripe.Subscription.retrieve(str(sub_id))
+                _sync_subscription(sub)
+            return
 
-    if event_type == "invoice.payment_failed":
-        sub_id = data_object.get("subscription")
-        if sub_id:
-            sub = stripe.Subscription.retrieve(str(sub_id))
-            # 标记 past_due
-            if not isinstance(sub, dict):
-                # StripeObject 可当 dict 用
-                pass
-            _sync_subscription(sub)
-            user_id = None
-            meta = getattr(sub, "metadata", None) or {}
-            if isinstance(meta, dict):
-                user_id = meta.get("user_id")
-            customer_id = getattr(sub, "customer", None)
-            if not user_id and customer_id:
-                user = user_store.get_user_by_stripe_customer(str(customer_id))
-                user_id = user["id"] if user else None
-            if user_id:
-                user_store.upsert_subscription(
-                    str(user_id),
-                    status="past_due",
-                    stripe_subscription_id=str(sub_id),
-                )
-        return
+        if event_type == "invoice.payment_failed":
+            sub_id = data_object.get("subscription")
+            if sub_id:
+                sub = stripe.Subscription.retrieve(str(sub_id))
+                _sync_subscription(sub)
+                sub_map = _as_dict(sub)
+                user_id = None
+                meta = sub_map.get("metadata") or {}
+                if isinstance(meta, dict):
+                    user_id = meta.get("user_id")
+                customer_id = sub_map.get("customer")
+                if not user_id and customer_id:
+                    user = user_store.get_user_by_stripe_customer(str(customer_id))
+                    user_id = user["id"] if user else None
+                if user_id:
+                    user_store.upsert_subscription(
+                        str(user_id),
+                        status="past_due",
+                        stripe_subscription_id=str(sub_id),
+                    )
+            return
 
-    logger.info("Unhandled Stripe event type: %s", event_type)
+        logger.info("Unhandled Stripe event type: %s", event_type)
+    except Exception:
+        # 履约失败时删掉幂等记录，允许 Stripe 重试真正完成开通
+        user_store.delete_stripe_event(str(event_id))
+        raise

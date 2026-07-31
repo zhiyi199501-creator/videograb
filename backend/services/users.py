@@ -190,6 +190,12 @@ def try_record_event(event_id: str, event_type: str) -> bool:
             return False
 
 
+def delete_stripe_event(event_id: str) -> None:
+    """履约失败时删除幂等记录，允许 Stripe 重试。"""
+    with get_db() as conn:
+        conn.execute("DELETE FROM stripe_events WHERE event_id = ?", (event_id,))
+
+
 def try_record_checkout_session(session_id: str, user_id: str) -> bool:
     with get_db() as conn:
         try:
