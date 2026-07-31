@@ -16,8 +16,8 @@
 
 | 事件 | 说明 |
 |------|------|
-| `status` | 进度文案（含语音转写等待秒数） |
-| `ping` | 心跳，防止代理缓冲导致前端卡住 |
+| `status` | 进度文案（含语音转写 / 思维导图等待秒数） |
+| `ping` | 心跳，防止代理缓冲导致前端卡住（ASR 与导图生成阶段均会推送） |
 | `subtitle` | 字幕全文 + `segments`（含起止时间，供下载） |
 | `content` | 摘要增量（delta）；另附 `delta_b64` 防字符丢失 |
 | `mindmap` | 思维导图 Markdown（附 `markdown_b64`） |
@@ -57,6 +57,8 @@
 |------|------|------|
 | `DEEPSEEK_API_KEY` | （空） | 必填 |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | 聊天模型 |
+| `DEEPSEEK_COMPLETE_TIMEOUT` | 120 | 非流式（思维导图）最长等待秒数 |
+| `DEEPSEEK_HTTP_TIMEOUT` | 120 | OpenAI 客户端 HTTP 超时（秒） |
 | `WHISPER_MODEL` | tiny | faster-whisper 模型（tiny 更快，base/small 更准） |
 | `ASR_LANGUAGE` | auto | 空/auto=自动检测；可强制 `en` / `zh`（勿对英文视频写死 zh） |
 | `ASR_MAX_DURATION` | 1800 | 单次 ASR 最长秒数；超过则只转写前 N 分钟 |

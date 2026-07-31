@@ -78,6 +78,7 @@ export default function SummaryPanel({
     abortRef.current = ac;
 
     try {
+      let finished = false;
       await subscribeSummarize(
         jobId,
         (ev) => {
@@ -90,20 +91,27 @@ export default function SummaryPanel({
           } else if (ev.event === "content" && ev.data.delta) {
             setSummary((prev) => prev + ev.data.delta);
             setStatus("正在生成总结…");
-          } else if (ev.event === "mindmap" && ev.data.markdown) {
-            setMindmap(ev.data.markdown);
-            setStatus("思维导图已生成");
+          } else if (ev.event === "mindmap") {
+            const md = ev.data.markdown || "";
+            setMindmap(md);
+            setStatus(md ? "思维导图已生成" : "思维导图生成完成（内容为空）");
           } else if (ev.event === "done") {
+            finished = true;
             setDone(true);
             setStatus("完成");
             setTab("summary");
           } else if (ev.event === "error") {
+            finished = true;
             setError(ev.data.message || "总结失败");
             setStatus("");
           }
         },
         ac.signal
       );
+      if (!finished && !ac.signal.aborted) {
+        setError("连接中断，总结未完成。请点击重新生成。");
+        setStatus("");
+      }
       // 非 Pro 扣次后刷新剩余次数
       if (!isPro) {
         await refreshMe().catch(() => undefined);
