@@ -15,9 +15,9 @@ from services.ytdlp import TEMP_DIR, _base_opts, _normalize_url
 
 logger = logging.getLogger(__name__)
 
-# 中国网络默认走 HF 镜像拉取模型
-if not os.environ.get("HF_ENDPOINT"):
-    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+# 仅当显式设置 HF_ENDPOINT 时才走镜像。海外机（如新加坡）默认官方 huggingface.co，
+# 强制 hf-mirror 会导致 308/HEAD 失败、模型下不全。
+# 国内网络可在 .env 设：HF_ENDPOINT=https://hf-mirror.com
 
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "tiny").strip() or "tiny"
 # 单次 ASR 最长秒数；超过则只转写前 N 分钟（可通过环境变量调大）
@@ -44,8 +44,37 @@ def _get_model():
             "未安装语音转写组件。请执行: pip install faster-whisper"
         ) from e
 
-    logger.info("Loading Whisper model %s ...", WHISPER_MODEL)
-    _model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
+    logger.info(
+        "Loading Whisper model %s (HF_ENDPOINT=%s)",
+        WHISPER_MODEL,
+        os.environ.get("HF_ENDPOINT") or "https://huggingface.co",
+    )
+    try:
+        _model = WhisperModel(WHISPER_MODEL, device="cpu", compute_type="int8")
+    except Exception as e:
+        # 镜像失败时回退官方源再试一次
+        endpoint = (os.environ.get("HF_ENDPOINT") or "").strip()
+        if endpoint and "huggingface.co" not in endpoint:
+            logger.warning(
+                "Whisper download via %s failed (%s); retrying official Hub",
+                endpoint,
+                e,
+            )
+            os.environ.pop("HF_ENDPOINT", None)
+            try:
+                _model = WhisperModel(
+                    WHISPER_MODEL, device="cpu", compute_type="int8"
+                )
+            except Exception as e2:
+                raise SubtitleError(
+                    "语音模型下载失败，请检查服务器能否访问 huggingface.co "
+                    f"（或配置可用的 HF_ENDPOINT）。详情: {e2}"
+                ) from e2
+        else:
+            raise SubtitleError(
+                "语音模型下载失败，请检查服务器网络或 HF 缓存。"
+                f"详情: {e}"
+            ) from e
     return _model
 
 

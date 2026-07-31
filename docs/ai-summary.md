@@ -62,7 +62,7 @@
 | `WHISPER_MODEL` | tiny | faster-whisper 模型（tiny 更快，base/small 更准） |
 | `ASR_LANGUAGE` | auto | 空/auto=自动检测；可强制 `en` / `zh`（勿对英文视频写死 zh） |
 | `ASR_MAX_DURATION` | 1800 | 单次 ASR 最长秒数；超过则只转写前 N 分钟 |
-| `HF_ENDPOINT` | https://hf-mirror.com | HuggingFace 镜像（拉取 Whisper 权重） |
+| `HF_ENDPOINT` | （空=官方 Hub） | 仅国内网络设 `https://hf-mirror.com`；海外机勿设 |
 
 ## 前端
 

@@ -17,11 +17,13 @@ services:
       - COOKIES_FILE=/secrets/cookies.txt
       # AI 总结：复制 backend/.env.example 为 backend/.env 并填写 DEEPSEEK_API_KEY
       # Stripe：在 backend/.env 填写 STRIPE_* / JWT_SECRET
+      # 海外机勿设 HF_ENDPOINT=hf-mirror；国内可在 .env 设镜像
     env_file:
       - ./backend/.env
     volumes:
       - video-temp:/tmp/videos
       - backend-data:/app/data
+      - hf-cache:/root/.cache/huggingface
       - ./secrets:/secrets:ro
     restart: unless-stopped
 
@@ -48,3 +50,4 @@ services:
 volumes:
   video-temp:
   backend-data:
+  hf-cache:
