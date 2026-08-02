@@ -56,10 +56,31 @@ export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+function clientLocale(): string {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return "zh";
+  }
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+    if (match?.[1]) {
+      const raw = decodeURIComponent(match[1]).trim();
+      if (raw) return raw.split("-")[0].toLowerCase();
+    }
+    const lang = document.documentElement?.lang?.trim();
+    if (lang) return lang.split("-")[0].toLowerCase();
+  } catch {
+    /* ignore */
+  }
+  return "zh";
+}
+
 export function authHeaders(
   extra?: Record<string, string>
 ): Record<string, string> {
-  const headers: Record<string, string> = { ...(extra || {}) };
+  const headers: Record<string, string> = {
+    "Accept-Language": clientLocale(),
+    ...(extra || {}),
+  };
   const token = getStoredToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
@@ -89,7 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const res = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${t}` },
+      headers: {
+        Authorization: `Bearer ${t}`,
+        "Accept-Language": clientLocale(),
+      },
     });
     if (!res.ok) {
       clearSession();
@@ -108,7 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": clientLocale(),
+        },
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error(await parseError(res));
@@ -122,7 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": clientLocale(),
+        },
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error(await parseError(res));

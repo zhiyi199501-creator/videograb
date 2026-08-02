@@ -37,9 +37,11 @@ app.state.limiter = limiter
 
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    from i18n import get_request_locale, t
+
     return JSONResponse(
         status_code=429,
-        content={"detail": "解析请求过于频繁，请稍后再试"},
+        content={"detail": t("rate_limited", get_request_locale(request))},
     )
 
 app.add_middleware(

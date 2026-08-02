@@ -145,32 +145,21 @@ def _base_opts(url: str = "") -> dict:
     return opts
 
 
-def _friendly_error(err: str) -> str:
-    """把 yt-dlp 原始报错转成对用户友好的中文提示。"""
+def _friendly_error(err: str, locale: str = "zh") -> str:
+    """把 yt-dlp 原始报错转成对用户友好的本地化提示。"""
+    from i18n import t
+
     # 去掉终端 ANSI 颜色码，避免前端直接展示 \x1b[0;31m
     err = re.sub(r"\x1b\[[0-9;]*m", "", err or "")
     low = err.lower()
     if "download exceeded" in low and "budget" in low:
-        return (
-            "下载超时：视频源速度过慢或被限速，已自动中止。"
-            "请稍后重试、更换网络环境，或选择更低的清晰度。"
-        )
+        return t("ytdlp.timeout", locale)
     if "fresh cookies" in low or ("douyin" in low and "cookie" in low):
-        return (
-            "抖音需要较新的浏览器 Cookie（不一定要登录）。"
-            "请在本机 Chrome 打开 douyin.com 后重试；或导出含 douyin.com 的 "
-            "Netscape cookies.txt，配置 COOKIES_FILE / COOKIES_FROM_BROWSER。"
-        )
+        return t("ytdlp.douyin_cookies", locale)
     if "412" in err or "precondition failed" in low:
-        return (
-            "该视频被平台风控拦截（HTTP 412）。B站等平台需要登录 Cookie；"
-            "请运维配置 secrets/cookies.txt（见部署文档 Cookie 运维）后重试。"
-        )
+        return t("ytdlp.http_412", locale)
     if "tunnel connection failed" in low or "proxyerror" in low:
-        return (
-            "当前网络代理无法访问该视频源（Proxy Tunnel 403）。"
-            "请关闭系统/终端代理后重试，或换一个可用节点。"
-        )
+        return t("ytdlp.proxy", locale)
     # YouTube 反爬：403 / SABR / 限流。常见于机房 IP 或错误的 client/Cookie 组合。
     if (
         "403" in err
@@ -180,30 +169,17 @@ def _friendly_error(err: str) -> str:
         or "the downloaded file is empty" in low
         or "eof occurred in violation" in low
     ):
-        return (
-            "该视频源拒绝了当前服务器的下载请求（反爬 / 地区限制）。"
-            "请稍后重试、更换网络环境；B站等平台可配置登录 Cookie。"
-        )
+        return t("ytdlp.anti_bot", locale)
     if "page needs to be reloaded" in low or "sign in to confirm" in low or "bot" in low:
-        return (
-            "该视频被平台反爬限制（常见于 YouTube 人机验证）。"
-            "本地请在 Chrome 登录 YouTube 后配置 COOKIES_FROM_BROWSER；"
-            "生产请把含 youtube.com 的 Netscape cookies 并入 secrets/cookies.txt 后重试。"
-        )
+        return t("ytdlp.bot_check", locale)
     if "private" in low or "login" in low or "members-only" in low:
-        return "该视频为私有/会员内容，需要登录 Cookie 才能下载。"
+        return t("ytdlp.private", locale)
     if "requested format is not available" in low:
-        return (
-            "所选清晰度暂不可用（可能被平台限制）。请换一个清晰度重试，"
-            "或稍后再试。"
-        )
+        return t("ytdlp.format_unavailable", locale)
     if "unavailable" in low or "not available" in low:
-        return "该视频不可用或已被删除，请检查链接。"
+        return t("ytdlp.unavailable", locale)
     if "unsupported url" in low or "no video" in low:
-        return (
-            "暂不支持该链接格式。抖音请尽量使用分享链接，或 "
-            "https://www.douyin.com/video/视频ID 形式的地址。"
-        )
+        return t("ytdlp.unsupported", locale)
     # 兜底：截断过长的原始错误
     return err.split("\n")[0][:200]
 
@@ -384,17 +360,21 @@ def _douyin_download_opts() -> dict:
     }
 
 
-def _format_label(fmt: dict) -> str:
+def _format_label(fmt: dict, locale: str = "zh") -> str:
+    from i18n import t
+
     res = fmt.get("resolution") or fmt.get("format_note") or ""
     ext = fmt.get("ext", "unknown")
     if fmt.get("vcodec") == "none":
-        return f"音频 {ext.upper()}"
+        return f"{t('format.audio_prefix', locale)} {ext.upper()}"
     if res:
         return f"{res} {ext.upper()}"
-    return f"最佳画质 {ext.upper()}"
+    return f"{t('format.best_quality', locale)} {ext.upper()}"
 
 
-def _pick_formats(info: dict) -> list[FormatInfo]:
+def _pick_formats(info: dict, locale: str = "zh") -> list[FormatInfo]:
+    from i18n import t
+
     seen: set[str] = set()
     result: list[FormatInfo] = []
 
@@ -428,7 +408,7 @@ def _pick_formats(info: dict) -> list[FormatInfo]:
                 filesize=f.get("filesize") or f.get("filesize_approx"),
                 vcodec=f.get("vcodec"),
                 acodec=f.get("acodec"),
-                label=_format_label(f),
+                label=_format_label(f, locale),
             )
         )
         if len(result) >= 5:
@@ -444,7 +424,7 @@ def _pick_formats(info: dict) -> list[FormatInfo]:
                 filesize=best_audio.get("filesize") or best_audio.get("filesize_approx"),
                 vcodec="none",
                 acodec=best_audio.get("acodec"),
-                label="仅音频",
+                label=t("format.audio_only", locale),
             )
         )
 
@@ -457,7 +437,7 @@ def _pick_formats(info: dict) -> list[FormatInfo]:
                 filesize=None,
                 vcodec=None,
                 acodec=None,
-                label="最佳画质",
+                label=t("format.best_quality", locale),
             )
         )
 
@@ -520,9 +500,11 @@ class JobStore:
 job_store = JobStore()
 
 
-async def extract_info(job_id: str, url: str) -> None:
+async def extract_info(job_id: str, url: str, locale: str = "zh") -> None:
     url = _normalize_url(url)
-    job_store.update(job_id, url=url, status=JobStatus.EXTRACTING, progress=0.0)
+    job_store.update(
+        job_id, url=url, status=JobStatus.EXTRACTING, progress=0.0, locale=locale
+    )
 
     def _extract() -> dict:
         opts = {**_base_opts(url), "skip_download": True}
@@ -531,7 +513,7 @@ async def extract_info(job_id: str, url: str) -> None:
 
     try:
         info = await asyncio.to_thread(_extract)
-        formats = _pick_formats(info)
+        formats = _pick_formats(info, locale)
         raw_duration = info.get("duration")
         duration = int(raw_duration) if raw_duration is not None else None
         thumb_url = _pick_thumbnail_url(info)
@@ -553,7 +535,11 @@ async def extract_info(job_id: str, url: str) -> None:
         )
     except Exception as e:
         logger.exception("Extract failed for job %s", job_id)
-        job_store.update(job_id, status=JobStatus.FAILED, error=_friendly_error(str(e)))
+        job_store.update(
+            job_id,
+            status=JobStatus.FAILED,
+            error=_friendly_error(str(e), locale),
+        )
 
 
 def _make_progress_hook(
@@ -728,11 +714,14 @@ def _resolve_format(job: dict, format_id: Optional[str]) -> str:
     return f"{format_id}+bestaudio/{format_id}"
 
 
-async def download_video(job_id: str, format_id: Optional[str] = None) -> None:
+async def download_video(
+    job_id: str, format_id: Optional[str] = None, locale: Optional[str] = None
+) -> None:
     job = job_store.get(job_id)
     if not job:
         return
 
+    locale = locale or job.get("locale") or "zh"
     url = _normalize_url(job["url"])
     if url != job["url"]:
         job_store.update(job_id, url=url)
@@ -811,7 +800,11 @@ async def download_video(job_id: str, format_id: Optional[str] = None) -> None:
             )
         except Exception as e:
             logger.exception("Download failed for job %s", job_id)
-            job_store.update(job_id, status=JobStatus.FAILED, error=_friendly_error(str(e)))
+            job_store.update(
+                job_id,
+                status=JobStatus.FAILED,
+                error=_friendly_error(str(e), locale),
+            )
         finally:
             stop_monitor.set()
             if monitor is not None:

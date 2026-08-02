@@ -8,9 +8,10 @@ from typing import Any, Dict, Optional
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from i18n import get_request_locale, t
 from services import users as user_store
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-only-change-me-use-32bytes-min!!")
@@ -39,13 +40,13 @@ def create_access_token(user_id: str, email: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 
-def decode_token(token: str) -> Dict[str, Any]:
+def decode_token(token: str, locale: str = "zh") -> Dict[str, Any]:
     try:
         return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
     except jwt.PyJWTError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="登录已失效，请重新登录",
+            detail=t("auth.session_expired", locale),
         ) from exc
 
 
@@ -79,35 +80,38 @@ def user_public(user: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def get_current_user(
+    request: Request,
     creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
 ) -> Dict[str, Any]:
+    locale = get_request_locale(request)
     if not creds or creds.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="请先登录",
+            detail=t("auth.login_required", locale),
         )
-    payload = decode_token(creds.credentials)
+    payload = decode_token(creds.credentials, locale)
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="登录已失效，请重新登录",
+            detail=t("auth.session_expired", locale),
         )
     user = user_store.get_user_by_id(user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户不存在",
+            detail=t("auth.user_not_found", locale),
         )
     return user
 
 
 async def get_optional_user(
+    request: Request,
     creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
 ) -> Optional[Dict[str, Any]]:
     if not creds or creds.scheme.lower() != "bearer":
         return None
     try:
-        return await get_current_user(creds)
+        return await get_current_user(request, creds)
     except HTTPException:
         return None

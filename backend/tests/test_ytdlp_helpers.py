@@ -73,6 +73,9 @@ def test_friendly_error_maps_known_cases():
     assert "YouTube" in _friendly_error(
         "Sign in to confirm you’re not a bot. Use --cookies-from-browser"
     )
+    en = _friendly_error("HTTP Error 412: Precondition Failed", "en")
+    assert "412" in en
+    assert "风控" not in en
 
 
 def test_base_opts_youtube_uses_cookies_and_web_clients(monkeypatch):
