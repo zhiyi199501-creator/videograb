@@ -49,7 +49,7 @@
 | F1.3 | 单视频下载 | P0 | 下载到服务器临时目录，提供直链保存 |
 | F1.4 | 下载进度展示 | P0 | SSE 实时推送 0–100% 进度；完成后自动唤起浏览器保存 |
 | F1.5 | 平台支持展示 | P0 | 首页紧凑标签展示 YouTube、B站、TikTok 等 |
-| F1.6 | Pro 功能占位 | P0 | AI 总结（已可用）、字幕翻译、批量 4K 等；紧凑列表展示 |
+| F1.6 | Pro 功能占位 | P0 | AI 总结（已可用）；字幕翻译、批量 4K 等未做；首页不再展示功能列表，转化统一到 `/pricing` |
 | F1.7 | 定价页 | P0 | Free / Pro 两档对比（Team 未做） |
 | F1.8 | 移动端适配 | P0 | 响应式布局 + iOS Safari 直链下载 + 微信浏览器提示 |
 | F1.9 | 免责声明 | P0 | Footer 展示个人学习用途、版权说明 |
@@ -68,8 +68,8 @@
 | ID | 功能 | 说明 |
 |----|------|------|
 | F3.1 | 用户登录 | ✅ JWT + SQLite（邮箱密码） |
-| F3.2 | 付费套餐 | ✅ Stripe Checkout 月付 Pro；Webhook 履约；见 docs/membership.md |
-| F3.3 | AI 视频总结 | ✅ 已实现；登录免费 3 次，Pro 无限（见 docs/membership.md） |
+| F3.2 | 付费套餐 | ✅ Stripe Checkout 月付 Pro；Pro 无限下载；Webhook 履约；见 docs/membership.md |
+| F3.3 | AI 视频总结 | ✅ 已实现；全站免费，无需登录（见 docs/ai-summary.md） |
 | F3.4 | 字幕翻译 | yt-dlp 提取字幕 + 翻译 API（未做） |
 | F3.5 | Team 套餐 | 未做（定价页已不展示） |
 

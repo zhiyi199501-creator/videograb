@@ -1,14 +1,14 @@
 # AI 视频总结功能说明
 
 > 字幕提取（或语音转写）→ DeepSeek 流式摘要 → markmap 思维导图 → 基于字幕的问答。  
-> **需登录**。登录用户免费 **3** 次总结；Pro 无限。有额度时解析成功后可**自动触发**；仍可手动「重新生成」（执行中禁用）。无额度时下载页展示登录/升级引导。
+> **无需登录，全站免费**。解析成功后可**自动触发**；仍可手动「重新生成」（执行中禁用）。
 
 ## 用户流程
 
 1. 首页粘贴链接 → 解析成功进入下载页
-2. 已登录且有额度：可自动开始，或点击「AI 视频总结」/「重新生成」
-3. `GET /api/jobs/{id}/summarize` 以 SSE 推送进度与结果（非 Pro 每次成功开始扣 1 次免费额度）
-4. 可在 Tab 中查看摘要 / 字幕 / 思维导图，或进行问答（`chat` 校验额度但不扣次）
+2. 任意用户：可自动开始，或点击「AI 视频总结」/「重新生成」
+3. `GET /api/jobs/{id}/summarize` 以 SSE 推送进度与结果（不扣额度、不校验登录）
+4. 可在 Tab 中查看摘要 / 字幕 / 思维导图，或进行问答（`chat` 同样免费）
 5. 字幕可下载为 SRT / VTT / TXT；思维导图支持全屏与 PNG / SVG 导出
 6. 下载页与总结左右同屏（约 40% : 60%）
 
@@ -66,7 +66,7 @@
 
 ## 前端
 
-- `SummaryPanel`：`can_use_ai` 时 `autoStart` 可自动总结；摘要 / 字幕 / 思维导图 / 问答；保留「重新生成」（执行中禁用）
+- `SummaryPanel`：`autoStart` 可自动总结；摘要 / 字幕 / 思维导图 / 问答；保留「重新生成」（执行中禁用）
 - `MarkdownContent`：`marked` + `@tailwindcss/typography`（`prose`）渲染摘要与问答
 - `MindMapView`：`markmap-lib` + `markmap-view`；全屏；完整内容 PNG（2.5x）/ SVG 导出（不受当前缩放平移影响）
 - 下载页：左右同屏（左 40% 视频信息，右 60% 总结），移动端上下堆叠
@@ -83,7 +83,7 @@
 | `services/asr.py` | 无字幕时音频转写 |
 | `services/deepseek.py` | DeepSeek 流式/非流式调用 |
 | `services/summarizer.py` | 编排 + SSE 事件 + 心跳 |
-| `services/auth.py` / `users.py` | JWT、`can_use_ai`、免费次数扣减 |
+| `services/auth.py` / `users.py` | JWT、`can_download`、下载免费次数扣减 |
 | `routers/summarize.py` | `/summarize`、`/chat`；SSE 封装与 Base64 |
 
 ## 验收建议

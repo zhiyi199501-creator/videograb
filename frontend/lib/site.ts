@@ -3,7 +3,7 @@
  * 可通过 NEXT_PUBLIC_SITE_URL 覆盖（含 https，无尾斜杠）。
  */
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://videograb.lianxi.com"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://example.com"
 ).replace(/\/$/, "");
 
 export const SITE_NAME = "VideoGrab";
@@ -34,7 +34,7 @@ export const PRICING_TITLE =
   "定价方案 - VideoGrab | 免费与 Pro 视频下载套餐对比";
 
 export const PRICING_DESCRIPTION =
-  "查看 VideoGrab 免费版与 Pro 套餐对比：每日解析、AI 视频总结免费试用与无限额度等能力一览，从免费版开始即可下载 1000+ 平台视频。";
+  "查看 VideoGrab 免费版与 Pro 套餐对比：登录免费下载 3 次、AI 总结全站免费、Pro 无限次下载等能力一览。";
 
 export const PRICING_KEYWORDS = [
   "VideoGrab定价",

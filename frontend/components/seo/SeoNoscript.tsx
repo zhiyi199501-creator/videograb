@@ -23,7 +23,7 @@ export default function SeoNoscript() {
             {SITE_NAME}（{SITE_URL}）是一款免费在线视频下载工具，支持 YouTube、B站、抖音、TikTok、Instagram
             等 1000+ 平台。
           </strong>
-          无需安装软件，浏览器粘贴链接即可下载；内置 AI 视频总结，可生成摘要、思维导图与字幕文本。
+          AI 视频总结免费开放、无需登录；视频下载需登录（免费 3 次）。无需安装软件；内置 AI 视频总结，可生成摘要、思维导图与字幕文本。
         </p>
         <p>
           <small>更新于 {UPDATED_AT}</small>
@@ -41,7 +41,7 @@ export default function SeoNoscript() {
           </li>
           <li>
             <strong>第三步：选择清晰度并下载</strong> —
-            选择画质后下载到本地，也可使用 AI 总结。
+            登录后选择画质下载到本地，也可使用免费 AI 总结。
           </li>
         </ol>
 
@@ -66,7 +66,7 @@ export default function SeoNoscript() {
 
         <h2>常见问题</h2>
         <h3>{SITE_NAME} 是免费的吗？</h3>
-        <p>提供永久免费版；Pro 可解锁更高清晰度与更多能力。</p>
+        <p>AI 总结免费开放；登录后可免费下载 3 次，升级 Pro 可无限次下载。</p>
         <h3>手机上可以使用吗？</h3>
         <p>可以，手机浏览器即可使用。</p>
 

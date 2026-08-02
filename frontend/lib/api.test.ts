@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   formatDuration,
   formatFileSize,
   normalizeVideoUrl,
+  startDownload,
 } from "./api";
 
 describe("normalizeVideoUrl", () => {
@@ -40,5 +41,27 @@ describe("formatDuration", () => {
     expect(formatDuration(null)).toBe("");
     expect(formatDuration(65)).toBe("1:05");
     expect(formatDuration(3600)).toBe("60:00");
+  });
+});
+
+describe("startDownload", () => {
+  it("sends bearer token when logged in", async () => {
+    vi.stubGlobal("window", {});
+    vi.stubGlobal("localStorage", { getItem: () => "token-123" });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ job_id: "job-1", status: "downloading" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      await startDownload("job-1", "fmt-1");
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toContain("/api/jobs/job-1/download");
+      expect(init.headers.Authorization).toBe("Bearer token-123");
+      expect(init.headers["Content-Type"]).toBe("application/json");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

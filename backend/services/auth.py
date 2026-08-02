@@ -52,20 +52,20 @@ def decode_token(token: str) -> Dict[str, Any]:
 def user_public(user: Dict[str, Any]) -> Dict[str, Any]:
     sub = user_store.get_subscription(user["id"])
     is_pro = user_store.is_pro_user(user["id"])
-    free_used = user_store.get_ai_free_used(user["id"])
+    free_used = user_store.get_download_free_used(user["id"])
     free_remaining = (
         None
         if is_pro
-        else max(0, user_store.AI_FREE_LIMIT - free_used)
+        else max(0, user_store.DOWNLOAD_FREE_LIMIT - free_used)
     )
     return {
         "id": user["id"],
         "email": user["email"],
         "is_pro": is_pro,
-        "can_use_ai": user_store.can_use_ai(user["id"]),
-        "ai_free_limit": user_store.AI_FREE_LIMIT,
-        "ai_free_used": free_used,
-        "ai_free_remaining": free_remaining,
+        "can_download": user_store.can_download(user["id"]),
+        "download_free_limit": user_store.DOWNLOAD_FREE_LIMIT,
+        "download_free_used": free_used,
+        "download_free_remaining": free_remaining,
         "subscription": (
             {
                 "plan": sub.get("plan"),
@@ -111,36 +111,3 @@ async def get_optional_user(
         return await get_current_user(creds)
     except HTTPException:
         return None
-
-
-async def require_ai_access(
-    user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
-    """登录用户：Pro 无限，否则免费额度内可用。"""
-    if user_store.can_use_ai(user["id"]):
-        return user
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=f"免费 AI 总结次数已用完（共 {user_store.AI_FREE_LIMIT} 次），请升级 Pro",
-    )
-
-
-async def require_ai_access_and_consume(
-    user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
-    """总结接口：校验额度并为非 Pro 扣 1 次。"""
-    if user_store.is_pro_user(user["id"]):
-        return user
-    if not user_store.consume_ai_free_credit(user["id"]):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"免费 AI 总结次数已用完（共 {user_store.AI_FREE_LIMIT} 次），请升级 Pro",
-        )
-    return user
-
-
-# 兼容旧名
-async def require_pro_user(
-    user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
-    return await require_ai_access(user)

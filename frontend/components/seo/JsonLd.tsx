@@ -23,6 +23,8 @@ const webAppLd = {
     "AI视频内容总结",
     "思维导图自动生成",
     "字幕下载（SRT/VTT/TXT）",
+    "AI 总结全站免费",
+    "登录免费下载 3 次",
     "移动端适配",
     "无需安装软件",
   ],
@@ -49,7 +51,7 @@ const faqLd = {
       name: "VideoGrab 是免费的吗？",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "VideoGrab 提供永久免费版，支持每日解析与最高 720p 画质。Pro 套餐可解锁更高清晰度、批量下载、AI 视频总结等能力。",
+        text: "AI 视频总结免费开放，无需登录。视频下载需登录：登录后免费 3 次，升级 Pro（¥9.9/月）可无限次下载。",
       },
     },
     {
@@ -57,7 +59,7 @@ const faqLd = {
       name: "如何使用 VideoGrab 下载视频？",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "只需 3 步：1. 复制视频链接；2. 粘贴到 VideoGrab 输入框并解析；3. 选择清晰度后下载。无需安装软件，手机浏览器也可使用。",
+        text: "只需 3 步：1. 复制视频链接；2. 粘贴到 VideoGrab 输入框并解析；3. 登录后选择清晰度下载。无需安装软件，手机浏览器也可使用。",
       },
     },
     {
@@ -92,7 +94,7 @@ const howToLd = {
   "@type": "HowTo",
   name: "如何使用 VideoGrab 下载视频",
   description:
-    "使用 VideoGrab 在线视频下载器，只需 3 步即可免费下载 YouTube、B站、抖音等 1000+ 平台的视频。",
+    "使用 VideoGrab 在线视频下载器，登录后即可下载 YouTube、B站、抖音等 1000+ 平台的视频。",
   totalTime: "PT1M",
   tool: {
     "@type": "HowToTool",
@@ -117,7 +119,7 @@ const howToLd = {
       "@type": "HowToStep",
       position: 3,
       name: "选择清晰度并下载",
-      text: "选择清晰度后点击下载保存到本地。解析成功后还可自动生成 AI 摘要与思维导图。",
+      text: "登录后选择清晰度并下载保存到本地。解析成功后还可自动生成 AI 摘要与思维导图。",
       url: `${SITE_URL}/#how-to-use`,
     },
   ],

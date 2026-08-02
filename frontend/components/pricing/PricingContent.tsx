@@ -20,9 +20,9 @@ const plans = [
     desc: "适合偶尔下载",
     features: [
       "每日解析（受限流）",
-      "视频下载",
       "1000+ 平台支持",
-      "登录后 AI 总结免费 3 次",
+      "登录后免费下载 3 次",
+      "AI 视频总结 / 导图 / 问答全站免费",
     ],
     highlighted: false,
   },
@@ -32,9 +32,10 @@ const plans = [
     price: "¥9.9",
     period: "/月",
     original: "¥29/月",
-    desc: "适合重度用户",
+    desc: "适合高频下载用户",
     features: [
-      "无限次 AI 视频总结 / 导图 / 问答",
+      "无限次视频下载",
+      "AI 总结 / 导图 / 问答免费",
       "字幕提取与下载",
       "优先体验新功能",
       "可随时在账单门户取消",
@@ -92,7 +93,7 @@ export default function PricingContent() {
             <span className="text-[#1677ff]">下载方案</span>
           </h1>
           <p className="mt-3 text-sm text-[#64748b] sm:text-base">
-            免费下载随时用；登录可试用 AI 总结，升级 Pro 不限次数
+            登录后可免费下载 3 次；AI 总结免费开放；升级 Pro 无限次下载
           </p>
           {!loading && user?.is_pro && (
             <p className="mt-3 inline-flex rounded-full bg-[#1677ff]/10 px-3 py-1 text-sm font-medium text-[#1677ff]">
