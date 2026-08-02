@@ -1,4 +1,10 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 export default function Footer() {
+  const t = useTranslations("footer");
+
   return (
     <footer className="mt-auto border-t border-[#e8eef5]/80 bg-white/70 backdrop-blur-sm">
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
@@ -10,24 +16,22 @@ export default function Footer() {
               </div>
               <span className="font-bold text-[#0f172a]">VideoGrab</span>
             </div>
-            <p className="text-sm leading-relaxed text-[#64748b]">
-              万能视频下载工具，支持 1000+ 平台，随时随地保存视频到本地。
-            </p>
+            <p className="text-sm leading-relaxed text-[#64748b]">{t("tagline")}</p>
           </div>
 
           <div>
-            <h4 className="mb-3 text-sm font-bold text-[#0f172a]">免责声明</h4>
+            <h4 className="mb-3 text-sm font-bold text-[#0f172a]">
+              {t("disclaimerTitle")}
+            </h4>
             <p className="text-xs leading-relaxed text-[#94a3b8]">
-              本工具仅供个人学习与研究使用。用户应确保对所下载内容拥有合法权利，并遵守各平台服务条款。
-              请勿用于侵犯版权或商业用途，由此产生的法律责任由用户自行承担。
-              本服务不永久存储任何视频内容，文件将在 2 小时后自动删除。
+              {t("disclaimer")}
             </p>
           </div>
         </div>
 
         <div className="mt-5 flex flex-col items-center justify-between gap-2 border-t border-[#f0f1f2] pt-4 text-xs text-[#94a3b8] sm:flex-row">
-          <span>© 2026 VideoGrab. 基于 yt-dlp 开源项目构建。</span>
-          <span>沪ICP备XXXXXXXX号（占位）</span>
+          <span>{t("copyright")}</span>
+          <span>{t("icp")}</span>
         </div>
       </div>
     </footer>

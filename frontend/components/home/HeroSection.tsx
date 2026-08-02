@@ -1,9 +1,15 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 interface HeroSectionProps {
   /** 紧凑首屏：缩小间距；演示模式关闭时弱化副文案 */
   compact?: boolean;
 }
 
 export default function HeroSection({ compact = false }: HeroSectionProps) {
+  const t = useTranslations("home");
+
   return (
     <section
       className={`relative px-4 text-center sm:px-6 ${
@@ -24,14 +30,14 @@ export default function HeroSection({ compact = false }: HeroSectionProps) {
             : "text-[2rem] sm:text-4xl lg:text-[2.75rem]"
         }`}
       >
-        万能视频下载，
-        <span className="text-[#1677ff]">一键保存到本地</span>
+        {t("heroTitleBefore")}
+        <span className="text-[#1677ff]">{t("heroTitleAccent")}</span>
       </h1>
       {!compact && (
         <p className="relative mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#64748b] sm:text-[15px]">
-          YouTube、B站、抖音等 1000+ 平台，手机也能下。
+          {t("heroSubtitle")}
           <br className="hidden sm:block" />
-          下载之外，还能 AI 总结视频要点。
+          {t("heroSubtitleAi")}
         </p>
       )}
     </section>

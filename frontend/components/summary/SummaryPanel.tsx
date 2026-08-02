@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { SubtitleSegment, subscribeSummarize } from "@/lib/api";
 import {
   SubtitleFormat,
@@ -26,6 +27,7 @@ export default function SummaryPanel({
   autoStart = false,
   className = "",
 }: SummaryPanelProps) {
+  const t = useTranslations("summary");
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("summary");
   const [status, setStatus] = useState("");
@@ -52,7 +54,7 @@ export default function SummaryPanel({
     if (loading) return;
     setOpen(true);
     setError("");
-    setStatus("准备中…");
+    setStatus(t("preparing"));
     setLoading(true);
     setDone(false);
     setSummary("");
@@ -75,34 +77,34 @@ export default function SummaryPanel({
           } else if (ev.event === "subtitle" && ev.data.text) {
             setSubtitle(ev.data.text);
             setSegments(ev.data.segments || []);
-            setStatus("字幕已提取");
+            setStatus(t("subtitleReady"));
           } else if (ev.event === "content" && ev.data.delta) {
             setSummary((prev) => prev + ev.data.delta);
-            setStatus("正在生成总结…");
+            setStatus(t("generatingSummary"));
           } else if (ev.event === "mindmap") {
             const md = ev.data.markdown || "";
             setMindmap(md);
-            setStatus(md ? "思维导图已生成" : "思维导图生成完成（内容为空）");
+            setStatus(md ? t("mindmapReady") : t("mindmapEmptyDone"));
           } else if (ev.event === "done") {
             finished = true;
             setDone(true);
-            setStatus("完成");
+            setStatus(t("done"));
             setTab("summary");
           } else if (ev.event === "error") {
             finished = true;
-            setError(ev.data.message || "总结失败");
+            setError(ev.data.message || t("failed"));
             setStatus("");
           }
         },
         ac.signal
       );
       if (!finished && !ac.signal.aborted) {
-        setError("连接中断，总结未完成。请点击重新生成。");
+        setError(t("connectionLost"));
         setStatus("");
       }
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "总结失败");
+      setError(err instanceof Error ? err.message : t("failed"));
     } finally {
       setLoading(false);
     }
@@ -133,24 +135,24 @@ export default function SummaryPanel({
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
       copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
     } catch {
-      window.alert("复制失败，请手动选择文本复制");
+      window.alert(t("copyFailed"));
     }
   };
 
   const tabs: { id: Tab; label: string; disabled?: boolean }[] = [
-    { id: "summary", label: "摘要" },
-    { id: "subtitle", label: "字幕", disabled: !subtitle },
-    { id: "mindmap", label: "思维导图", disabled: !mindmap },
-    { id: "chat", label: "问答", disabled: !subtitle },
+    { id: "summary", label: t("tabSummary") },
+    { id: "subtitle", label: t("tabSubtitle"), disabled: !subtitle },
+    { id: "mindmap", label: t("tabMindmap"), disabled: !mindmap },
+    { id: "chat", label: t("tabChat"), disabled: !subtitle },
   ];
 
   const actionLabel = loading
-    ? "总结中…"
+    ? t("summarizing")
     : done
-      ? "重新生成"
+      ? t("regenerate")
       : open
-        ? "开始总结"
-        : "AI 视频总结";
+        ? t("start")
+        : t("aiButton");
 
   return (
     <div className={`w-full ${className}`}>
@@ -171,7 +173,7 @@ export default function SummaryPanel({
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
-                AI 视频总结
+                {t("title")}
               </h2>
               {status && (
                 <p className="mt-0.5 truncate text-xs text-[#64748b]">
@@ -190,19 +192,19 @@ export default function SummaryPanel({
           </div>
 
           <div className="mb-3 flex flex-wrap gap-1.5 border-b border-[#f1f5f9] pb-2">
-            {tabs.map((t) => (
+            {tabs.map((tabItem) => (
               <button
-                key={t.id}
+                key={tabItem.id}
                 type="button"
-                disabled={t.disabled}
-                onClick={() => setTab(t.id)}
+                disabled={tabItem.disabled}
+                onClick={() => setTab(tabItem.id)}
                 className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-                  tab === t.id
+                  tab === tabItem.id
                     ? "bg-[#1677ff] text-white"
                     : "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
                 }`}
               >
-                {t.label}
+                {tabItem.label}
               </button>
             ))}
           </div>
@@ -218,7 +220,7 @@ export default function SummaryPanel({
               <div className="min-h-[120px]">
                 {loading && !summary && !error && (
                   <p className="animate-pulse text-sm text-[#94a3b8]">
-                    {status || "生成中…"}
+                    {status || t("generating")}
                   </p>
                 )}
                 {summary ? (
@@ -229,14 +231,16 @@ export default function SummaryPanel({
                         onClick={handleCopySummary}
                         className="rounded-md border border-[#1677ff]/30 bg-white px-2.5 py-1 text-xs font-medium text-[#1677ff] transition-colors hover:bg-[#1677ff]/10"
                       >
-                        {copied ? "已复制" : "复制摘要"}
+                        {copied ? t("copied") : t("copySummary")}
                       </button>
                     </div>
                     <MarkdownContent content={summary} />
                   </div>
                 ) : (
                   !loading &&
-                  !error && <p className="text-sm text-[#94a3b8]">暂无摘要</p>
+                  !error && (
+                    <p className="text-sm text-[#94a3b8]">{t("noSummary")}</p>
+                  )
                 )}
               </div>
             )}
@@ -246,8 +250,8 @@ export default function SummaryPanel({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-[#94a3b8]">
                     {segments.length
-                      ? `共 ${segments.length} 条字幕`
-                      : "纯文本字幕"}
+                      ? t("subtitleCount", { count: segments.length })
+                      : t("plainSubtitle")}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {(["srt", "vtt", "txt"] as SubtitleFormat[]).map((fmt) => (
@@ -264,7 +268,7 @@ export default function SummaryPanel({
                   </div>
                 </div>
                 <pre className="max-h-[360px] overflow-y-auto whitespace-pre-wrap rounded-xl bg-[#f8fafc] p-3 font-sans text-xs leading-relaxed text-[#334155]">
-                  {subtitle || "暂无字幕"}
+                  {subtitle || t("noSubtitle")}
                 </pre>
               </div>
             )}
@@ -274,7 +278,7 @@ export default function SummaryPanel({
                 <MindMapView markdown={mindmap} title={title} />
               ) : (
                 <p className="text-sm text-[#94a3b8]">
-                  {loading ? "思维导图生成中…" : "暂无思维导图"}
+                  {loading ? t("mindmapGenerating") : t("noMindmap")}
                 </p>
               ))}
 

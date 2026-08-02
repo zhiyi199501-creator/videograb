@@ -28,8 +28,8 @@ describe("normalizeVideoUrl", () => {
 
 describe("formatFileSize", () => {
   it("handles empty and units", () => {
-    expect(formatFileSize(null)).toBe("未知大小");
-    expect(formatFileSize(0)).toBe("未知大小");
+    expect(formatFileSize(null)).toBe("Unknown size");
+    expect(formatFileSize(0)).toBe("Unknown size");
     expect(formatFileSize(512)).toBe("512 B");
     expect(formatFileSize(2048)).toBe("2.0 KB");
     expect(formatFileSize(1024 * 1024)).toBe("1.0 MB");
@@ -60,6 +60,7 @@ describe("startDownload", () => {
       expect(url).toContain("/api/jobs/job-1/download");
       expect(init.headers.Authorization).toBe("Bearer token-123");
       expect(init.headers["Content-Type"]).toBe("application/json");
+      expect(init.headers["Accept-Language"]).toBe("zh");
     } finally {
       vi.unstubAllGlobals();
     }

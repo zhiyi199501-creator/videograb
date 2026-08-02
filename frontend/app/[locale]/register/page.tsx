@@ -1,13 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/lib/auth";
 
 export default function RegisterPage() {
+  const t = useTranslations("auth");
   const { register, user, loading } = useAuth();
   const router = useRouter();
   const search = useSearchParams();
@@ -30,7 +32,7 @@ export default function RegisterPage() {
       await register(email.trim(), password);
       router.push(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "注册失败");
+      setError(err instanceof Error ? err.message : t("registerFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -41,13 +43,15 @@ export default function RegisterPage() {
       <Navbar />
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <h1 className="text-2xl font-black text-[#0f172a]">注册</h1>
-          <p className="mt-2 text-sm text-[#64748b]">
-            创建账号后可免费下载 3 次，也可升级 Pro 无限下载
-          </p>
+          <h1 className="text-2xl font-black text-[#0f172a]">
+            {t("registerTitle")}
+          </h1>
+          <p className="mt-2 text-sm text-[#64748b]">{t("registerLead")}</p>
           <form onSubmit={onSubmit} className="mt-8 space-y-4">
             <label className="block">
-              <span className="text-sm font-medium text-[#0f172a]">邮箱</span>
+              <span className="text-sm font-medium text-[#0f172a]">
+                {t("email")}
+              </span>
               <input
                 type="email"
                 required
@@ -59,7 +63,7 @@ export default function RegisterPage() {
             </label>
             <label className="block">
               <span className="text-sm font-medium text-[#0f172a]">
-                密码（至少 8 位）
+                {t("passwordMin")}
               </span>
               <input
                 type="password"
@@ -81,16 +85,16 @@ export default function RegisterPage() {
               disabled={submitting}
               className="w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white hover:bg-[#4096ff] disabled:opacity-60"
             >
-              {submitting ? "注册中…" : "注册"}
+              {submitting ? t("registering") : t("registerTitle")}
             </button>
           </form>
           <p className="mt-6 text-center text-sm text-[#64748b]">
-            已有账号？{" "}
+            {t("hasAccount")}{" "}
             <Link
               href={`/login?next=${encodeURIComponent(next)}`}
               className="text-[#1677ff] hover:underline"
             >
-              登录
+              {t("loginLink")}
             </Link>
           </p>
         </div>

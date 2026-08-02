@@ -1,34 +1,21 @@
-import { UPDATED_AT } from "@/lib/site";
+"use client";
 
-const faqs = [
-  {
-    q: "VideoGrab 支持哪些视频平台？",
-    a: "基于 yt-dlp，支持 YouTube、B站、抖音、TikTok、Instagram、Twitter/X 等 1000+ 主流视频与社交媒体平台。",
-  },
-  {
-    q: "VideoGrab 是免费的吗？",
-    a: "AI 视频总结免费开放，无需登录。视频下载需登录：登录后免费 3 次，升级 Pro（¥9.9/月）可无限次下载。",
-  },
-  {
-    q: "如何下载 YouTube / B站 / 抖音视频？",
-    a: "复制链接 → 粘贴到首页输入框并解析 → 登录后选择清晰度下载。三步完成，无需安装。",
-  },
-  {
-    q: "AI 视频总结能做什么？",
-    a: "自动提取字幕或语音转写，生成结构化摘要与思维导图，并支持基于字幕的智能问答，适合快速消化长视频。",
-  },
-  {
-    q: "和其他下载工具有什么区别？",
-    a: "平台覆盖更广（1000+）、内置 AI 总结与导图、浏览器即用、字幕多格式导出、手机端可用。",
-  },
-  {
-    q: "手机上能用吗？",
-    a: "可以。响应式适配手机浏览器；微信内打开时会提示跳转系统浏览器完成下载。",
-  },
-];
+import { useTranslations } from "next-intl";
 
 /** GEO：问答式内容，便于生成式引擎直接引用 */
 export default function FaqSection() {
+  const t = useTranslations("home");
+  const tSeo = useTranslations("seo");
+
+  const faqs = [
+    { q: t("faq1q"), a: t("faq1a") },
+    { q: t("faq2q"), a: t("faq2a") },
+    { q: t("faq3q"), a: t("faq3a") },
+    { q: t("faq4q"), a: t("faq4a") },
+    { q: t("faq5q"), a: t("faq5a") },
+    { q: t("faq6q"), a: t("faq6a") },
+  ];
+
   return (
     <section
       id="faq"
@@ -41,11 +28,10 @@ export default function FaqSection() {
             id="faq-heading"
             className="text-2xl font-bold text-[#0f172a] sm:text-3xl"
           >
-            常见问题（FAQ）
+            {t("faqTitle")}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-[#64748b] sm:text-base">
-            关于 VideoGrab 平台支持、免费额度、下载步骤与 AI
-            总结的快速解答。更新于 {UPDATED_AT}。
+            {t("faqLead", { updatedAt: tSeo("updatedAt") })}
           </p>
         </div>
 
