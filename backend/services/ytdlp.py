@@ -102,8 +102,8 @@ def _cookie_opts() -> dict:
 def _base_opts(url: str = "") -> dict:
     """Shared yt-dlp options: retries + headers + multi player-client fallback.
 
-    - YouTube: prefer android client WITHOUT cookies. Cookie + web/tv often
-      forces SABR streams that 403 on download.
+    - YouTube：无 Cookie 时优先 android；有 Cookie 时改用 web 系（android 不支持 Cookie，
+      且机房/住宅 IP 常触发 “Sign in to confirm you’re not a bot”）。
     - Bilibili returns HTTP 412 without browser User-Agent + Referer.
     """
     headers = {"User-Agent": _USER_AGENT}
@@ -114,6 +114,19 @@ def _base_opts(url: str = "") -> dict:
         headers["Referer"] = "https://www.douyin.com/"
 
     is_yt = _is_youtube(url)
+    cookie_opts = _cookie_opts()
+    has_cookies = bool(cookie_opts)
+
+    if is_yt:
+        # android 客户端不吃 cookies；有 Cookie 时走 web 系才能过 bot 墙
+        player_client = (
+            ["web_safari", "web", "tv", "mweb"]
+            if has_cookies
+            else ["android", "tv", "web_safari", "web"]
+        )
+    else:
+        player_client = ["tv", "ios", "web_safari", "web"]
+
     opts: dict = {
         "quiet": True,
         "no_warnings": True,
@@ -124,18 +137,11 @@ def _base_opts(url: str = "") -> dict:
         "http_headers": headers,
         "extractor_args": {
             "youtube": {
-                "player_client": (
-                    ["android", "tv", "web_safari", "web"]
-                    if is_yt
-                    else ["tv", "ios", "web_safari", "web"]
-                )
+                "player_client": player_client,
             }
         },
     }
-
-    # YouTube + Cookie 容易触发 SABR/403；B 站等仍需要 Cookie
-    if not is_yt:
-        opts.update(_cookie_opts())
+    opts.update(cookie_opts)
     return opts
 
 
@@ -180,8 +186,9 @@ def _friendly_error(err: str) -> str:
         )
     if "page needs to be reloaded" in low or "sign in to confirm" in low or "bot" in low:
         return (
-            "该视频被平台反爬限制。请稍后重试；B站等平台可配置浏览器 Cookie "
-            "（COOKIES_FROM_BROWSER）。"
+            "该视频被平台反爬限制（常见于 YouTube 人机验证）。"
+            "本地请在 Chrome 登录 YouTube 后配置 COOKIES_FROM_BROWSER；"
+            "生产请把含 youtube.com 的 Netscape cookies 并入 secrets/cookies.txt 后重试。"
         )
     if "private" in low or "login" in low or "members-only" in low:
         return "该视频为私有/会员内容，需要登录 Cookie 才能下载。"

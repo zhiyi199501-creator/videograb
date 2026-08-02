@@ -5,6 +5,7 @@ import pytest
 
 from services.ytdlp import (
     JobStore,
+    _base_opts,
     _ensure_url_scheme,
     _friendly_error,
     _normalize_url,
@@ -69,6 +70,45 @@ def test_friendly_error_maps_known_cases():
         "\x1b[0;31mERROR:\x1b[0m [Douyin] 123: Fresh cookies (not necessarily logged in) are needed"
     )
     assert "\x1b" not in _friendly_error("\x1b[0;31mboom\x1b[0m unavailable")
+    assert "YouTube" in _friendly_error(
+        "Sign in to confirm you’re not a bot. Use --cookies-from-browser"
+    )
+
+
+def test_base_opts_youtube_uses_cookies_and_web_clients(monkeypatch):
+    monkeypatch.setenv("COOKIES_FROM_BROWSER", "chrome")
+    monkeypatch.delenv("COOKIES_FILE", raising=False)
+    # reset one-shot log flag
+    import services.ytdlp as ytdlp
+
+    ytdlp._cookie_opts_logged = False
+    opts = _base_opts("https://www.youtube.com/watch?v=BS6cgVyQom0")
+    assert opts.get("cookiesfrombrowser") == ("chrome",)
+    assert opts["extractor_args"]["youtube"]["player_client"][0] == "web_safari"
+    assert "android" not in opts["extractor_args"]["youtube"]["player_client"]
+
+
+def test_base_opts_youtube_without_cookies_prefers_android(monkeypatch):
+    monkeypatch.delenv("COOKIES_FROM_BROWSER", raising=False)
+    monkeypatch.delenv("COOKIES_FILE", raising=False)
+    import services.ytdlp as ytdlp
+
+    ytdlp._cookie_opts_logged = False
+    opts = _base_opts("https://youtu.be/BS6cgVyQom0")
+    assert "cookiesfrombrowser" not in opts
+    assert "cookiefile" not in opts
+    assert opts["extractor_args"]["youtube"]["player_client"][0] == "android"
+
+
+def test_base_opts_bilibili_still_gets_cookies(monkeypatch):
+    monkeypatch.setenv("COOKIES_FROM_BROWSER", "chrome")
+    monkeypatch.delenv("COOKIES_FILE", raising=False)
+    import services.ytdlp as ytdlp
+
+    ytdlp._cookie_opts_logged = False
+    opts = _base_opts("https://www.bilibili.com/video/BV1xx")
+    assert opts.get("cookiesfrombrowser") == ("chrome",)
+    assert opts["http_headers"]["Referer"] == "https://www.bilibili.com/"
 
 
 def test_writable_cookiefile_copies_readonly_source(tmp_path, monkeypatch):
