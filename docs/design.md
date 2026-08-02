@@ -194,11 +194,11 @@ videograb/
 
 - 定价页 `/pricing` + Stripe Checkout / Customer Portal 已接入（见 membership.md）
 - 后端可扩展更高清晰度 / 批量等 Pro 能力（当前 Pro 主要权益为无限 AI）
-- 首页 `ProFeatureCards` 仍可作转化入口
+- 首页 Pro 转化统一走 `/pricing` 入口
 
 ### 7.2 AI 视频总结（已实现）
 
-详见 [ai-summary.md](ai-summary.md)。需登录；登录用户免费 3 次，Pro 无限。有额度时下载页可自动触发，可手动重新生成。
+详见 [ai-summary.md](ai-summary.md)。全站免费，无需登录。下载页解析成功后自动触发，可手动重新生成。
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -215,9 +215,9 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 
 详见 [membership.md](membership.md)、[stripe-setup.md](stripe-setup.md)。
 
-- SQLite：`users`（含 `ai_free_used`）/ `subscriptions` / `stripe_events` / `checkout_sessions`
+- SQLite：`users`（含 `download_free_used`）/ `subscriptions` / `stripe_events` / `checkout_sessions`
 - JWT 登录；Stripe Checkout 月付 Pro（¥9.9）；Webhook 幂等履约
-- 登录用户免费 AI 总结 3 次；用尽后需 Pro（`require_ai_access` / `require_ai_access_and_consume`）
+- 下载需登录：非 Pro 免费 3 次，Pro 无限（下载路由内扣次）；AI 总结全站免费
 - Job 仍为内存；可后续挂 `user_id`
 
 ### 7.4 DB 迁移路径（后续）
@@ -235,7 +235,7 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 | JOB_TTL_HOURS | 2 | Job 过期时间 |
 | （硬编码） | 60/hour | `POST /api/extract` IP 限流；总结/问答另有 20/30/hour |
 | TEMP_DIR | /tmp/videos | 临时文件目录 |
-| CORS_ORIGINS | http://localhost:3000 | 前端域名；生产由 `docker-compose.prod.yml` 覆盖 |
+| CORS_ORIGINS | http://localhost:3000,http://127.0.0.1:3000 | 前端域名；生产由 `docker-compose.prod.yml` 覆盖 |
 | DEEPSEEK_API_KEY | （空） | AI 总结必填 |
 | DEEPSEEK_MODEL | deepseek-v4-flash | DeepSeek 模型 |
 | WHISPER_MODEL | tiny | 无字幕 ASR 模型 |

@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import MobileTip from "@/components/download/MobileTip";
 import FormatPicker from "@/components/download/FormatPicker";
 import ProgressBar from "@/components/download/ProgressBar";
 import SummaryPanel from "@/components/summary/SummaryPanel";
+import { useAuth } from "@/lib/auth";
 import {
   FormatInfo,
   JobResponse,
+  downloadFile,
   formatDuration,
-  getFileUrl,
   getThumbnailUrl,
   getJob,
   startDownload,
@@ -43,7 +44,9 @@ function pickDefaultFormat(formats: FormatInfo[]): string {
 
 export default function DownloadPage() {
   const params = useParams();
+  const router = useRouter();
   const jobId = params.id as string;
+  const { user, loading: authLoading, refreshMe } = useAuth();
 
   const [phase, setPhase] = useState<Phase>("extracting");
   const [job, setJob] = useState<JobResponse | null>(null);
@@ -53,6 +56,7 @@ export default function DownloadPage() {
   const [downloading, setDownloading] = useState(false);
   const [thumbError, setThumbError] = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
+  const [savingFile, setSavingFile] = useState(false);
   const selectedFormatRef = useRef("");
   const autoSavedRef = useRef(false);
   const unsubRef = useRef<(() => void) | undefined>(undefined);
@@ -74,16 +78,12 @@ export default function DownloadPage() {
     autoSavedRef.current = true;
 
     const filename = job?.filename || "video.mp4";
-    const url = getFileUrl(jobId);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setAutoSaved(true);
+    downloadFile(jobId, filename)
+      .then(() => setAutoSaved(true))
+      .catch(() => {
+        autoSavedRef.current = false;
+        setAutoSaved(false);
+      });
   }, [phase, jobId, job?.filename]);
 
   useEffect(() => {
@@ -189,6 +189,15 @@ export default function DownloadPage() {
   }, [jobId]);
 
   const handleDownload = async () => {
+    if (!user) {
+      router.push(`/login?next=${encodeURIComponent(`/download/${jobId}`)}`);
+      return;
+    }
+    if (!user.is_pro && (user.download_free_remaining ?? 0) <= 0) {
+      setError("免费下载次数已用完（共 3 次），升级 Pro 可无限次下载");
+      return;
+    }
+
     downloadStartedRef.current = true;
     setDownloading(true);
     setError("");
@@ -197,6 +206,7 @@ export default function DownloadPage() {
 
     try {
       await startDownload(jobId, selectedFormat);
+      await refreshMe().catch(() => undefined);
       unsubRef.current?.();
       unsubRef.current = subscribeJobEvents(jobId, (data) => {
         if (cancelledRef.current) return;
@@ -241,8 +251,27 @@ export default function DownloadPage() {
     }
   };
 
+  const handleSaveFile = async () => {
+    setSavingFile(true);
+    setError("");
+    try {
+      await downloadFile(jobId, job?.filename || "video.mp4");
+      setAutoSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "保存失败");
+    } finally {
+      setSavingFile(false);
+    }
+  };
+
   const showSplit =
     phase === "ready" || phase === "downloading" || phase === "complete";
+  const downloadRemaining =
+    typeof user?.download_free_remaining === "number"
+      ? user.download_free_remaining
+      : null;
+  const quotaExhausted = !!user && !user.is_pro && downloadRemaining === 0;
+  const loginNext = `/login?next=${encodeURIComponent(`/download/${jobId}`)}`;
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-3 sm:px-5 sm:py-4">
@@ -314,12 +343,42 @@ export default function DownloadPage() {
 
                 <button
                   type="button"
-                  onClick={handleDownload}
-                  disabled={downloading || !selectedFormat}
+                  onClick={!user ? () => router.push(loginNext) : handleDownload}
+                  disabled={
+                    downloading || !selectedFormat || authLoading || quotaExhausted
+                  }
                   className="mt-4 w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] disabled:opacity-60"
                 >
-                  {downloading ? "准备下载..." : "开始下载"}
+                  {downloading
+                    ? "准备下载..."
+                    : authLoading
+                      ? "加载中…"
+                      : !user
+                        ? "登录后免费下载"
+                        : user.is_pro
+                          ? "开始下载"
+                          : quotaExhausted
+                            ? "免费次数已用完"
+                            : `开始下载（剩余 ${downloadRemaining} 次）`}
                 </button>
+                {!user && !authLoading && (
+                  <p className="mt-2 text-center text-xs text-[#64748b]">
+                    登录后可免费下载 3 次
+                  </p>
+                )}
+                {user && !user.is_pro && downloadRemaining !== null && (
+                  <p className="mt-2 text-center text-xs text-[#64748b]">
+                    免费下载剩余 {downloadRemaining} 次
+                  </p>
+                )}
+                {quotaExhausted && (
+                  <Link
+                    href="/pricing"
+                    className="mt-2 block text-center text-xs font-medium text-[#1677ff] hover:underline"
+                  >
+                    升级 Pro 无限下载
+                  </Link>
+                )}
               </div>
             )}
 
@@ -354,13 +413,18 @@ export default function DownloadPage() {
                     ? "若浏览器未弹出保存，请点击下方按钮重试"
                     : "正在唤起保存…"}
                 </p>
-                <a
-                  href={getFileUrl(jobId)}
-                  download={job?.filename || "video.mp4"}
-                  className="mt-4 inline-block w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff]"
+                <button
+                  type="button"
+                  onClick={handleSaveFile}
+                  disabled={savingFile}
+                  className="mt-4 inline-block w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] disabled:opacity-60"
                 >
-                  {autoSaved ? "再次保存到手机 / 电脑" : "保存到手机 / 电脑"}
-                </a>
+                  {savingFile
+                    ? "保存中…"
+                    : autoSaved
+                      ? "再次保存到手机 / 电脑"
+                      : "保存到手机 / 电脑"}
+                </button>
                 <Link
                   href="/"
                   className="mt-3 block text-sm text-[#1677ff] hover:underline"

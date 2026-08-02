@@ -52,7 +52,7 @@ def test_handle_event_idempotent(db_path):
     }
     billing.handle_stripe_event(event)
     billing.handle_stripe_event(event)
-    assert user_store.get_ai_free_used(user["id"]) == 0
+    assert user_store.get_download_free_used(user["id"]) == 0
     assert user_store.is_pro_user(user["id"]) is True
 
 

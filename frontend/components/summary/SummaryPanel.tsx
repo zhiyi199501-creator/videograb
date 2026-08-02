@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SubtitleSegment, subscribeSummarize } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
 import {
   SubtitleFormat,
   downloadSubtitles,
@@ -17,7 +15,7 @@ type Tab = "summary" | "subtitle" | "mindmap" | "chat";
 interface SummaryPanelProps {
   jobId: string;
   title?: string | null;
-  /** 挂载后自动开始总结（需登录且 can_use_ai） */
+  /** 挂载后自动开始总结 */
   autoStart?: boolean;
   className?: string;
 }
@@ -28,17 +26,6 @@ export default function SummaryPanel({
   autoStart = false,
   className = "",
 }: SummaryPanelProps) {
-  const { user, loading: authLoading, refreshMe } = useAuth();
-  const isPro = !!user?.is_pro;
-  const canUseAi =
-    !!user &&
-    (typeof user.can_use_ai === "boolean"
-      ? user.can_use_ai
-      : isPro ||
-        (typeof user.ai_free_remaining === "number" &&
-          user.ai_free_remaining > 0));
-  const freeRemaining =
-    typeof user?.ai_free_remaining === "number" ? user.ai_free_remaining : null;
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("summary");
   const [status, setStatus] = useState("");
@@ -52,6 +39,7 @@ export default function SummaryPanel({
   const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startedForRef = useRef<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -61,7 +49,7 @@ export default function SummaryPanel({
   }, []);
 
   const startSummarize = async () => {
-    if (!canUseAi || loading) return;
+    if (loading) return;
     setOpen(true);
     setError("");
     setStatus("准备中…");
@@ -112,24 +100,24 @@ export default function SummaryPanel({
         setError("连接中断，总结未完成。请点击重新生成。");
         setStatus("");
       }
-      // 非 Pro 扣次后刷新剩余次数
-      if (!isPro) {
-        await refreshMe().catch(() => undefined);
-      }
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
       setError(err instanceof Error ? err.message : "总结失败");
-      await refreshMe().catch(() => undefined);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (authLoading || !autoStart || !canUseAi) return;
-    void startSummarize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart / canUseAi 变化自动触发
-  }, [autoStart, jobId, canUseAi, authLoading]);
+    if (!autoStart || startedForRef.current === jobId) return;
+    startedForRef.current = jobId;
+    const timer = setTimeout(() => void startSummarize(), 0);
+    return () => {
+      clearTimeout(timer);
+      if (startedForRef.current === jobId) startedForRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 job / autoStart 变化自动触发
+  }, [autoStart, jobId]);
 
   const handleDownloadSubtitle = (format: SubtitleFormat) => {
     if (!subtitle.trim() && segments.length === 0) return;
@@ -164,58 +152,6 @@ export default function SummaryPanel({
         ? "开始总结"
         : "AI 视频总结";
 
-  if (authLoading) {
-    return (
-      <div className={`w-full ${className}`}>
-        <div className="rounded-xl border border-[#eef0f3] bg-white p-4 text-sm text-[#94a3b8]">
-          加载会员状态…
-        </div>
-      </div>
-    );
-  }
-
-  if (!canUseAi) {
-    return (
-      <div className={`w-full ${className}`}>
-        <div className="rounded-xl border border-[#1677ff]/20 bg-gradient-to-b from-[#1677ff]/5 to-white p-5 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
-          <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
-            AI 视频总结
-          </h2>
-          <p className="mt-2 text-sm text-[#64748b]">
-            {user
-              ? "免费 3 次已用完。升级 Pro（¥9.9/月）可无限使用摘要、导图与问答。"
-              : "登录后可免费体验 3 次 AI 总结；升级 Pro 无限次。"}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            {user ? (
-              <Link
-                href="/pricing"
-                className="rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff]"
-              >
-                升级 Pro · ¥9.9/月
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login?next=/pricing"
-                  className="rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff]"
-                >
-                  登录免费试用
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="rounded-full border border-[#1677ff]/30 px-5 py-2 text-sm font-medium text-[#1677ff]"
-                >
-                  查看定价
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={`w-full ${className}`}>
       {!open ? (
@@ -229,11 +165,6 @@ export default function SummaryPanel({
             <span>✨</span>
             {actionLabel}
           </span>
-          {!isPro && freeRemaining !== null && (
-            <span className="text-xs font-normal text-[#64748b]">
-              免费剩余 {freeRemaining} 次
-            </span>
-          )}
         </button>
       ) : (
         <div className="flex h-full w-full flex-col rounded-xl border border-[#eef0f3] bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-4">
@@ -241,11 +172,6 @@ export default function SummaryPanel({
             <div className="min-w-0">
               <h2 className="text-sm font-bold text-[#0f172a] sm:text-base">
                 AI 视频总结
-                {!isPro && freeRemaining !== null && (
-                  <span className="ml-2 text-xs font-normal text-[#64748b]">
-                    免费剩余 {freeRemaining} 次
-                  </span>
-                )}
               </h2>
               {status && (
                 <p className="mt-0.5 truncate text-xs text-[#64748b]">
@@ -256,7 +182,7 @@ export default function SummaryPanel({
             <button
               type="button"
               onClick={startSummarize}
-              disabled={loading || (!isPro && freeRemaining === 0)}
+              disabled={loading}
               className="shrink-0 rounded-full border border-[#1677ff]/25 bg-[#1677ff]/5 px-3 py-1 text-xs font-medium text-[#1677ff] hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {actionLabel}

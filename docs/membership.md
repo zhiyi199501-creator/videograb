@@ -1,6 +1,6 @@
 # 会员购买与 Stripe 支付方案
 
-> 已确认决策（2026-07）：登录（1A）+ 月付订阅（2A）+ 仅 Pro 套餐（3A，无 Team）+ CNY/Price 环境变量（4）+ AI 登录免费 3 次、Pro 无限（5B 演进）+ 本地 Stripe CLI 测试（6A）。
+> 已确认决策（2026-07）：登录（1A）+ 月付订阅（2A）+ 仅 Pro 套餐（3A，无 Team）+ CNY/Price 环境变量（4）+ 下载登录免费 3 次、Pro 无限 + AI 总结全站免费（5B 演进）+ 本地 Stripe CLI 测试（6A）。
 
 ## 1. 产品范围（本期）
 
@@ -9,7 +9,7 @@
 | 登录 | 邮箱 + 密码，JWT，SQLite |
 | 套餐 | 仅 **Pro**，¥9.9/月（Stripe Recurring Price，需在 Dashboard 创建对应价格） |
 | 支付 | Stripe Checkout（托管收银台），`mode=subscription` |
-| 权益 | 登录用户免费 AI 总结 **3 次**；Pro 无限；下载等其它功能仍可用 |
+| 权益 | 未登录不能下载视频；登录免费下载 **3 次**；Pro 无限下载；AI 总结全站免费 |
 | Team | 不做（定价页仅 Free / Pro） |
 | 取消/改卡 | Customer Portal（可选入口） |
 
@@ -28,6 +28,8 @@
 
 **履约以 Webhook 为准**，成功页仅作 UX；不可仅凭前端「支付成功」改会员状态。
 
+下载权限：未登录只能解析与使用 AI 总结；`POST /api/jobs/{id}/download` 需登录，非 Pro 每次消耗 1 次免费下载额度。
+
 ## 3. 数据模型（SQLite）
 
 ### users
@@ -38,7 +40,7 @@
 | email | 唯一，小写 |
 | password_hash | bcrypt |
 | stripe_customer_id | 可空 |
-| ai_free_used | INTEGER，非 Pro 已用免费 AI 次数（默认 0） |
+| download_free_used | INTEGER，非 Pro 已用免费下载次数（默认 0） |
 | created_at | ISO 时间 |
 
 ### subscriptions
@@ -84,10 +86,12 @@
 | POST | `/api/billing/checkout` | JWT | 返回 `{url}` |
 | POST | `/api/billing/portal` | JWT | 返回 Customer Portal `{url}` |
 | POST | `/api/billing/webhook` | Stripe 签名 | 原始 body 验签 |
-| GET | `/api/jobs/{id}/summarize` | JWT + AI 额度 | 非 Pro 成功开始时扣 1 次免费额度；用尽 → 403 |
-| POST | `/api/jobs/{id}/chat` | JWT + AI 额度 | 校验额度但不扣次；用尽 → 403 |
+| POST | `/api/jobs/{id}/download` | JWT + 下载额度 | 非 Pro 成功开始时扣 1 次免费额度；用尽 → 403 |
+| GET | `/api/jobs/{id}/file` | JWT | 取回已下载文件，不扣次 |
+| GET | `/api/jobs/{id}/summarize` | 无 | 全站免费，不校验登录 |
+| POST | `/api/jobs/{id}/chat` | 无 | 全站免费，不校验登录 |
 
-**AI 额度**：`can_use_ai` = Pro（`active`/`past_due` 且未过宽限期）**或** `ai_free_used < 3`。依赖 `require_ai_access` / `require_ai_access_and_consume`（旧名 `require_pro_user` 已改为走额度逻辑）。
+**下载额度**：`can_download` = Pro（`active`/`past_due` 且未过宽限期）**或** `download_free_used < 3`。下载路由内校验并扣次。
 
 ## 5. 安全与幂等
 
@@ -109,7 +113,6 @@
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` |
 | `STRIPE_PRICE_PRO` | Pro 月付 Price ID（`price_…`） |
 | `FRONTEND_URL` | 如 `http://localhost:3000`（success/cancel/portal 回跳） |
-| `STRIPE_PORTAL_CONFIG_ID` | 可选 |
 
 ## 7. Webhook 事件
 
@@ -127,7 +130,8 @@
 - Navbar 登录态 / 退出；Pro 角标
 - `/pricing`：Free / Pro；已是 Pro 显示「当前方案」
 - `/pricing/success`、`/pricing/cancel`
-- 下载页 AI 总结：有额度（含免费剩余次数）时可自动触发；无额度展示登录/升级引导并显示剩余次数
+- 下载页 AI 总结：全站免费，解析后自动触发；未登录也可用
+- 下载页视频下载：未登录展示登录引导；登录非 Pro 显示剩余下载次数，用尽后引导升级 Pro
 
 ## 9. 本地测试（无公网域名）
 

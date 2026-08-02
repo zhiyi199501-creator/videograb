@@ -11,7 +11,7 @@ def test_register_login_me(client):
     assert body["token_type"] == "bearer"
     assert body["user"]["email"] == email
     assert body["user"]["is_pro"] is False
-    assert body["user"]["ai_free_remaining"] == 3
+    assert body["user"]["download_free_remaining"] == 3
     token = body["access_token"]
 
     dup = client.post(

@@ -33,7 +33,7 @@
 ## 现役产品事实（易过期）
 
 - 线上：`https://videograb.codedance.work`（新加坡）；健康检查 `GET /health`（不在公开 `/api` 前缀）
-- AI：登录后免费 3 次；Pro 无限。`summarize` 扣次，`chat` 只校验
+- AI：总结/问答全站免费，未登录也可用，不扣次。下载：未登录不能下载；登录非 Pro 免费 **3** 次（`download_free_used`），Pro 无限。
 - 解析限流 60/hour（硬编码）；Job TTL 默认 2h；视频不持久化
 - Docker 前端构建：`BACKEND_URL=http://backend:8000`，`NEXT_PUBLIC_API_URL` 留空
 - Cookie：生产勿用 `COOKIES_FROM_BROWSER`；`COOKIES_FILE=/secrets/cookies.txt`（只读挂载，yt-dlp 用可写副本）

@@ -42,6 +42,7 @@ def init_db() -> None:
                 password_hash TEXT NOT NULL,
                 stripe_customer_id TEXT,
                 ai_free_used INTEGER NOT NULL DEFAULT 0,
+                download_free_used INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
             );
 
@@ -81,4 +82,7 @@ def init_db() -> None:
             conn.execute(
                 "ALTER TABLE users ADD COLUMN ai_free_used INTEGER NOT NULL DEFAULT 0"
             )
-
+        if "download_free_used" not in cols:
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN download_free_used INTEGER NOT NULL DEFAULT 0"
+            )

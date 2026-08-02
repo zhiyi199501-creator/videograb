@@ -43,7 +43,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <h1 className="text-2xl font-black text-[#0f172a]">注册</h1>
           <p className="mt-2 text-sm text-[#64748b]">
-            创建账号后即可升级 Pro 会员
+            创建账号后可免费下载 3 次，也可升级 Pro 无限下载
           </p>
           <form onSubmit={onSubmit} className="mt-8 space-y-4">
             <label className="block">

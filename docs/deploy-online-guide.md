@@ -228,7 +228,7 @@ services:
   backend:
     environment:
       - FRONTEND_URL=https://videograb.codedance.work
-      - CORS_ORIGINS=https://videograb.codedance.work,http://frontend:3000
+      - CORS_ORIGINS=https://videograb.codedance.work,https://www.videograb.codedance.work,http://frontend:3000
   frontend:
     build:
       args:
@@ -629,94 +629,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec frontend pr
 
 ---
 
-## 16. 可复制一键脚本（可选）
+## 16. 服务器一键脚本（仓库内置）
 
-下面脚本适合“代码已在 `/opt/videograb`、域名已解析好”的场景。  
-**请先用编辑器改脚本顶部变量**，再执行。
+脚本以仓库内 `scripts/` 目录为唯一现役版本，部署到 `/opt/videograb` 后可直接使用：
 
-保存为服务器上的 `/opt/videograb/scripts/reload-https.sh`：
+- `scripts/redeploy.sh`：`--pull` 先拉代码再重建，或仅重建并重启容器。
+- `scripts/reload-https.sh`：写入并重载 Caddy 的域名 HTTPS 反代。
 
-```bash
-#!/usr/bin/env bash
-# ============================================================
-# 作用：重载 Caddy，把指定域名 HTTPS 反代到本机 3000
-# 使用前：先确认 DNS 已指向本机，且防火墙放行 80/443
-# 用法：
-#   chmod +x /opt/videograb/scripts/reload-https.sh
-#   /opt/videograb/scripts/reload-https.sh
-# ============================================================
-
-set -euo pipefail
-
-# ===== 按你的实际情况修改 =====
-DOMAIN="videograb.codedance.work"
-UPSTREAM="127.0.0.1:3000"
-# ==============================
-
-echo "[1/3] 写入 /etc/caddy/Caddyfile ..."
-sudo tee /etc/caddy/Caddyfile >/dev/null <<EOF
-${DOMAIN} {
-    encode gzip
-    reverse_proxy ${UPSTREAM} {
-        flush_interval -1
-        transport http {
-            read_timeout 3600s
-            write_timeout 3600s
-        }
-    }
-}
-
-:80 {
-    reverse_proxy ${UPSTREAM} {
-        flush_interval -1
-    }
-}
-EOF
-
-echo "[2/3] 重载 Caddy ..."
-sudo systemctl reload caddy
-
-echo "[3/3] 检查服务状态 ..."
-sudo systemctl status caddy --no-pager | sed -n '1,20p'
-
-echo
-echo "完成。请浏览器访问：https://${DOMAIN}"
-```
-
-重建并启动项目脚本示例 `/opt/videograb/scripts/redeploy.sh`：
-
-```bash
-#!/usr/bin/env bash
-# ============================================================
-# 作用：拉取最新代码（可选）并重建前后端
-# 用法：
-#   chmod +x /opt/videograb/scripts/redeploy.sh
-#   /opt/videograb/scripts/redeploy.sh           # 不拉代码，只重建
-#   /opt/videograb/scripts/redeploy.sh --pull    # 先 git pull 再重建
-# ============================================================
-
-set -euo pipefail
-
-APP_DIR="/opt/videograb"
-cd "${APP_DIR}"
-
-if [[ "${1:-}" == "--pull" ]]; then
-  echo "[1/3] git pull ..."
-  git pull
-else
-  echo "[1/3] 跳过 git pull（如需更新代码请加 --pull）"
-fi
-
-echo "[2/3] docker compose build & up ..."
-docker compose up -d --build --force-recreate
-
-echo "[3/3] 当前容器状态："
-docker compose ps
-
-echo
-echo "完成。日志查看："
-echo "  docker compose logs -f --tail=100"
-```
+首次使用先按脚本顶部注释确认 `APP_DIR` / `DOMAIN` 等变量，再执行。
 
 ---
 

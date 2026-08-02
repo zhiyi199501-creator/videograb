@@ -2,6 +2,17 @@
 // 需要直连后端时再设 NEXT_PUBLIC_API_URL（如 http://127.0.0.1:8000）。
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+function withAuthHeaders(
+  extra: Record<string, string> = {}
+): Record<string, string> {
+  const headers = { ...extra };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("vg_access_token");
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 /** 兼容无协议粘贴，如 bilibili.com/video/BVxxx?... → https://... */
 export function normalizeVideoUrl(raw: string): string {
   const url = raw.trim().replace(/^['"]+|['"]+$/g, "");
@@ -64,7 +75,7 @@ export async function startDownload(
 ): Promise<JobResponse> {
   const res = await fetch(`${API_BASE}/api/jobs/${jobId}/download`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: withAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ format_id: formatId }),
   });
   if (!res.ok) {
@@ -74,8 +85,29 @@ export async function startDownload(
   return res.json();
 }
 
-export function getFileUrl(jobId: string): string {
-  return `${API_BASE}/api/jobs/${jobId}/file`;
+export async function downloadFile(
+  jobId: string,
+  filename: string
+): Promise<void> {
+  const headers = withAuthHeaders();
+
+  const res = await fetch(`${API_BASE}/api/jobs/${jobId}/file`, { headers });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "下载失败" }));
+    throw new Error(err.detail || "下载失败");
+  }
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function getThumbnailUrl(jobId: string): string {

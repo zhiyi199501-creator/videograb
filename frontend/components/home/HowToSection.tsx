@@ -14,7 +14,7 @@ const steps = [
   {
     number: 3,
     title: "选择清晰度并下载",
-    desc: "选择清晰度后点击下载保存到本地。解析成功后还可自动生成 AI 摘要与思维导图。",
+    desc: "登录后选择清晰度并下载（免费 3 次）。解析成功后还可自动生成 AI 摘要与思维导图，AI 总结无需登录。",
   },
 ];
 
@@ -35,8 +35,8 @@ export default function HowToSection() {
             如何使用 <span className="text-[#1677ff]">VideoGrab</span> 下载视频
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-[#64748b] sm:text-base">
-            结论先行：只需 3 步，即可免费下载 YouTube、B站、抖音等 1000+
-            平台视频，无需安装软件。
+            结论先行：只需 3 步，登录后即可免费下载 3 次 YouTube、B站、抖音等
+            1000+ 平台视频，无需安装软件。
           </p>
         </div>
 

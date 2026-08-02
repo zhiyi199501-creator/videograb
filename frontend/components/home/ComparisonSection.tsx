@@ -16,7 +16,8 @@ const rows: { feature: string; videograb: Cell; online: Cell; desktop: Cell }[] 
     { feature: "最高画质", videograb: "4K", online: "720p-1080p", desktop: "4K" },
     { feature: "无需安装", videograb: true, online: true, desktop: false },
     { feature: "手机浏览器可用", videograb: true, online: "部分支持", desktop: false },
-    { feature: "费用", videograb: "免费起步", online: "免费/付费", desktop: "付费为主" },
+    { feature: "登录免费下载", videograb: "3 次", online: "-", desktop: "-" },
+    { feature: "费用", videograb: "免费 AI + 登录 3 次下载，Pro 无限", online: "免费/付费", desktop: "付费为主" },
   ];
 
 function CellValue({ value }: { value: Cell }) {

@@ -10,7 +10,7 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-ARG NEXT_PUBLIC_SITE_URL=https://videograb.lianxi.com
+ARG NEXT_PUBLIC_SITE_URL=https://example.com
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 # Next.js rewrites 在 build 时读取 BACKEND_URL；Docker Compose 内应为 http://backend:8000

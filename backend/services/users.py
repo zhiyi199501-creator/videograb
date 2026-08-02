@@ -10,8 +10,8 @@ from typing import Any
 
 from db import get_db
 
-# 登录用户免费 AI 总结次数（非 Pro）
-AI_FREE_LIMIT = 3
+# 登录用户免费下载次数（非 Pro）
+DOWNLOAD_FREE_LIMIT = 3
 
 
 def _now_iso() -> str:
@@ -136,30 +136,30 @@ def is_pro_user(user_id: str) -> bool:
     return True
 
 
-def get_ai_free_used(user_id: str) -> int:
+def get_download_free_used(user_id: str) -> int:
     user = get_user_by_id(user_id)
     if not user:
         return 0
     try:
-        return max(0, int(user.get("ai_free_used") or 0))
+        return max(0, int(user.get("download_free_used") or 0))
     except (TypeError, ValueError):
         return 0
 
 
-def get_ai_free_remaining(user_id: str) -> int:
+def get_download_free_remaining(user_id: str) -> int:
     if is_pro_user(user_id):
-        return AI_FREE_LIMIT  # Pro 不消耗免费额度，返回满额便于展示
-    return max(0, AI_FREE_LIMIT - get_ai_free_used(user_id))
+        return DOWNLOAD_FREE_LIMIT  # Pro 不消耗免费额度，返回满额便于展示
+    return max(0, DOWNLOAD_FREE_LIMIT - get_download_free_used(user_id))
 
 
-def can_use_ai(user_id: str) -> bool:
+def can_download(user_id: str) -> bool:
     if is_pro_user(user_id):
         return True
-    return get_ai_free_used(user_id) < AI_FREE_LIMIT
+    return get_download_free_used(user_id) < DOWNLOAD_FREE_LIMIT
 
 
-def consume_ai_free_credit(user_id: str) -> bool:
-    """非 Pro 用户消耗 1 次免费额度。成功返回 True；已用尽或 Pro 不扣次。
+def consume_download_free_credit(user_id: str) -> bool:
+    """非 Pro 用户消耗 1 次免费下载额度。成功返回 True；已用尽或 Pro 不扣次。
 
     Pro 直接返回 True（不写库）。
     """
@@ -169,10 +169,10 @@ def consume_ai_free_credit(user_id: str) -> bool:
         cur = conn.execute(
             """
             UPDATE users
-            SET ai_free_used = ai_free_used + 1
-            WHERE id = ? AND ai_free_used < ?
+            SET download_free_used = download_free_used + 1
+            WHERE id = ? AND download_free_used < ?
             """,
-            (user_id, AI_FREE_LIMIT),
+            (user_id, DOWNLOAD_FREE_LIMIT),
         )
         return cur.rowcount == 1
 

@@ -117,7 +117,7 @@ Ready! Your webhook signing secret is whsec_xxxxx
 
 4. 支付成功后应回到 `/pricing/success`  
 5. 看 Stripe CLI 终端（终端 2）：应出现 `checkout.session.completed` 等事件且 HTTP 200  
-6. 打开下载页：登录用户可免费总结 3 次；用尽后需 Pro；Pro 用户不限次数  
+6. 打开下载页：AI 总结全站免费（无需登录）；视频下载需登录，登录免费 3 次，Pro 不限次数
 
 ### 常用失败场景测试卡
 

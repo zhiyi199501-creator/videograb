@@ -12,7 +12,7 @@
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无独立下载数据库：内存 Job + 临时文件，2 小时 TTL 自动清理；用户/订阅另用 SQLite
 - IP 限流（解析 60 次/小时）防滥用
-- **用户登录 + Stripe Pro 会员**（登录免费 AI 3 次，Pro ¥9.9/月无限；见 docs/membership.md）
+- **用户登录 + Stripe Pro 会员**（未登录不能下载；登录免费下载 3 次，Pro ¥9.9/月无限；AI 总结全站免费；见 docs/membership.md）
 - 定价页 Free / Pro（Team 未做）
 
 ## 技术栈
@@ -142,10 +142,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 | `MAX_CONCURRENT` | 3 | 最大并发下载 |
 | `JOB_TTL_HOURS` | 2 | Job 过期时间 |
 | `TEMP_DIR` | /tmp/videos | 临时文件目录 |
-| `CORS_ORIGINS` | http://localhost:3000 | 允许的前端域名 |
+| `CORS_ORIGINS` | http://localhost:3000,http://127.0.0.1:3000 | 允许的前端域名 |
 | `NEXT_PUBLIC_API_URL` | （空，同源 `/api`） | 前端 API 基址；Docker 生产建议留空，由 Next rewrites 代理 |
-| `NEXT_PUBLIC_SITE_URL` | https://videograb.lianxi.com | 站点域名（SEO canonical / sitemap / OG）；生产用 `docker-compose.prod.yml` 覆盖 |
-| `BACKEND_URL` | http://backend:8000 | Next 服务端代理目标（构建时写入）；勿写成容器内的 127.0.0.1 |
+| `NEXT_PUBLIC_SITE_URL` | https://example.com | 站点域名（SEO canonical / sitemap / OG）；生产用 `docker-compose.prod.yml` 覆盖 |
+| `BACKEND_URL` | http://backend:8000（Docker）/ http://127.0.0.1:8000（本地默认） | Next 服务端代理目标（构建时写入）；容器内勿写成 127.0.0.1 |
 | `DEEPSEEK_API_KEY` | （空） | AI 总结必填，见 `backend/.env.example` |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | DeepSeek 模型 ID |
 | `WHISPER_MODEL` | tiny | 无字幕时 ASR 模型 |
@@ -174,10 +174,10 @@ cp backend/.env.example backend/.env
 | POST | `/api/extract` | 解析视频元数据，返回 jobId + 格式列表 |
 | GET | `/api/jobs/{id}` | 查询任务状态 |
 | GET | `/api/jobs/{id}/events` | SSE 进度推送 |
-| POST | `/api/jobs/{id}/download` | 开始下载 |
-| GET | `/api/jobs/{id}/file` | 下载文件（attachment） |
-| GET | `/api/jobs/{id}/summarize` | SSE：字幕 + AI 摘要 + 思维导图 |
-| POST | `/api/jobs/{id}/chat` | SSE：基于字幕的 AI 问答 |
+| POST | `/api/jobs/{id}/download` | 开始下载（需登录；非 Pro 消耗 1 次免费额度） |
+| GET | `/api/jobs/{id}/file` | 下载文件（attachment，需登录） |
+| GET | `/api/jobs/{id}/summarize` | SSE：字幕 + AI 摘要 + 思维导图（全站免费） |
+| POST | `/api/jobs/{id}/chat` | SSE：基于字幕的 AI 问答（全站免费） |
 | POST | `/api/auth/register` | 注册 |
 | POST | `/api/auth/login` | 登录 |
 | GET | `/api/auth/me` | 当前用户与会员状态 |
