@@ -78,6 +78,31 @@ def test_summarize_and_chat_are_free_without_login(client):
 
     res = client.get(f"/api/jobs/{job_id}/summarize")
     assert res.status_code == 400  # pending job，而非 401
+    assert "解析" in res.json()["detail"] or "parsed" in res.json()["detail"].lower()
+
+    en = client.get(
+        f"/api/jobs/{job_id}/summarize",
+        headers={"Accept-Language": "en"},
+    )
+    assert en.status_code == 400
+    assert "parsed" in en.json()["detail"].lower() or "try again" in en.json()["detail"].lower()
 
     res = client.post("/api/jobs/missing/chat", json={"question": "hi"})
     assert res.status_code == 404
+    assert res.json()["detail"] in ("任务不存在", "Job not found")
+
+    en404 = client.post(
+        "/api/jobs/missing/chat",
+        json={"question": "hi"},
+        headers={"Accept-Language": "en"},
+    )
+    assert en404.status_code == 404
+    assert en404.json()["detail"] == "Job not found"
+
+
+def test_summarize_messages_cover_locales():
+    from i18n import t
+
+    assert "总结" in t("summarize.start", "zh") or "…" in t("summarize.start", "zh")
+    assert "summary" in t("summarize.start", "en").lower()
+    assert t("job.not_found", "en") == "Job not found"

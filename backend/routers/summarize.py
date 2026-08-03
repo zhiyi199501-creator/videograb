@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from i18n import get_request_locale, t
 from models.job import JobStatus
 from routers.api import limiter
 from services.summarizer import chat_events, summarize_events
@@ -48,10 +49,10 @@ def _sse_padding() -> str:
     return f": {'.' * 2048}\n\n"
 
 
-def _job_or_404(job_id: str) -> dict:
+def _job_or_404(job_id: str, locale: str) -> dict:
     job = job_store.get(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise HTTPException(status_code=404, detail=t("job.not_found", locale))
     return job
 
 
@@ -61,16 +62,21 @@ async def api_summarize(
     request: Request,
     job_id: str,
 ):
-    job = _job_or_404(job_id)
+    locale = get_request_locale(request)
+    job = _job_or_404(job_id, locale)
     status = job.get("status")
     if status in (JobStatus.PENDING, JobStatus.EXTRACTING):
-        raise HTTPException(status_code=400, detail="视频仍在解析中，请稍后再试")
+        raise HTTPException(
+            status_code=400, detail=t("summarize.still_extracting", locale)
+        )
     if status == JobStatus.FAILED and not job.get("url"):
-        raise HTTPException(status_code=400, detail="任务已失败，无法总结")
+        raise HTTPException(
+            status_code=400, detail=t("summarize.job_failed", locale)
+        )
 
     async def event_stream():
         yield _sse_padding()
-        async for item in summarize_events(job_id):
+        async for item in summarize_events(job_id, locale=locale):
             yield _sse(item["event"], item["data"])
             # 让出事件循环，便于尽快刷出 chunk
             await asyncio.sleep(0)
@@ -93,11 +99,12 @@ async def api_chat(
     job_id: str,
     body: ChatRequest,
 ):
-    _job_or_404(job_id)
+    locale = get_request_locale(request)
+    _job_or_404(job_id, locale)
 
     async def event_stream():
         yield _sse_padding()
-        async for item in chat_events(job_id, body.question):
+        async for item in chat_events(job_id, body.question, locale=locale):
             yield _sse(item["event"], item["data"])
             await asyncio.sleep(0)
 

@@ -6,6 +6,14 @@ from typing import Any
 
 from .locale import DEFAULT_LOCALE, SUPPORTED
 
+
+def _msg(zh: str, en: str) -> dict[str, str]:
+    """zh + en；其余 locale 先用英文，避免缺译时回落到中文。"""
+    out = {loc: en for loc in SUPPORTED}
+    out["zh"] = zh
+    return out
+
+
 MESSAGES: dict[str, dict[str, str]] = {
     "auth.invalid_email": {
         "zh": "邮箱格式不正确",
@@ -500,6 +508,45 @@ MESSAGES: dict[str, dict[str, str]] = {
         "th": "This link format is not supported. For Douyin prefer share links or https://www.douyin.com/video/VIDEO_ID.",
         "vi": "This link format is not supported. For Douyin prefer share links or https://www.douyin.com/video/VIDEO_ID.",
     },
+    "job.not_found": _msg("任务不存在", "Job not found"),
+    "summarize.still_extracting": _msg(
+        "视频仍在解析中，请稍后再试",
+        "Video is still being parsed. Please try again shortly",
+    ),
+    "summarize.job_failed": _msg(
+        "任务已失败，无法总结",
+        "This job failed and cannot be summarized",
+    ),
+    "summarize.no_url": _msg("任务缺少视频链接", "Job is missing a video URL"),
+    "summarize.no_subtitles": _msg("未能获取字幕", "Could not get subtitles"),
+    "summarize.start": _msg("开始总结…", "Starting summary…"),
+    "summarize.extracting_subs": _msg(
+        "正在提取字幕；若无字幕将语音转写（约 1 分钟）…",
+        "Extracting subtitles; if none, will transcribe audio (~1 min)…",
+    ),
+    "summarize.asr_waiting": _msg(
+        "正在语音转写中…已等待 {elapsed}s，请勿关闭页面",
+        "Transcribing audio… waited {elapsed}s — keep this page open",
+    ),
+    "summarize.asr_done": _msg(
+        "语音转写完成，正在生成总结…",
+        "Transcription done, generating summary…",
+    ),
+    "summarize.generating_summary": _msg(
+        "正在生成 AI 总结…",
+        "Generating AI summary…",
+    ),
+    "summarize.generating_mindmap": _msg(
+        "正在生成思维导图…",
+        "Generating mind map…",
+    ),
+    "summarize.heartbeat": _msg(
+        "{prefix}（已等待 {elapsed}s，请勿关闭页面）",
+        "{prefix} (waited {elapsed}s — keep this page open)",
+    ),
+    "summarize.failed": _msg("总结失败: {message}", "Summary failed: {message}"),
+    "chat.empty_question": _msg("请输入问题", "Please enter a question"),
+    "chat.failed": _msg("问答失败: {message}", "Q&A failed: {message}"),
 }
 
 
