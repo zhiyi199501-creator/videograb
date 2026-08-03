@@ -315,15 +315,20 @@ sudo apt install -y caddy
 
 ```bash
 sudo tee /etc/caddy/Caddyfile >/dev/null <<'EOF'
-# 监听 80，把流量转到本机前端容器 3000
+# 监听 80，把流量转到本机前端容器 3000；/health 直达后端
 :80 {
     encode gzip
-    reverse_proxy 127.0.0.1:3000 {
-        # SSE / 长连接：关闭缓冲
-        flush_interval -1
-        transport http {
-            read_timeout 3600s
-            write_timeout 3600s
+    handle /health {
+        reverse_proxy 127.0.0.1:8000
+    }
+    handle {
+        reverse_proxy 127.0.0.1:3000 {
+            # SSE / 长连接：关闭缓冲
+            flush_interval -1
+            transport http {
+                read_timeout 3600s
+                write_timeout 3600s
+            }
         }
     }
 }
@@ -387,19 +392,32 @@ sudo tee /etc/caddy/Caddyfile >/dev/null <<'EOF'
 # 正式站点：自动申请 Let's Encrypt 证书
 videograb.codedance.work {
     encode gzip
-    reverse_proxy 127.0.0.1:3000 {
-        flush_interval -1
-        transport http {
-            read_timeout 3600s
-            write_timeout 3600s
+
+    # 探活直达后端（不经前端）
+    handle /health {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    handle {
+        reverse_proxy 127.0.0.1:3000 {
+            flush_interval -1
+            transport http {
+                read_timeout 3600s
+                write_timeout 3600s
+            }
         }
     }
 }
 
 # 可选：继续保留 IP:80 访问
 :80 {
-    reverse_proxy 127.0.0.1:3000 {
-        flush_interval -1
+    handle /health {
+        reverse_proxy 127.0.0.1:8000
+    }
+    handle {
+        reverse_proxy 127.0.0.1:3000 {
+            flush_interval -1
+        }
     }
 }
 EOF
