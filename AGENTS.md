@@ -33,7 +33,7 @@
 
 ## 现役产品事实（易过期）
 
-- 线上：`https://videograb.codedance.work`（新加坡）；`GET /health` 在后端，**尚未**公开反代（打域名常落到前端 404）
+- 线上：`https://videograb.codedance.work`（新加坡）；`GET /health` 由 Caddy 直达后端（不经前端）
 - AI：总结/问答全站免费，未登录也可用，不扣次。下载：未登录不能下载；登录非 Pro 免费 **3** 次（`download_free_used`），Pro **无限下载**（不是无限 AI）
 - i18n：默认 `zh`，`localePrefix: as-needed`；非中文路径如 `/en/...`。summarize 路由/SSE 状态已本地化；subtitle/ASR 底层错误文案仍多为中文
 - 解析限流 60/hour（硬编码）；Job TTL 默认 2h；视频不持久化
@@ -53,7 +53,6 @@
 
 ## 当前状态 / 下一步
 
-- 已上（生产）：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE 心跳、ASR HF 缓存
-- 本分支代码已有、合入/部署前勿当线上事实：15 语 i18n（UI/SEO + API 错误 + summarize SSE 状态）
-- 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；公开 `/health` 反代；Stripe **Live**；subtitle/ASR 底层错误全量 i18n
+- 已上（生产）：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE 心跳、ASR HF 缓存、15 语 i18n、公开 `/health` 反代
+- 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；Stripe **Live**；subtitle/ASR 底层错误全量 i18n
 - 扩展前读对应 `docs/*`；以代码为准修正文档，勿双写矛盾
