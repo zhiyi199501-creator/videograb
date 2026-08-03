@@ -1,18 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { Link } from "@/i18n/navigation";
+import LocaleSwitcher from "@/components/layout/LocaleSwitcher";
 import { useAuth } from "@/lib/auth";
 
-const navItems = [
-  { href: "/", label: "首页" },
-  { href: "/#how-to-use", label: "使用说明" },
-  { href: "/#comparison", label: "工具对比" },
-  { href: "/#faq", label: "常见问题" },
-  { href: "/pricing", label: "定价" },
-];
-
 function AuthSlot() {
+  const t = useTranslations("nav");
   const { user, loading, logout } = useAuth();
   // 避免 SSR 与客户端首屏因 localStorage 会话不一致导致 hydration 报错
   const [ready, setReady] = useState(false);
@@ -45,7 +40,7 @@ function AuthSlot() {
           onClick={logout}
           className="rounded-full border border-[#e2e8f0] px-3 py-1.5 text-sm text-[#020817] hover:border-[#1677ff]"
         >
-          退出
+          {t("logout")}
         </button>
       </div>
     );
@@ -56,14 +51,24 @@ function AuthSlot() {
       href="/login"
       className="rounded-full bg-[#1677ff] px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff]"
     >
-      登录
+      {t("login")}
     </Link>
   );
 }
 
 export default function Navbar() {
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
+
+  const navItems = [
+    { href: "/", label: t("home") },
+    { href: "/#how-to-use", label: t("howTo") },
+    { href: "/#comparison", label: t("comparison") },
+    { href: "/#faq", label: t("faq") },
+    { href: "/pricing", label: t("pricing") },
+  ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e8eef5]/80 bg-white/75 backdrop-blur-md">
@@ -77,7 +82,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-5 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -87,33 +92,37 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          <LocaleSwitcher />
           <AuthSlot />
         </nav>
 
-        <button
-          type="button"
-          className="md:hidden rounded-lg p-2 text-[#0f172a]"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="菜单"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {mobileOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            )}
-          </svg>
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <LocaleSwitcher />
+          <button
+            type="button"
+            className="rounded-lg p-2 text-[#0f172a]"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={tc("menu")}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -142,7 +151,7 @@ export default function Navbar() {
                 }}
                 className="mt-1 w-full rounded-full border border-[#e2e8f0] py-2 text-sm"
               >
-                退出
+                {t("logout")}
               </button>
             </>
           ) : (
@@ -151,7 +160,7 @@ export default function Navbar() {
               className="mt-2 block w-full rounded-full bg-[#1677ff] py-2 text-center text-sm font-medium text-white"
               onClick={() => setMobileOpen(false)}
             >
-              登录
+              {t("login")}
             </Link>
           )}
         </div>

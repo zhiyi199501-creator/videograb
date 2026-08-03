@@ -12,14 +12,15 @@
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无独立下载数据库：内存 Job + 临时文件，2 小时 TTL 自动清理；用户/订阅另用 SQLite
 - IP 限流（解析 60 次/小时）防滥用
-- **用户登录 + Stripe Pro 会员**（未登录不能下载；登录免费下载 3 次，Pro ¥9.9/月无限；AI 总结全站免费；见 docs/membership.md）
+- **用户登录 + Stripe Pro 会员**（未登录不能下载；登录免费下载 3 次，Pro ¥9.9/月无限下载；AI 总结全站免费；见 docs/membership.md）
+- **多语言**：15 语 UI/SEO（next-intl，默认中文，路径 `as-needed`）；后端部分错误文案跟 `Accept-Language`
 - 定价页 Free / Pro（Team 未做）
 
 ## 技术栈
 
 | 层 | 选型 |
 |----|------|
-| 前端 | Next.js 16 + Tailwind CSS + marked + typography + markmap |
+| 前端 | Next.js 16 + Tailwind CSS + next-intl + marked + typography + markmap |
 | 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg + DeepSeek + faster-whisper |
 | 状态 | 内存 Job Registry + `/tmp/videos`；用户/订阅用 SQLite |
 | 部署 | Docker Compose |

@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 export default function MobileTip() {
+  const t = useTranslations("download");
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -19,9 +21,8 @@ export default function MobileTip() {
 
   return (
     <div className="mb-2 rounded-xl border border-[#ffe58f] bg-[#fffbe6] px-4 py-2.5 text-sm text-[#ad6800]">
-      <strong>提示：</strong>
-      当前为应用内置浏览器，下载可能受限。请点击右上角「···」选择
-      「在 Safari / Chrome 中打开」以获得最佳下载体验。
+      <strong>{t("mobileTipStrong")}</strong>
+      {t("mobileTip")}
     </div>
   );
 }

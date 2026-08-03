@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Transformer } from "markmap-lib";
 import { Markmap } from "markmap-view";
 import { safeFilename } from "@/lib/subtitleFormat";
@@ -119,7 +120,7 @@ async function safeFit(markmap: Markmap | null) {
   try {
     await markmap.fit();
   } catch (err) {
-    console.warn("思维导图自适应失败:", err);
+    console.warn("Mind map fit failed:", err);
   }
 }
 
@@ -182,7 +183,8 @@ function svgToPng(
   svgString: string,
   width: number,
   height: number,
-  scale: number
+  scale: number,
+  errors: { canvasFailed: string; pngExportFailed: string; svgRenderFailed: string }
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -195,7 +197,7 @@ function svgToPng(
         canvas.height = Math.ceil(height * scale);
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          reject(new Error("无法创建 canvas 上下文"));
+          reject(new Error(errors.canvasFailed));
           return;
         }
         ctx.fillStyle = "#ffffff";
@@ -205,7 +207,7 @@ function svgToPng(
         canvas.toBlob(
           (blob) => {
             if (blob) resolve(blob);
-            else reject(new Error("PNG 导出失败"));
+            else reject(new Error(errors.pngExportFailed));
           },
           "image/png",
           1
@@ -215,19 +217,21 @@ function svgToPng(
       }
     };
 
-    img.onerror = () => reject(new Error("SVG 渲染为图片失败"));
+    img.onerror = () => reject(new Error(errors.svgRenderFailed));
     img.src = svgDataUrl;
   });
 }
 
 export default function MindMapView({ markdown, title }: MindMapViewProps) {
+  const t = useTranslations("summary");
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const mmRef = useRef<Markmap | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [exporting, setExporting] = useState<"svg" | "png" | null>(null);
 
-  const exportBaseName = safeFilename(title || "思维导图", "思维导图");
+  const defaultName = t("mindmapDefaultName");
+  const exportBaseName = safeFilename(title || defaultName, defaultName);
 
   const syncSvgSize = useCallback(() => {
     const container = containerRef.current;
@@ -290,7 +294,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
       await safeFit(mmRef.current);
     };
 
-    render().catch((err) => console.error("思维导图渲染失败:", err));
+    render().catch((err) => console.error("Mind map render failed:", err));
 
     return () => {
       cancelled = true;
@@ -323,12 +327,12 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
     const markmap = mmRef.current;
     const svg = svgRef.current;
     if (!markmap || !svg) {
-      throw new Error("思维导图尚未就绪，请稍后再试");
+      throw new Error(t("mindmapNotReady"));
     }
     const data = buildExportSvg(markmap, svg);
-    if (!data) throw new Error("思维导图内容为空，无法导出");
+    if (!data) throw new Error(t("mindmapEmptyExport"));
     return data;
-  }, []);
+  }, [t]);
 
   const handleDownloadSvg = useCallback(async () => {
     if (exporting) return;
@@ -340,29 +344,33 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
       });
       downloadBlob(blob, `${exportBaseName}.svg`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "SVG 导出失败";
+      const msg = err instanceof Error ? err.message : t("svgExportFailed");
       console.error(msg, err);
       window.alert(msg);
     } finally {
       setExporting(null);
     }
-  }, [exporting, exportBaseName, getExportData]);
+  }, [exporting, exportBaseName, getExportData, t]);
 
   const handleDownloadPng = useCallback(async () => {
     if (exporting) return;
     setExporting("png");
     try {
       const { svgString, width, height } = getExportData();
-      const blob = await svgToPng(svgString, width, height, PNG_SCALE);
+      const blob = await svgToPng(svgString, width, height, PNG_SCALE, {
+        canvasFailed: t("canvasFailed"),
+        pngExportFailed: t("pngExportFailed"),
+        svgRenderFailed: t("svgRenderFailed"),
+      });
       downloadBlob(blob, `${exportBaseName}.png`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "PNG 导出失败";
+      const msg = err instanceof Error ? err.message : t("pngExportFailed");
       console.error(msg, err);
       window.alert(msg);
     } finally {
       setExporting(null);
     }
-  }, [exporting, exportBaseName, getExportData]);
+  }, [exporting, exportBaseName, getExportData, t]);
 
   const toggleFullscreen = useCallback(async () => {
     const el = containerRef.current;
@@ -374,13 +382,13 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
       } else if (el.requestFullscreen) {
         await el.requestFullscreen();
       } else {
-        window.alert("当前浏览器不支持全屏功能");
+        window.alert(t("fullscreenUnsupported"));
       }
     } catch (err) {
-      console.error("全屏切换失败:", err);
-      window.alert("全屏切换失败，请重试");
+      console.error("Fullscreen toggle failed:", err);
+      window.alert(t("fullscreenFailed"));
     }
-  }, []);
+  }, [t]);
 
   return (
     <div
@@ -393,7 +401,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
           onClick={toggleFullscreen}
           className={TOOLBAR_BTN}
         >
-          {isFullscreen ? "退出全屏" : "全屏"}
+          {isFullscreen ? t("exitFullscreen") : t("fullscreen")}
         </button>
         <button
           type="button"
@@ -401,7 +409,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
           disabled={!!exporting}
           className={TOOLBAR_BTN}
         >
-          {exporting === "svg" ? "导出中…" : "下载 SVG"}
+          {exporting === "svg" ? t("exporting") : t("downloadSvg")}
         </button>
         <button
           type="button"
@@ -409,7 +417,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
           disabled={!!exporting}
           className={TOOLBAR_BTN}
         >
-          {exporting === "png" ? "导出中…" : "下载 PNG"}
+          {exporting === "png" ? t("exporting") : t("downloadPng")}
         </button>
       </div>
 
@@ -417,7 +425,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
       <svg ref={svgRef} className="block" />
 
       <p className="pointer-events-none absolute right-3 bottom-2 text-[10px] text-[#94a3b8]">
-        滚轮缩放 · 拖拽平移
+        {t("zoomHint")}
       </p>
     </div>
   );

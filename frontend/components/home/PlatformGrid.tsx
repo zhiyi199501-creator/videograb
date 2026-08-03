@@ -1,46 +1,52 @@
-const platforms = [
-  {
-    name: "YouTube",
-    color: "#ff4d4f",
-    href: "https://www.youtube.com",
-  },
-  {
-    name: "哔哩哔哩",
-    color: "#fb7299",
-    href: "https://www.bilibili.com",
-  },
-  {
-    name: "抖音",
-    color: "#111827",
-    href: "https://www.douyin.com",
-  },
-  {
-    name: "TikTok",
-    color: "#0f172a",
-    href: "https://www.tiktok.com",
-  },
-  {
-    name: "Instagram",
-    color: "#e1306c",
-    href: "https://www.instagram.com",
-  },
-  {
-    name: "Twitter / X",
-    color: "#1d9bf0",
-    href: "https://x.com",
-  },
-  {
-    name: "1000+ 更多",
-    color: "#1677ff",
-    href: "https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md",
-  },
-];
+"use client";
+
+import { useTranslations } from "next-intl";
 
 interface PlatformGridProps {
   compact?: boolean;
 }
 
 export default function PlatformGrid({ compact = false }: PlatformGridProps) {
+  const t = useTranslations("home");
+
+  const platforms = [
+    {
+      name: "YouTube",
+      color: "#ff4d4f",
+      href: "https://www.youtube.com",
+    },
+    {
+      name: t("platformBilibili"),
+      color: "#fb7299",
+      href: "https://www.bilibili.com",
+    },
+    {
+      name: t("platformDouyin"),
+      color: "#111827",
+      href: "https://www.douyin.com",
+    },
+    {
+      name: "TikTok",
+      color: "#0f172a",
+      href: "https://www.tiktok.com",
+    },
+    {
+      name: "Instagram",
+      color: "#e1306c",
+      href: "https://www.instagram.com",
+    },
+    {
+      name: "Twitter / X",
+      color: "#1d9bf0",
+      href: "https://x.com",
+    },
+    {
+      name: t("platformMore"),
+      color: "#1677ff",
+      href: "https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md",
+    },
+  ];
+
   return (
     <section
       id="platforms"
@@ -48,7 +54,7 @@ export default function PlatformGrid({ compact = false }: PlatformGridProps) {
     >
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-medium tracking-wide text-[#94a3b8]">
-          支持平台
+          {t("platformsLabel")}
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           {platforms.map((p) => (

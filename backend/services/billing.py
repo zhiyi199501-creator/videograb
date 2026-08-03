@@ -10,6 +10,7 @@ from typing import Any, Optional
 import stripe
 from fastapi import HTTPException
 
+from i18n import t
 from services import users as user_store
 
 logger = logging.getLogger(__name__)
@@ -33,17 +34,17 @@ def _is_placeholder(value: str) -> bool:
     return v in _PLACEHOLDER_VALUES or v.endswith("_xxx")
 
 
-def _stripe() -> None:
+def _stripe(locale: str = "zh") -> None:
     if _is_placeholder(STRIPE_SECRET_KEY):
         raise HTTPException(
             status_code=503,
-            detail="未配置有效的 STRIPE_SECRET_KEY（生产仍是示例占位符），无法发起支付",
+            detail=t("billing.stripe_key_missing", locale),
         )
     stripe.api_key = STRIPE_SECRET_KEY
 
 
-def _ensure_customer(user: dict[str, Any]) -> str:
-    _stripe()
+def _ensure_customer(user: dict[str, Any], locale: str = "zh") -> str:
+    _stripe(locale)
     existing = user.get("stripe_customer_id")
     if existing:
         return existing
@@ -56,18 +57,20 @@ def _ensure_customer(user: dict[str, Any]) -> str:
     return customer.id
 
 
-def create_checkout_session(user: dict[str, Any]) -> str:
-    _stripe()
+def create_checkout_session(user: dict[str, Any], locale: str = "zh") -> str:
+    _stripe(locale)
     if _is_placeholder(STRIPE_PRICE_PRO):
         raise HTTPException(
             status_code=503,
-            detail="未配置有效的 STRIPE_PRICE_PRO（仍是示例占位符），请先在 Stripe 创建 Pro 价格",
+            detail=t("billing.stripe_price_missing", locale),
         )
     if user_store.is_pro_user(user["id"]):
-        raise HTTPException(status_code=400, detail="你已是 Pro 会员")
+        raise HTTPException(
+            status_code=400, detail=t("billing.already_pro", locale)
+        )
 
     try:
-        customer_id = _ensure_customer(user)
+        customer_id = _ensure_customer(user, locale)
         idem_key = f"checkout:{user['id']}:pro:{date.today().isoformat()}"
 
         session = stripe.checkout.Session.create(
@@ -88,31 +91,41 @@ def create_checkout_session(user: dict[str, Any]) -> str:
         logger.exception("Stripe auth failed during checkout")
         raise HTTPException(
             status_code=503,
-            detail="Stripe API Key 无效，请检查生产环境 STRIPE_SECRET_KEY",
+            detail=t("billing.stripe_key_invalid", locale),
         ) from exc
     except stripe.StripeError as exc:
         logger.exception("Stripe checkout failed")
         raise HTTPException(
             status_code=502,
-            detail=f"Stripe 创建支付失败: {exc.user_message or str(exc)}",
+            detail=t(
+                "billing.stripe_create_failed",
+                locale,
+                message=exc.user_message or str(exc),
+            ),
         ) from exc
 
     if not session.url:
-        raise HTTPException(status_code=500, detail="创建支付会话失败")
+        raise HTTPException(
+            status_code=500, detail=t("billing.checkout_failed", locale)
+        )
     return session.url
 
 
-def create_portal_session(user: dict[str, Any]) -> str:
-    _stripe()
+def create_portal_session(user: dict[str, Any], locale: str = "zh") -> str:
+    _stripe(locale)
     customer_id = user.get("stripe_customer_id")
     if not customer_id:
-        raise HTTPException(status_code=400, detail="尚无账单信息，请先订阅 Pro")
+        raise HTTPException(
+            status_code=400, detail=t("billing.no_billing", locale)
+        )
     portal = stripe.billing_portal.Session.create(
         customer=customer_id,
         return_url=f"{FRONTEND_URL}/pricing",
     )
     if not portal.url:
-        raise HTTPException(status_code=500, detail="创建账单门户失败")
+        raise HTTPException(
+            status_code=500, detail=t("billing.portal_failed", locale)
+        )
     return portal.url
 
 

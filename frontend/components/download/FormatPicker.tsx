@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { FormatInfo, formatFileSize } from "@/lib/api";
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function FormatPicker({ formats, selected, onSelect }: Props) {
+  const t = useTranslations("download");
   const videoFormats = formats.filter((f) => f.vcodec !== "none");
   const fastestId =
     videoFormats.length > 0
@@ -22,10 +24,8 @@ export default function FormatPicker({ formats, selected, onSelect }: Props) {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-bold text-[#0f172a]">选择格式</label>
-      <p className="text-xs text-[#94a3b8]">
-        体积越小下载越快，长视频建议选较低清晰度
-      </p>
+      <label className="text-sm font-bold text-[#0f172a]">{t("formatLabel")}</label>
+      <p className="text-xs text-[#94a3b8]">{t("formatHint")}</p>
       <div className="space-y-2">
         {formats.map((f) => (
           <label
@@ -51,7 +51,7 @@ export default function FormatPicker({ formats, selected, onSelect }: Props) {
                 </span>
                 {f.format_id === fastestId && (
                   <span className="ml-2 rounded-full bg-[#1677ff]/10 px-2 py-0.5 text-[10px] font-medium text-[#1677ff]">
-                    推荐·更快
+                    {t("recommendedFaster")}
                   </span>
                 )}
                 <span className="ml-2 text-xs text-[#94a3b8]">

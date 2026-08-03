@@ -21,13 +21,12 @@
 - 更快速地从各平台下载视频
 - 随时随地使用（含手机端）
 - 选择合适清晰度与格式
-- 后续按需扩展 AI 总结、字幕翻译、付费能力
+- 已具备 AI 总结与登录/付费；后续按需扩展字幕翻译、批量等
 
 ### 1.3 产品定位
 
-- **Phase 1**：免费核心下载工具 + 付费功能占位（引导转化）
-- **Phase 2+**：体验增强（批量、历史）
-- **Phase 3+**：商业化（登录、付费、AI）
+- **已交付**：核心下载 + 登录/Stripe Pro（下载额度）+ AI 总结（全站免费）+ 多语言 UI
+- **后续**：体验增强（批量、历史、字幕翻译）；Stripe Live；Team 等
 
 ## 2. 用户画像与使用场景
 
@@ -95,7 +94,7 @@
 
 1. Chrome 桌面端：YouTube URL → 解析 → 选格式 → 下载 mp4 成功
 2. 手机 Safari：B站 URL → 完成下载保存
-3. UI：导航/Hero/URL 输入/平台卡片/Pro 卡片/下载页/定价页/Footer 完整，风格一致
+3. UI：导航/Hero/URL 输入/平台标签/下载页/定价页/Footer 完整，风格一致（首页不再堆 Pro 功能列表）
 4. 文档：requirements.md、design.md 完整可读
 5. 部署：`docker compose up` 可本地一键启动；生产见 `docs/deploy-online-guide.md`（`docker-compose.yml` + `docker-compose.prod.yml` + Caddy HTTPS）
 

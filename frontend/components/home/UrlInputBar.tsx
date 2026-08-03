@@ -1,14 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { extractUrl, normalizeVideoUrl } from "@/lib/api";
+import { useRouter } from "@/i18n/navigation";
 
 interface UrlInputBarProps {
   compact?: boolean;
 }
 
 export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
+  const t = useTranslations("home");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +20,7 @@ export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
     e.preventDefault();
     const trimmed = normalizeVideoUrl(url);
     if (!trimmed) {
-      setError("请输入视频链接");
+      setError(t("urlEmpty"));
       return;
     }
     setError("");
@@ -27,7 +29,7 @@ export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
       const job = await extractUrl(trimmed);
       router.push(`/download/${job.job_id}?url=${encodeURIComponent(trimmed)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "解析失败，请检查链接");
+      setError(err instanceof Error ? err.message : t("parseFailed"));
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
             spellCheck={false}
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="粘贴视频链接，例如 bilibili.com/video/BV..."
+            placeholder={t("urlPlaceholder")}
             className="flex-1 rounded-full bg-transparent px-5 py-3 text-sm text-[#020817] placeholder:text-[#94a3b8] outline-none"
             disabled={loading}
           />
@@ -54,7 +56,7 @@ export default function UrlInputBar({ compact = false }: UrlInputBarProps) {
             disabled={loading}
             className="shrink-0 rounded-full bg-[#1677ff] px-6 py-2.5 text-sm font-medium text-white shadow-[0_4px_14px_-4px_rgba(22,119,255,0.5)] transition-all hover:bg-[#4096ff] disabled:opacity-60"
           >
-            {loading ? "解析中..." : "开始解析"}
+            {loading ? t("parsing") : t("startParse")}
           </button>
         </div>
         {error && (

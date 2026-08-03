@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
+from i18n import get_request_locale
 from services.auth import get_current_user
 from services import billing
 
@@ -12,14 +13,14 @@ router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 
 @router.post("/checkout")
-def checkout(user=Depends(get_current_user)):
-    url = billing.create_checkout_session(user)
+def checkout(request: Request, user=Depends(get_current_user)):
+    url = billing.create_checkout_session(user, get_request_locale(request))
     return {"url": url}
 
 
 @router.post("/portal")
-def portal(user=Depends(get_current_user)):
-    url = billing.create_portal_session(user)
+def portal(request: Request, user=Depends(get_current_user)):
+    url = billing.create_portal_session(user, get_request_locale(request))
     return {"url": url}
 
 

@@ -8,6 +8,7 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any, Optional
 
+from i18n import DEFAULT_LOCALE, t
 from services import deepseek
 from services.subtitle import SubtitleError, extract_subtitles
 from services.ytdlp import job_store
@@ -70,26 +71,30 @@ async def _shared_extract(job_id: str, url: str) -> dict[str, Any]:
     return result
 
 
-async def ensure_subtitles(job_id: str) -> dict[str, Any]:
+async def ensure_subtitles(
+    job_id: str, *, locale: str = DEFAULT_LOCALE
+) -> dict[str, Any]:
     job = job_store.get(job_id)
     if not job:
-        raise SubtitleError("任务不存在")
+        raise SubtitleError(t("job.not_found", locale))
     cached = _cached_subs(job)
     if cached:
         return cached
     url = job.get("url")
     if not url:
-        raise SubtitleError("任务缺少视频链接")
+        raise SubtitleError(t("summarize.no_url", locale))
     return await _shared_extract(job_id, url)
 
 
 async def _ensure_subtitles_with_heartbeat(
     job_id: str,
+    *,
+    locale: str = DEFAULT_LOCALE,
 ) -> AsyncIterator[dict]:
     """提取字幕期间持续推送 status/ping，避免代理/浏览器以为连接卡死。"""
     job = job_store.get(job_id)
     if not job:
-        raise SubtitleError("任务不存在")
+        raise SubtitleError(t("job.not_found", locale))
 
     cached = _cached_subs(job)
     if cached:
@@ -98,11 +103,11 @@ async def _ensure_subtitles_with_heartbeat(
 
     url = job.get("url")
     if not url:
-        raise SubtitleError("任务缺少视频链接")
+        raise SubtitleError(t("summarize.no_url", locale))
 
     yield {
         "event": "status",
-        "data": {"message": "正在提取字幕；若无字幕将语音转写（约 1 分钟）…"},
+        "data": {"message": t("summarize.extracting_subs", locale)},
     }
 
     task = asyncio.create_task(_shared_extract(job_id, url))
@@ -115,7 +120,7 @@ async def _ensure_subtitles_with_heartbeat(
         yield {
             "event": "status",
             "data": {
-                "message": f"正在语音转写中…已等待 {elapsed}s，请勿关闭页面"
+                "message": t("summarize.asr_waiting", locale, elapsed=elapsed)
             },
         }
         yield {"event": "ping", "data": {"t": time.time()}}
@@ -128,6 +133,7 @@ async def _await_with_heartbeat(
     coro,
     *,
     status_prefix: str,
+    locale: str = DEFAULT_LOCALE,
 ) -> AsyncIterator[dict]:
     """在长耗时 await 期间推送 status/ping，避免 SSE 空闲被代理掐断。"""
     task = asyncio.ensure_future(coro)
@@ -141,7 +147,12 @@ async def _await_with_heartbeat(
             yield {
                 "event": "status",
                 "data": {
-                    "message": f"{status_prefix}（已等待 {elapsed}s，请勿关闭页面）"
+                    "message": t(
+                        "summarize.heartbeat",
+                        locale,
+                        prefix=status_prefix,
+                        elapsed=elapsed,
+                    )
                 },
             }
             yield {"event": "ping", "data": {"t": time.time()}}
@@ -156,31 +167,36 @@ async def _await_with_heartbeat(
         raise
 
 
-async def summarize_events(job_id: str) -> AsyncIterator[dict]:
+async def summarize_events(
+    job_id: str, *, locale: str = DEFAULT_LOCALE
+) -> AsyncIterator[dict]:
     job = job_store.get(job_id)
     if not job:
-        yield {"event": "error", "data": {"message": "任务不存在"}}
+        yield {"event": "error", "data": {"message": t("job.not_found", locale)}}
         return
 
     title: Optional[str] = job.get("title")
 
     try:
-        yield {"event": "status", "data": {"message": "开始总结…"}}
+        yield {
+            "event": "status",
+            "data": {"message": t("summarize.start", locale)},
+        }
 
         subs: Optional[dict] = None
-        async for item in _ensure_subtitles_with_heartbeat(job_id):
+        async for item in _ensure_subtitles_with_heartbeat(job_id, locale=locale):
             if item["event"] == "_result":
                 subs = item["data"]
             else:
                 yield item
 
         if not subs:
-            raise SubtitleError("未能获取字幕")
+            raise SubtitleError(t("summarize.no_subtitles", locale))
 
         if subs.get("source") == "asr":
             yield {
                 "event": "status",
-                "data": {"message": "语音转写完成，正在生成总结…"},
+                "data": {"message": t("summarize.asr_done", locale)},
             }
 
         segments = subs.get("segments") or []
@@ -194,7 +210,10 @@ async def summarize_events(job_id: str) -> AsyncIterator[dict]:
             },
         }
 
-        yield {"event": "status", "data": {"message": "正在生成 AI 总结…"}}
+        yield {
+            "event": "status",
+            "data": {"message": t("summarize.generating_summary", locale)},
+        }
         summary_parts: list[str] = []
         async for token in deepseek.stream_summary(subs["text"], title=title):
             summary_parts.append(token)
@@ -203,11 +222,13 @@ async def summarize_events(job_id: str) -> AsyncIterator[dict]:
         summary = "".join(summary_parts).strip()
         job_store.update(job_id, summary=summary)
 
-        yield {"event": "status", "data": {"message": "正在生成思维导图…"}}
+        mindmap_prefix = t("summarize.generating_mindmap", locale)
+        yield {"event": "status", "data": {"message": mindmap_prefix}}
         mindmap = ""
         async for item in _await_with_heartbeat(
             deepseek.generate_mindmap(summary or subs["text"][:3000], title=title),
-            status_prefix="正在生成思维导图",
+            status_prefix=mindmap_prefix,
+            locale=locale,
         ):
             if item["event"] == "_result":
                 mindmap = item["data"] or ""
@@ -224,31 +245,39 @@ async def summarize_events(job_id: str) -> AsyncIterator[dict]:
         yield {"event": "error", "data": {"message": str(e)}}
     except Exception as e:
         logger.exception("summarize failed for job %s", job_id)
-        yield {"event": "error", "data": {"message": f"总结失败: {e}"}}
+        yield {
+            "event": "error",
+            "data": {"message": t("summarize.failed", locale, message=str(e))},
+        }
 
 
-async def chat_events(job_id: str, question: str) -> AsyncIterator[dict]:
+async def chat_events(
+    job_id: str, question: str, *, locale: str = DEFAULT_LOCALE
+) -> AsyncIterator[dict]:
     job = job_store.get(job_id)
     if not job:
-        yield {"event": "error", "data": {"message": "任务不存在"}}
+        yield {"event": "error", "data": {"message": t("job.not_found", locale)}}
         return
 
     question = (question or "").strip()
     if not question:
-        yield {"event": "error", "data": {"message": "请输入问题"}}
+        yield {
+            "event": "error",
+            "data": {"message": t("chat.empty_question", locale)},
+        }
         return
 
     title: Optional[str] = job.get("title")
 
     try:
         subs: Optional[dict] = None
-        async for item in _ensure_subtitles_with_heartbeat(job_id):
+        async for item in _ensure_subtitles_with_heartbeat(job_id, locale=locale):
             if item["event"] == "_result":
                 subs = item["data"]
             else:
                 yield item
         if not subs:
-            raise SubtitleError("未能获取字幕")
+            raise SubtitleError(t("summarize.no_subtitles", locale))
 
         async for token in deepseek.stream_answer(
             subs["text"], question, title=title
@@ -261,4 +290,7 @@ async def chat_events(job_id: str, question: str) -> AsyncIterator[dict]:
         yield {"event": "error", "data": {"message": str(e)}}
     except Exception as e:
         logger.exception("chat failed for job %s", job_id)
-        yield {"event": "error", "data": {"message": f"问答失败: {e}"}}
+        yield {
+            "event": "error",
+            "data": {"message": t("chat.failed", locale, message=str(e))},
+        }

@@ -5,9 +5,10 @@ from __future__ import annotations
 import re
 import sqlite3
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from i18n import get_request_locale, t
 from services import users as user_store
 from services.auth import (
     create_access_token,
@@ -32,16 +33,19 @@ def _normalize_email(email: str) -> str:
 
 
 @router.post("/register")
-def register(body: AuthBody):
+def register(request: Request, body: AuthBody):
+    locale = get_request_locale(request)
     email = _normalize_email(body.email)
     if not _EMAIL_RE.match(email):
-        raise HTTPException(status_code=400, detail="邮箱格式不正确")
+        raise HTTPException(status_code=400, detail=t("auth.invalid_email", locale))
     if user_store.get_user_by_email(email):
-        raise HTTPException(status_code=409, detail="该邮箱已注册")
+        raise HTTPException(status_code=409, detail=t("auth.email_taken", locale))
     try:
         user = user_store.create_user(email, hash_password(body.password))
     except sqlite3.IntegrityError as exc:
-        raise HTTPException(status_code=409, detail="该邮箱已注册") from exc
+        raise HTTPException(
+            status_code=409, detail=t("auth.email_taken", locale)
+        ) from exc
     token = create_access_token(user["id"], user["email"])
     return {
         "access_token": token,
@@ -51,13 +55,14 @@ def register(body: AuthBody):
 
 
 @router.post("/login")
-def login(body: AuthBody):
+def login(request: Request, body: AuthBody):
+    locale = get_request_locale(request)
     email = _normalize_email(body.email)
     user = user_store.get_user_by_email(email)
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="邮箱或密码错误",
+            detail=t("auth.bad_credentials", locale),
         )
     token = create_access_token(user["id"], user["email"])
     return {

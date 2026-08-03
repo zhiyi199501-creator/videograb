@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import MobileTip from "@/components/download/MobileTip";
 import FormatPicker from "@/components/download/FormatPicker";
 import ProgressBar from "@/components/download/ProgressBar";
@@ -43,6 +44,8 @@ function pickDefaultFormat(formats: FormatInfo[]): string {
 }
 
 export default function DownloadPage() {
+  const t = useTranslations("download");
+  const tc = useTranslations("common");
   const params = useParams();
   const router = useRouter();
   const jobId = params.id as string;
@@ -110,7 +113,7 @@ export default function DownloadPage() {
       const next = statusToPhase(current.status);
       if (next) setPhase(next);
       if (current.status === "failed") {
-        setError(current.error || "操作失败");
+        setError(current.error || t("operationFailed"));
       }
       if (
         current.status === "ready" &&
@@ -139,7 +142,7 @@ export default function DownloadPage() {
         if (data.status === "ready" || data.status === "complete") {
           pollOnce().catch(() => undefined);
         } else if (data.status === "failed") {
-          setError(data.error || "操作失败");
+          setError(data.error || t("operationFailed"));
         }
       });
     };
@@ -175,7 +178,7 @@ export default function DownloadPage() {
       } catch (err) {
         if (cancelledRef.current) return;
         setPhase("failed");
-        setError(err instanceof Error ? err.message : "加载失败");
+        setError(err instanceof Error ? err.message : t("loadFailed"));
       }
     };
 
@@ -186,7 +189,7 @@ export default function DownloadPage() {
       unsubRef.current = undefined;
       if (interval) clearInterval(interval);
     };
-  }, [jobId]);
+  }, [jobId, t]);
 
   const handleDownload = async () => {
     if (!user) {
@@ -194,7 +197,7 @@ export default function DownloadPage() {
       return;
     }
     if (!user.is_pro && (user.download_free_remaining ?? 0) <= 0) {
-      setError("免费下载次数已用完（共 3 次），升级 Pro 可无限次下载");
+      setError(t("quotaExhaustedError"));
       return;
     }
 
@@ -228,7 +231,7 @@ export default function DownloadPage() {
             .catch(() => undefined);
         } else if (data.status === "failed") {
           downloadStartedRef.current = false;
-          setError(data.error || "下载失败");
+          setError(data.error || t("downloadFailed"));
         }
       });
       const current = await getJob(jobId);
@@ -240,12 +243,12 @@ export default function DownloadPage() {
       if (next) setPhase(next);
       if (current.status === "failed") {
         downloadStartedRef.current = false;
-        setError(current.error || "下载失败");
+        setError(current.error || t("downloadFailed"));
       }
     } catch (err) {
       downloadStartedRef.current = false;
       setPhase("failed");
-      setError(err instanceof Error ? err.message : "下载失败");
+      setError(err instanceof Error ? err.message : t("downloadFailed"));
     } finally {
       setDownloading(false);
     }
@@ -258,7 +261,7 @@ export default function DownloadPage() {
       await downloadFile(jobId, job?.filename || "video.mp4");
       setAutoSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "保存失败");
+      setError(err instanceof Error ? err.message : t("saveFailed"));
     } finally {
       setSavingFile(false);
     }
@@ -281,7 +284,7 @@ export default function DownloadPage() {
         href="/"
         className="mb-3 inline-flex items-center gap-1 text-xs text-[#64748b] hover:text-[#1677ff] sm:text-sm"
       >
-        ← 返回首页
+        {t("backHome")}
       </Link>
 
       {phase === "extracting" && (
@@ -292,7 +295,7 @@ export default function DownloadPage() {
             <div className="mx-auto h-4 w-1/2 rounded bg-[#f0f1f2]" />
           </div>
           <p className="mt-5 text-center text-sm text-[#64748b]">
-            正在解析视频信息...
+            {t("extracting")}
           </p>
           <div className="mt-3">
             <ProgressBar progress={progress || 0.1} />
@@ -311,7 +314,7 @@ export default function DownloadPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={getThumbnailUrl(jobId)}
-                      alt={job.title || "缩略图"}
+                      alt={job.title || t("thumbnailAlt")}
                       onError={() => setThumbError(true)}
                       className="h-36 w-full shrink-0 rounded-lg object-cover sm:h-28 sm:w-40 lg:h-32 lg:w-full xl:h-28 xl:w-40"
                     />
@@ -350,25 +353,27 @@ export default function DownloadPage() {
                   className="mt-4 w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] disabled:opacity-60"
                 >
                   {downloading
-                    ? "准备下载..."
+                    ? t("preparing")
                     : authLoading
-                      ? "加载中…"
+                      ? tc("loading")
                       : !user
-                        ? "登录后免费下载"
+                        ? t("loginToDownload")
                         : user.is_pro
-                          ? "开始下载"
+                          ? t("startDownload")
                           : quotaExhausted
-                            ? "免费次数已用完"
-                            : `开始下载（剩余 ${downloadRemaining} 次）`}
+                            ? t("quotaExhaustedBtn")
+                            : t("startDownloadRemaining", {
+                                count: downloadRemaining ?? 0,
+                              })}
                 </button>
                 {!user && !authLoading && (
                   <p className="mt-2 text-center text-xs text-[#64748b]">
-                    登录后可免费下载 3 次
+                    {t("loginHint")}
                   </p>
                 )}
                 {user && !user.is_pro && downloadRemaining !== null && (
                   <p className="mt-2 text-center text-xs text-[#64748b]">
-                    免费下载剩余 {downloadRemaining} 次
+                    {t("remainingHint", { count: downloadRemaining })}
                   </p>
                 )}
                 {quotaExhausted && (
@@ -376,7 +381,7 @@ export default function DownloadPage() {
                     href="/pricing"
                     className="mt-2 block text-center text-xs font-medium text-[#1677ff] hover:underline"
                   >
-                    升级 Pro 无限下载
+                    {t("upgradeLink")}
                   </Link>
                 )}
               </div>
@@ -385,14 +390,14 @@ export default function DownloadPage() {
             {phase === "downloading" && (
               <div className="rounded-xl bg-white p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
                 <h2 className="mb-3 line-clamp-2 text-center text-sm font-bold text-[#0f172a]">
-                  {job?.title || "正在下载"}
+                  {job?.title || t("downloadingTitle")}
                 </h2>
                 <ProgressBar
                   progress={Math.max(progress, 0.05)}
-                  label="下载进度"
+                  label={t("downloadProgress")}
                 />
                 <p className="mt-3 text-center text-xs text-[#94a3b8]">
-                  进度为服务器拉取视频；完成后浏览器还会再传到本机，请保持页面打开
+                  {t("downloadHint")}
                 </p>
               </div>
             )}
@@ -403,15 +408,13 @@ export default function DownloadPage() {
                   ✅
                 </div>
                 <h2 className="text-base font-bold text-[#0f172a]">
-                  {autoSaved ? "已开始保存！" : "下载完成！"}
+                  {autoSaved ? t("saved") : t("complete")}
                 </h2>
                 <p className="mt-1.5 line-clamp-2 text-sm text-[#64748b]">
                   {job?.title || job?.filename}
                 </p>
                 <p className="mt-1 text-xs text-[#94a3b8]">
-                  {autoSaved
-                    ? "若浏览器未弹出保存，请点击下方按钮重试"
-                    : "正在唤起保存…"}
+                  {autoSaved ? t("retrySaveHint") : t("savingHint")}
                 </p>
                 <button
                   type="button"
@@ -420,16 +423,16 @@ export default function DownloadPage() {
                   className="mt-4 inline-block w-full rounded-full bg-[#1677ff] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4096ff] disabled:opacity-60"
                 >
                   {savingFile
-                    ? "保存中…"
+                    ? t("saving")
                     : autoSaved
-                      ? "再次保存到手机 / 电脑"
-                      : "保存到手机 / 电脑"}
+                      ? t("saveAgain")
+                      : t("saveToDevice")}
                 </button>
                 <Link
                   href="/"
                   className="mt-3 block text-sm text-[#1677ff] hover:underline"
                 >
-                  继续下载其他视频
+                  {t("continueOther")}
                 </Link>
               </div>
             )}
@@ -452,13 +455,13 @@ export default function DownloadPage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl">
             ❌
           </div>
-          <h2 className="text-lg font-bold text-[#0f172a]">操作失败</h2>
+          <h2 className="text-lg font-bold text-[#0f172a]">{t("failedTitle")}</h2>
           <p className="mt-2 text-sm text-red-500">{error}</p>
           <Link
             href="/"
             className="mt-6 inline-block rounded-full bg-[#1677ff] px-8 py-3 text-sm font-medium text-white hover:bg-[#4096ff]"
           >
-            返回重试
+            {t("retry")}
           </Link>
         </div>
       )}

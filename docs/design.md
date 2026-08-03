@@ -20,9 +20,10 @@
 
 | 层 | 选型 |
 |----|------|
-| 前端 | Next.js 16 + Tailwind CSS + marked + markmap |
+| 前端 | Next.js 16 + Tailwind CSS + next-intl + marked + markmap |
 | 后端 | FastAPI + uvicorn + yt-dlp + ffmpeg + DeepSeek + faster-whisper |
 | 状态 | 内存 Job + `/tmp/videos/{jobId}/`；用户/订阅 SQLite |
+| i18n | 15 语（默认 `zh`，`localePrefix: as-needed`）；`frontend/messages/` + `backend/i18n/` |
 | 部署 | Docker Compose |
 
 ## 2. 核心业务流程
@@ -135,10 +136,10 @@ data: {"status":"downloading","progress":0.42}
 
 ### 页面结构
 
-| 路径 | 组件 |
+| 路径（默认语 `zh` 无前缀；其他如 `/en/...`） | 组件 |
 |------|------|
-| `/` | Navbar, HomeContent（居中搜索 + 平台标签）, Footer |
-| `/download/[id]` | 左右同屏：左 40% 视频信息/下载，右 60% SummaryPanel（有 AI 额度时自动总结）；移动端上下堆叠 |
+| `/` | Navbar（含语言切换）, HomeContent（居中搜索 + 平台标签）, Footer |
+| `/download/[id]` | 左右同屏：左 40% 视频信息/下载，右 60% SummaryPanel（解析成功后自动总结，全站免费）；移动端上下堆叠 |
 | `/login` `/register` | 邮箱密码登录注册 |
 | `/pricing/success` `/pricing/cancel` | Stripe 回跳页 |
 | `/pricing` | Free / Pro 两档对比（Team 未做） |
@@ -150,7 +151,7 @@ Desktop (lg+)
 ┌──────────────────────────────────────────────┐
 │ ← 返回                                        │
 │ ┌─────────────┬────────────────────────────┐ │
-│ │ 40% 视频信息 │ 60% AI 总结（有额度则自动） │ │
+│ │ 40% 视频信息 │ 60% AI 总结（解析后自动）   │ │
 │ │ 缩略图/格式  │ 摘要/字幕/导图/问答         │ │
 │ │ 下载按钮     │ 重新生成（执行中禁用）       │ │
 │ └─────────────┴────────────────────────────┘ │
@@ -176,11 +177,15 @@ Mobile: 上下堆叠
 videograb/
 ├── docs/                 # requirements / design / ai-summary / membership / stripe-setup
 ├── frontend/             # Next.js（含 Dockerfile）
-│   ├── app/
+│   ├── app/[locale]/    # 页面按 locale 分区
+│   ├── messages/         # 15 语 UI/SEO 文案
+│   ├── i18n/             # routing / request / navigation
+│   ├── middleware.ts
 │   ├── components/
 │   └── lib/
 ├── backend/              # FastAPI（含 Dockerfile）
 │   ├── main.py / db.py
+│   ├── i18n/             # API 错误文案（部分路由）
 │   ├── models/job.py
 │   ├── routers/          # api / summarize / auth / billing
 │   └── services/         # ytdlp / summarizer / auth / users / billing …
@@ -193,7 +198,7 @@ videograb/
 ### 7.1 付费钩子
 
 - 定价页 `/pricing` + Stripe Checkout / Customer Portal 已接入（见 membership.md）
-- 后端可扩展更高清晰度 / 批量等 Pro 能力（当前 Pro 主要权益为无限 AI）
+- 当前 Pro 主要权益为**无限下载**；AI 总结全站免费。可再扩展更高清晰度 / 批量等 Pro 能力
 - 首页 Pro 转化统一走 `/pricing` 入口
 
 ### 7.2 AI 视频总结（已实现）

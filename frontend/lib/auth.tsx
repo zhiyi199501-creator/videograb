@@ -42,13 +42,13 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 async function parseError(res: Response): Promise<string> {
-  const err = await res.json().catch(() => ({ detail: "请求失败" }));
+  const err = await res.json().catch(() => ({ detail: "Request failed" }));
   const detail = err.detail;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
     return detail.map((d) => d.msg || JSON.stringify(d)).join("; ");
   }
-  return err.message || "请求失败";
+  return err.message || "Request failed";
 }
 
 export function getStoredToken(): string | null {
@@ -56,10 +56,31 @@ export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+function clientLocale(): string {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return "zh";
+  }
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+    if (match?.[1]) {
+      const raw = decodeURIComponent(match[1]).trim();
+      if (raw) return raw.split("-")[0].toLowerCase();
+    }
+    const lang = document.documentElement?.lang?.trim();
+    if (lang) return lang.split("-")[0].toLowerCase();
+  } catch {
+    /* ignore */
+  }
+  return "zh";
+}
+
 export function authHeaders(
   extra?: Record<string, string>
 ): Record<string, string> {
-  const headers: Record<string, string> = { ...(extra || {}) };
+  const headers: Record<string, string> = {
+    "Accept-Language": clientLocale(),
+    ...(extra || {}),
+  };
   const token = getStoredToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
@@ -89,7 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const res = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${t}` },
+      headers: {
+        Authorization: `Bearer ${t}`,
+        "Accept-Language": clientLocale(),
+      },
     });
     if (!res.ok) {
       clearSession();
@@ -108,7 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": clientLocale(),
+        },
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error(await parseError(res));
@@ -122,7 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": clientLocale(),
+        },
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) throw new Error(await parseError(res));
@@ -167,7 +197,7 @@ export async function createCheckoutSession(): Promise<string> {
   });
   if (!res.ok) throw new Error(await parseError(res));
   const data = await res.json();
-  if (!data.url) throw new Error("未返回支付链接");
+  if (!data.url) throw new Error("No checkout URL returned");
   return data.url as string;
 }
 
@@ -178,6 +208,6 @@ export async function createPortalSession(): Promise<string> {
   });
   if (!res.ok) throw new Error(await parseError(res));
   const data = await res.json();
-  if (!data.url) throw new Error("未返回账单门户链接");
+  if (!data.url) throw new Error("No billing portal URL returned");
   return data.url as string;
 }

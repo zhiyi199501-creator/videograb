@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useTranslations } from "next-intl";
 import { askAboutVideo } from "@/lib/api";
 import MarkdownContent from "./MarkdownContent";
 
@@ -15,6 +16,7 @@ interface Message {
 }
 
 export default function ChatBox({ jobId, disabled }: ChatBoxProps) {
+  const t = useTranslations("summary");
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [streaming, setStreaming] = useState(false);
@@ -49,11 +51,11 @@ export default function ChatBox({ jobId, disabled }: ChatBoxProps) {
             return next;
           });
         } else if (ev.event === "error") {
-          setError(ev.data.message || "问答失败");
+          setError(ev.data.message || t("chatFailed"));
         }
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "问答失败");
+      setError(err instanceof Error ? err.message : t("chatFailed"));
     } finally {
       setStreaming(false);
     }
@@ -64,7 +66,7 @@ export default function ChatBox({ jobId, disabled }: ChatBoxProps) {
       <div className="max-h-72 min-h-[120px] space-y-3 overflow-y-auto rounded-xl bg-[#f8fafc] p-3">
         {messages.length === 0 && (
           <p className="text-center text-xs text-[#94a3b8]">
-            基于视频字幕提问，例如「这段视频的核心结论是什么？」
+            {t("chatPlaceholderHint")}
           </p>
         )}
         {messages.map((m, i) => (
@@ -99,7 +101,7 @@ export default function ChatBox({ jobId, disabled }: ChatBoxProps) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           disabled={disabled || streaming}
-          placeholder="输入关于视频的问题…"
+          placeholder={t("chatPlaceholder")}
           className="flex-1 rounded-full border border-[#e2e8f0] px-4 py-2 text-sm outline-none focus:border-[#1677ff]"
         />
         <button
@@ -107,7 +109,7 @@ export default function ChatBox({ jobId, disabled }: ChatBoxProps) {
           disabled={disabled || streaming || !question.trim()}
           className="shrink-0 rounded-full bg-[#1677ff] px-5 py-2 text-sm font-medium text-white hover:bg-[#4096ff] disabled:opacity-50"
         >
-          {streaming ? "回答中…" : "提问"}
+          {streaming ? t("answering") : t("ask")}
         </button>
       </form>
     </div>

@@ -17,14 +17,15 @@
 
 ## 技术栈
 
-- 前端：Next.js 16 + Tailwind + marked + markmap
-- 后端：FastAPI；Job 内存 + `/tmp/videos`；用户/订阅 SQLite（`backend/data/app.db`）
+- 前端：Next.js 16 + Tailwind + next-intl + marked + markmap
+- 后端：FastAPI；Job 内存 + `/tmp/videos`；用户/订阅 SQLite（`backend/data/app.db`）；`backend/i18n/` 错误文案
 - AI：DeepSeek + faster-whisper（Compose 卷 `hf-cache`）；会员：Stripe Checkout 月付 Pro ¥9.9
 - 部署：Docker Compose + Caddy（海外机）；测试：pytest / Vitest / GitHub Actions 三 job
 
 ## 目录与约定
 
 - `docs/`：`requirements.md`、`design.md`、`ai-summary.md`、`membership.md`、`stripe-setup.md`、`deploy-online-guide.md`
+- `frontend/messages/` + `frontend/i18n/`：15 语 UI/SEO；`backend/i18n/`：API 错误（`Accept-Language` / `?locale=`）
 - `docker-compose.yml` 通用默认；`docker-compose.prod.yml` 正式域名 / CORS / FRONTEND_URL
 - `backend/routers/`：`api` / `summarize` / `auth` / `billing`；密钥只放 `backend/.env`，勿提交
 - `secrets/cookies.txt` 勿提交；上传：`./scripts/upload-cookies.sh`（见 deploy §14.2）
@@ -32,9 +33,11 @@
 
 ## 现役产品事实（易过期）
 
-- 线上：`https://videograb.codedance.work`（新加坡）；健康检查 `GET /health`（不在公开 `/api` 前缀）
-- AI：总结/问答全站免费，未登录也可用，不扣次。下载：未登录不能下载；登录非 Pro 免费 **3** 次（`download_free_used`），Pro 无限。
+- 线上：`https://videograb.codedance.work`（新加坡）；`GET /health` 在后端，**尚未**公开反代（打域名常落到前端 404）
+- AI：总结/问答全站免费，未登录也可用，不扣次。下载：未登录不能下载；登录非 Pro 免费 **3** 次（`download_free_used`），Pro **无限下载**（不是无限 AI）
+- i18n：默认 `zh`，`localePrefix: as-needed`；非中文路径如 `/en/...`。summarize 路由/SSE 状态已本地化；subtitle/ASR 底层错误文案仍多为中文
 - 解析限流 60/hour（硬编码）；Job TTL 默认 2h；视频不持久化
+- 用户表无 AI 次数字段（AI 全站免费）；下载额度用 `download_free_used`
 - Docker 前端构建：`BACKEND_URL=http://backend:8000`，`NEXT_PUBLIC_API_URL` 留空
 - Cookie：生产勿用 `COOKIES_FROM_BROWSER`；`COOKIES_FILE=/secrets/cookies.txt`（只读挂载，yt-dlp 用可写副本）
 - ASR：海外勿设 `HF_ENDPOINT`（默认官方 Hub）；国内才用镜像
@@ -46,9 +49,11 @@
 - `.venv` shebang 指旧路径 → `rm -rf backend/.venv && ./dev.sh`
 - Turbopack / Next package not found → `rm -rf frontend/.next` 后重启并硬刷新
 - 本机 Python 3.9 会让 yt-dlp 告警；目标 3.12
+- 缺 `next-intl` → 在 `frontend/` 跑 `npm install` 后再 `./dev.sh`
 
 ## 当前状态 / 下一步
 
-- 已上：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE 心跳、ASR HF 缓存
-- 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；公开 `/health` 反代；Stripe **Live** 收款
+- 已上（生产）：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE 心跳、ASR HF 缓存
+- 本分支代码已有、合入/部署前勿当线上事实：15 语 i18n（UI/SEO + API 错误 + summarize SSE 状态）
+- 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；公开 `/health` 反代；Stripe **Live**；subtitle/ASR 底层错误全量 i18n
 - 扩展前读对应 `docs/*`；以代码为准修正文档，勿双写矛盾

@@ -2,10 +2,38 @@
 // 需要直连后端时再设 NEXT_PUBLIC_API_URL（如 http://127.0.0.1:8000）。
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
+/** Short locale for Accept-Language (zh-CN → zh). */
+export function getClientLocale(): string {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return "zh";
+  }
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+    if (match?.[1]) {
+      const raw = decodeURIComponent(match[1]).trim();
+      if (raw) return raw.split("-")[0].toLowerCase();
+    }
+    const lang = document.documentElement?.lang?.trim();
+    if (lang) return lang.split("-")[0].toLowerCase();
+  } catch {
+    /* ignore */
+  }
+  return "zh";
+}
+
+function localeHeaders(
+  extra: Record<string, string> = {}
+): Record<string, string> {
+  return {
+    "Accept-Language": getClientLocale(),
+    ...extra,
+  };
+}
+
 function withAuthHeaders(
   extra: Record<string, string> = {}
 ): Record<string, string> {
-  const headers = { ...extra };
+  const headers = localeHeaders(extra);
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("vg_access_token");
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -51,21 +79,23 @@ export async function extractUrl(url: string): Promise<JobResponse> {
   const normalized = normalizeVideoUrl(url);
   const res = await fetch(`${API_BASE}/api/extract`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: localeHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ url: normalized }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "请求失败" }));
+    const err = await res.json().catch(() => ({ detail: "Request failed" }));
     throw new Error(
-      err.detail || err.error || err.message || "解析失败，请检查链接"
+      err.detail || err.error || err.message || "Failed to parse. Please check the link"
     );
   }
   return res.json();
 }
 
 export async function getJob(jobId: string): Promise<JobResponse> {
-  const res = await fetch(`${API_BASE}/api/jobs/${jobId}`);
-  if (!res.ok) throw new Error("任务不存在");
+  const res = await fetch(`${API_BASE}/api/jobs/${jobId}`, {
+    headers: localeHeaders(),
+  });
+  if (!res.ok) throw new Error("Job not found");
   return res.json();
 }
 
@@ -79,8 +109,8 @@ export async function startDownload(
     body: JSON.stringify({ format_id: formatId }),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "下载失败" }));
-    throw new Error(err.detail || "下载失败");
+    const err = await res.json().catch(() => ({ detail: "Download failed" }));
+    throw new Error(err.detail || "Download failed");
   }
   return res.json();
 }
@@ -93,8 +123,8 @@ export async function downloadFile(
 
   const res = await fetch(`${API_BASE}/api/jobs/${jobId}/file`, { headers });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "下载失败" }));
-    throw new Error(err.detail || "下载失败");
+    const err = await res.json().catch(() => ({ detail: "Download failed" }));
+    throw new Error(err.detail || "Download failed");
   }
 
   const blob = await res.blob();
@@ -147,7 +177,7 @@ export function subscribeJobEvents(
 }
 
 export function formatFileSize(bytes?: number | null): string {
-  if (!bytes) return "未知大小";
+  if (!bytes) return "Unknown size";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   if (bytes < 1024 * 1024 * 1024)
@@ -234,10 +264,10 @@ async function consumeSse(
   signal?: AbortSignal
 ): Promise<void> {
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "请求失败" }));
-    throw new Error(err.detail || err.message || "请求失败");
+    const err = await res.json().catch(() => ({ detail: "Request failed" }));
+    throw new Error(err.detail || err.message || "Request failed");
   }
-  if (!res.body) throw new Error("浏览器不支持流式响应");
+  if (!res.body) throw new Error("Streaming responses are not supported in this browser");
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -293,7 +323,7 @@ export function subscribeSummarize(
     typeof window !== "undefined"
       ? localStorage.getItem("vg_access_token")
       : null;
-  const headers: Record<string, string> = {};
+  const headers = localeHeaders();
   if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(`${API_BASE}/api/jobs/${jobId}/summarize`, {
     signal,
@@ -311,9 +341,9 @@ export function askAboutVideo(
     typeof window !== "undefined"
       ? localStorage.getItem("vg_access_token")
       : null;
-  const headers: Record<string, string> = {
+  const headers = localeHeaders({
     "Content-Type": "application/json",
-  };
+  });
   if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(`${API_BASE}/api/jobs/${jobId}/chat`, {
     method: "POST",

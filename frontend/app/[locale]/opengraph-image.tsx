@@ -1,12 +1,20 @@
 import { ImageResponse } from "next/og";
-import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import { getTranslations } from "next-intl/server";
+import { SITE_NAME } from "@/lib/site";
 
-export const runtime = "edge";
-export const alt = `${SITE_NAME} - ${SITE_TAGLINE}`;
+export const alt = "VideoGrab";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpenGraphImage() {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function OpenGraphImage({ params }: Props) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "home" });
+  const tSeo = await getTranslations({ locale, namespace: "seo" });
+
   return new ImageResponse(
     (
       <div
@@ -49,14 +57,23 @@ export default function OpenGraphImage() {
           </div>
           <div style={{ fontSize: 36, fontWeight: 800 }}>{SITE_NAME}</div>
         </div>
-        <div style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.2, maxWidth: 900 }}>
-          万能视频下载，一键保存到本地
+        <div
+          style={{
+            fontSize: 48,
+            fontWeight: 900,
+            lineHeight: 1.2,
+            maxWidth: 960,
+          }}
+        >
+          {`${t("heroTitleBefore")}${t("heroTitleAccent")}`}
         </div>
-        <div style={{ marginTop: 24, fontSize: 26, color: "#64748b", maxWidth: 860 }}>
-          支持 YouTube、B站、抖音等 1000+ 平台 · AI 总结 · 手机也能下
+        <div
+          style={{ marginTop: 24, fontSize: 24, color: "#64748b", maxWidth: 900 }}
+        >
+          {tSeo("tagline")}
         </div>
       </div>
     ),
-    { ...size },
+    { ...size }
   );
 }
