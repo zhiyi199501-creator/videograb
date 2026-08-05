@@ -92,6 +92,14 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          {user?.is_admin && (
+            <a
+              href="/admin"
+              className="text-sm text-[#020817] transition-colors hover:text-[#1677ff]"
+            >
+              后台
+            </a>
+          )}
           <LocaleSwitcher />
           <AuthSlot />
         </nav>
@@ -137,6 +145,15 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          {user?.is_admin && (
+            <a
+              href="/admin"
+              className="block py-2 text-sm text-[#020817]"
+              onClick={() => setMobileOpen(false)}
+            >
+              后台
+            </a>
+          )}
           {user ? (
             <>
               <p className="py-2 text-sm text-[#64748b]">

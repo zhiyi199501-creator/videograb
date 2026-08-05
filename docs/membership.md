@@ -58,6 +58,8 @@
 **Pro 有效判定**：`plan=pro` 且 `status in (active, past_due)` 且（无 period_end 或 `now < current_period_end + 宽限`）。  
 本期简化：`status == active` 即视为 Pro（`past_due` 仍暂允访问，给续费缓冲）。
 
+**人工 Pro（Admin）**：`POST /api/admin/users/{id}/pro`（需 `ADMIN_EMAILS`）可 `grant` / `revoke`，直接写 `subscriptions`（`grant` 时 `status=active` 且 `current_period_end=NULL`）。不经 Stripe；保留已有 `stripe_subscription_id`。若用户随后走 Checkout，webhook 仍会按 Stripe 状态同步。
+
 ### stripe_events
 
 | 字段 | 说明 |
@@ -82,7 +84,7 @@
 |------|------|------|------|
 | POST | `/api/auth/register` | 无 | `{email,password}` |
 | POST | `/api/auth/login` | 无 | 返回 `{access_token, token_type, user}` |
-| GET | `/api/auth/me` | JWT | 含 `is_pro`、订阅摘要 |
+| GET | `/api/auth/me` | JWT | 含 `is_pro`、`is_admin`、订阅摘要 |
 | POST | `/api/billing/checkout` | JWT | 返回 `{url}` |
 | POST | `/api/billing/portal` | JWT | 返回 Customer Portal `{url}` |
 | POST | `/api/billing/webhook` | Stripe 签名 | 原始 body 验签 |

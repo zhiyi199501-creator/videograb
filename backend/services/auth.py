@@ -21,6 +21,15 @@ JWT_ALG = "HS256"
 _bearer = HTTPBearer(auto_error=False)
 
 
+def admin_emails() -> set[str]:
+    raw = os.environ.get("ADMIN_EMAILS", "")
+    return {e.strip().lower() for e in raw.split(",") if e.strip()}
+
+
+def is_admin_email(email: str) -> bool:
+    return email.strip().lower() in admin_emails()
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -63,6 +72,7 @@ def user_public(user: Dict[str, Any]) -> Dict[str, Any]:
         "id": user["id"],
         "email": user["email"],
         "is_pro": is_pro,
+        "is_admin": is_admin_email(user["email"]),
         "can_download": user_store.can_download(user["id"]),
         "download_free_limit": user_store.DOWNLOAD_FREE_LIMIT,
         "download_free_used": free_used,
@@ -101,6 +111,17 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=t("auth.user_not_found", locale),
+        )
+    return user
+
+
+async def get_admin_user(
+    user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
+    if not is_admin_email(user["email"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
         )
     return user
 

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
+import AnalyticsBeacon from "@/components/AnalyticsBeacon";
 import JsonLd from "@/components/seo/JsonLd";
 import { AuthProvider } from "@/lib/auth";
 import { localeMeta } from "@/i18n/locales";
@@ -110,6 +111,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       >
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
+            <AnalyticsBeacon />
             <Suspense>{children}</Suspense>
           </AuthProvider>
         </NextIntlClientProvider>

@@ -16,6 +16,7 @@ export interface AuthUser {
   id: string;
   email: string;
   is_pro: boolean;
+  is_admin?: boolean;
   can_download?: boolean;
   download_free_limit?: number;
   download_free_used?: number;

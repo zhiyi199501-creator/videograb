@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from i18n import get_request_locale, t
+from services import analytics as analytics_store
 from services import users as user_store
 from services.auth import (
     create_access_token,
@@ -46,6 +47,12 @@ def register(request: Request, body: AuthBody):
         raise HTTPException(
             status_code=409, detail=t("auth.email_taken", locale)
         ) from exc
+    analytics_store.record_auth_event(
+        event="register",
+        email=email,
+        user_id=user["id"],
+        ip=request.client.host if request.client else None,
+    )
     token = create_access_token(user["id"], user["email"])
     return {
         "access_token": token,
@@ -60,10 +67,22 @@ def login(request: Request, body: AuthBody):
     email = _normalize_email(body.email)
     user = user_store.get_user_by_email(email)
     if not user or not verify_password(body.password, user["password_hash"]):
+        analytics_store.record_auth_event(
+            event="login_failed",
+            email=email,
+            user_id=user["id"] if user else None,
+            ip=request.client.host if request.client else None,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=t("auth.bad_credentials", locale),
         )
+    analytics_store.record_auth_event(
+        event="login",
+        email=email,
+        user_id=user["id"],
+        ip=request.client.host if request.client else None,
+    )
     token = create_access_token(user["id"], user["email"])
     return {
         "access_token": token,
