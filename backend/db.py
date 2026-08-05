@@ -70,6 +70,33 @@ def init_db() -> None:
             CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
             CREATE INDEX IF NOT EXISTS idx_users_stripe_customer
                 ON users(stripe_customer_id);
+
+            CREATE TABLE IF NOT EXISTS pageviews (
+                id TEXT PRIMARY KEY,
+                path TEXT NOT NULL,
+                locale TEXT,
+                visitor_id TEXT NOT NULL,
+                user_id TEXT,
+                ip_hash TEXT,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_pageviews_created
+                ON pageviews(created_at);
+            CREATE INDEX IF NOT EXISTS idx_pageviews_path
+                ON pageviews(path);
+
+            CREATE TABLE IF NOT EXISTS auth_events (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                email TEXT NOT NULL,
+                event TEXT NOT NULL,
+                ip_hash TEXT,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_auth_events_created
+                ON auth_events(created_at);
             """
         )
         # 兼容已有库：补齐下载额度；去掉已废弃的 AI 次数字段

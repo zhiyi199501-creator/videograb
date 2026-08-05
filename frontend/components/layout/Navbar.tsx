@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/layout/LocaleSwitcher";
 import { useAuth } from "@/lib/auth";
@@ -92,6 +93,14 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          {user?.is_admin && (
+            <NextLink
+              href="/admin"
+              className="text-sm text-[#020817] transition-colors hover:text-[#1677ff]"
+            >
+              后台
+            </NextLink>
+          )}
           <LocaleSwitcher />
           <AuthSlot />
         </nav>
@@ -137,6 +146,15 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          {user?.is_admin && (
+            <NextLink
+              href="/admin"
+              className="block py-2 text-sm text-[#020817]"
+              onClick={() => setMobileOpen(false)}
+            >
+              后台
+            </NextLink>
+          )}
           {user ? (
             <>
               <p className="py-2 text-sm text-[#64748b]">

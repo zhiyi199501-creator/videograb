@@ -13,6 +13,8 @@ from slowapi.errors import RateLimitExceeded
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from db import init_db
+from routers.admin import router as admin_router
+from routers.analytics import router as analytics_router
 from routers.api import limiter, router
 from routers.auth import router as auth_router
 from routers.billing import router as billing_router
@@ -56,6 +58,8 @@ app.include_router(router)
 app.include_router(summarize_router)
 app.include_router(auth_router)
 app.include_router(billing_router)
+app.include_router(analytics_router)
+app.include_router(admin_router)
 
 
 @app.get("/health")

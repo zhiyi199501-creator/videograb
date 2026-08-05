@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/download/", "/dev/"],
+        disallow: ["/api/", "/admin/", "/download/", "/dev/"],
       },
       // GEO：显式允许主流 AI 爬虫抓取公开页
       { userAgent: "GPTBot", allow: "/" },
