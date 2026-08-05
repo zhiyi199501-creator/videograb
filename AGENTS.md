@@ -42,8 +42,8 @@
 - Cookie：生产勿用 `COOKIES_FROM_BROWSER`；`COOKIES_FILE=/secrets/cookies.txt`（只读挂载，yt-dlp 用可写副本）
 - ASR：海外勿设 `HF_ENDPOINT`（默认官方 Hub）；国内才用镜像
 - Stripe：当前生产为 **Test Mode** + 站点 Webhook；履约以 webhook 为准（StripeObject 须转 dict）
-- 后台：`/admin`（同 Next 应用，不进 locale）；`ADMIN_EMAILS` 白名单 + 现有 JWT；`/api/admin/*`；访问埋点 `pageviews` + 登录事件 `auth_events`；可人工 grant/revoke Pro；系统页用 psutil（容器内为容器视角）
-- 合入 ≠ 已部署；改运行态后服务器 `./scripts/redeploy.sh --pull`
+- 后台（代码在分支/PR，**生产未上**）：`/admin`；`ADMIN_EMAILS` 白名单 + JWT；`/api/admin/*`；`pageviews` / `auth_events`；人工 Pro；psutil 系统页（容器视角）
+- 合入 ≠ 已部署；改运行态后服务器 `./scripts/redeploy.sh --pull`（生产目录 `/opt/videograb`）
 
 ## 本地坑
 
@@ -54,7 +54,7 @@
 
 ## 当前状态 / 下一步
 
-- 已上（生产）：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE 心跳、ASR HF 缓存、15 语 i18n、公开 `/health` 反代
-- 代码已有（待部署）：`/admin` 后台（访问/登录监控、Pro 人工增删、CPU/内存）
+- 已上（生产 live 2026-08-05 核验）：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE、ASR HF 缓存、15 语 i18n；`GET /health` → 200。生产 git 仍停在较旧 `main`（当时核验为 `86e1a21`），落后 `origin/main`
+- 进行中（未合入 / 未部署）：[PR #18](https://github.com/zhiyi199501-creator/videograb/pull/18) `/admin` 后台。生产 `backend/.env` 已写 `ADMIN_EMAILS`，但代码未上线时 `/admin` 与 `/api/admin/*` 为 404
 - 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；Stripe **Live**；subtitle/ASR 底层错误全量 i18n；业务漏斗埋点
 - 扩展前读对应 `docs/*`；以代码为准修正文档，勿双写矛盾

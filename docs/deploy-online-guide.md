@@ -177,10 +177,12 @@ DEEPSEEK_API_KEY=sk-你的真实key
 # 生产环境务必换成长随机串（不要用示例里的弱密钥）
 JWT_SECRET=请换成很长的随机字符串
 
+# 管理后台白名单（逗号分隔；账号须已注册）。未部署 /admin 代码时此项无效果
+# ADMIN_EMAILS=you@example.com
+
 # 先写 IP；有 HTTPS 域名后再改成 https://videograb.codedance.work
 FRONTEND_URL=http://你的公网IP
 ```
-
 生成随机密钥示例：
 
 ```bash
