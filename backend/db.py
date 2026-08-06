@@ -42,6 +42,7 @@ def init_db() -> None:
                 password_hash TEXT NOT NULL,
                 stripe_customer_id TEXT,
                 download_free_used INTEGER NOT NULL DEFAULT 0,
+                download_free_day TEXT,
                 created_at TEXT NOT NULL
             );
 
@@ -107,6 +108,10 @@ def init_db() -> None:
         if "download_free_used" not in cols:
             conn.execute(
                 "ALTER TABLE users ADD COLUMN download_free_used INTEGER NOT NULL DEFAULT 0"
+            )
+        if "download_free_day" not in cols:
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN download_free_day TEXT"
             )
         if "ai_free_used" in cols:
             conn.execute("ALTER TABLE users DROP COLUMN ai_free_used")

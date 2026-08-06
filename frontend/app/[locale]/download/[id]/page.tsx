@@ -429,12 +429,9 @@ export default function DownloadPage() {
                   </p>
                 )}
                 {quotaExhausted && (
-                  <Link
-                    href="/pricing"
-                    className="mt-2 block text-center text-xs font-medium text-[#1677ff] hover:underline"
-                  >
-                    {t("upgradeLink")}
-                  </Link>
+                  <p className="mt-2 text-center text-xs text-[#94a3b8]">
+                    {t("quotaExhaustedHint")}
+                  </p>
                 )}
               </div>
             )}

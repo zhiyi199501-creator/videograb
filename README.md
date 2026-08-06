@@ -12,9 +12,9 @@
 - 移动端友好：`Content-Disposition` 直链下载 + 微信/Safari 提示
 - 无独立下载数据库：内存 Job + 临时文件，2 小时 TTL 自动清理；用户/订阅另用 SQLite
 - IP 限流（解析 60 次/小时）防滥用
-- **用户登录 + Stripe Pro 会员**（未登录不能下载；登录免费下载 3 次，Pro ¥9.9/月无限下载；AI 总结全站免费；见 docs/membership.md）
+- **用户登录 + 下载额度**（未登录不能下载；登录后每天免费下载 **10** 次，按 Asia/Shanghai 自然日重置；AI 总结全站免费；前端已隐藏 Pro 自助升级；后端 Stripe/人工 Pro 仍保留，见 docs/membership.md）
 - **多语言**：15 语 UI/SEO（next-intl，默认中文，路径 `as-needed`）；后端部分错误文案跟 `Accept-Language`
-- 定价页 Free / Pro（Team 未做）
+- iOS 壳（仓库 `ios/`）：VideoGrab AI，AI 总结优先；详见 `ios/README.md`
 
 ## 技术栈
 
@@ -175,7 +175,7 @@ cp backend/.env.example backend/.env
 | POST | `/api/extract` | 解析视频元数据，返回 jobId + 格式列表 |
 | GET | `/api/jobs/{id}` | 查询任务状态 |
 | GET | `/api/jobs/{id}/events` | SSE 进度推送 |
-| POST | `/api/jobs/{id}/download` | 开始下载（需登录；非 Pro 消耗 1 次免费额度） |
+| POST | `/api/jobs/{id}/download` | 开始下载（需登录；非 Pro 消耗 1 次当日免费额度） |
 | GET | `/api/jobs/{id}/file` | 下载文件（attachment，需登录） |
 | GET | `/api/jobs/{id}/summarize` | SSE：字幕 + AI 摘要 + 思维导图（全站免费） |
 | POST | `/api/jobs/{id}/chat` | SSE：基于字幕的 AI 问答（全站免费） |

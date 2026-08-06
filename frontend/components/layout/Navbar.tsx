@@ -72,7 +72,6 @@ export default function Navbar() {
         { href: "/#how-to-use", label: t("howTo") },
         { href: "/#comparison", label: t("comparison") },
         { href: "/#faq", label: t("faq") },
-        { href: "/pricing", label: t("pricing") },
       ];
 
   return (

@@ -141,8 +141,7 @@ data: {"status":"downloading","progress":0.42}
 | `/` | Navbar（含语言切换）, HomeContent（居中搜索 + 平台标签）, Footer |
 | `/download/[id]` | 左右同屏：左 40% 视频信息/下载，右 60% SummaryPanel（解析成功后自动总结，全站免费）；移动端上下堆叠 |
 | `/login` `/register` | 邮箱密码登录注册 |
-| `/pricing/success` `/pricing/cancel` | Stripe 回跳页 |
-| `/pricing` | Free / Pro 两档对比（Team 未做） |
+| `/pricing*` | 重定向首页（Pro 自助入口已下线） |
 
 ### 下载页同屏布局
 
@@ -163,7 +162,7 @@ Mobile: 上下堆叠
 
 - 默认：标题 + 搜索框垂直居中，下方仅保留平台标签；弱化 Slogan 副文案
 - 连按三次 Enter（焦点不在输入框）：展开完整 Slogan 副文案
-- 首页不再展示 Pro 功能列表（定价见 `/pricing`）
+- 首页不再展示 Pro 功能列表；定价自助入口已下线
 
 ### 响应式断点
 
@@ -197,9 +196,9 @@ videograb/
 
 ### 7.1 付费钩子
 
-- 定价页 `/pricing` + Stripe Checkout / Customer Portal 已接入（见 membership.md）
-- 当前 Pro 主要权益为**无限下载**；AI 总结全站免费。可再扩展更高清晰度 / 批量等 Pro 能力
-- 首页 Pro 转化统一走 `/pricing` 入口
+- 定价页 `/pricing` 已改为重定向首页；Stripe Checkout / Portal **后端仍保留**，前端自助入口已下线（见 membership.md）
+- 现役下载权益：登录每天 **10** 次；已开通 Pro 的账号仍无限下载；AI 总结全站免费
+- 首页不再引导至 `/pricing`
 
 ### 7.2 AI 视频总结（已实现）
 
@@ -220,9 +219,9 @@ Job 可缓存字段：`subtitles`、`subtitle_text`、`subtitle_source`、`summa
 
 详见 [membership.md](membership.md)、[stripe-setup.md](stripe-setup.md)。
 
-- SQLite：`users`（含 `download_free_used`）/ `subscriptions` / `stripe_events` / `checkout_sessions`
-- JWT 登录；Stripe Checkout 月付 Pro（¥9.9）；Webhook 幂等履约
-- 下载需登录：非 Pro 免费 3 次，Pro 无限（下载路由内扣次）；AI 总结全站免费
+- SQLite：`users`（含 `download_free_used` + `download_free_day`）/ `subscriptions` / `stripe_events` / `checkout_sessions`
+- JWT 登录；下载额度每天 10 次；Stripe/人工 Pro 后端保留，前端自助入口已下线
+- 下载需登录：非 Pro 每天免费 10 次（上海时区按日重置），Pro 无限（下载路由内扣次）；AI 总结全站免费；前端隐藏 Pro 自助升级
 - Job 仍为内存；可后续挂 `user_id`
 
 ### 7.4 DB 迁移路径（后续）

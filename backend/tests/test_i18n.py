@@ -17,9 +17,9 @@ def test_auth_messages_differ_by_locale():
 
 
 def test_quota_message_interpolates_limit():
-    msg = t("download.quota_exhausted", "en", limit=3)
-    assert "3" in msg
-    assert "Pro" in msg
+    msg = t("download.quota_exhausted", "en", limit=10)
+    assert "10" in msg
+    assert "day" in msg.lower()
 
 
 def test_login_error_respects_accept_language(client):
@@ -73,5 +73,5 @@ def test_download_quota_error_english(client, monkeypatch):
         )
     assert res.status_code == 403
     detail = res.json()["detail"]
-    assert "Free download" in detail or "quota" in detail.lower()
-    assert "Pro" in detail
+    assert "quota" in detail.lower() or "free download" in detail.lower()
+    assert "tomorrow" in detail.lower() or "10" in detail

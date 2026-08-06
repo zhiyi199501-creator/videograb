@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const { register, user, loading } = useAuth();
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/pricing";
+  const next = search.get("next") || "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
