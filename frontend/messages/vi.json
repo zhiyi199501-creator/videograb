@@ -22,7 +22,9 @@
     "disclaimerTitle": "Tuyên bố miễn trừ",
     "disclaimer": "Công cụ này chỉ dành cho học tập và nghiên cứu cá nhân. Hãy đảm bảo bạn có quyền hợp pháp để tải nội dung và tuân thủ điều khoản của từng nền tảng. Không dùng để xâm phạm bản quyền hoặc mục đích thương mại; bạn chịu hoàn toàn trách nhiệm. Video không được lưu vĩnh viễn và sẽ bị xóa sau 2 giờ.",
     "copyright": "© 2026 VideoGrab. Xây dựng trên dự án mã nguồn mở yt-dlp.",
-    "icp": "Chỗ giữ chỗ đăng ký ICP"
+    "icp": "Chỗ giữ chỗ đăng ký ICP",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "Tải mọi video,",
@@ -80,7 +82,12 @@
     "faq5q": "Khác gì so với các trình tải khác?",
     "faq5a": "Phạm vi rộng hơn (1000+), tóm tắt AI và sơ đồ tư duy tích hợp, chỉ cần trình duyệt, phụ đề nhiều định dạng, thân thiện với di động.",
     "faq6q": "Tôi dùng trên điện thoại được không?",
-    "faq6a": "Được. Giao diện đáp ứng; trong WeChat bạn sẽ được nhắc mở trình duyệt hệ thống để hoàn tất tải."
+    "faq6a": "Được. Giao diện đáp ứng; trong WeChat bạn sẽ được nhắc mở trình duyệt hệ thống để hoàn tất tải.",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← Về trang chủ",
@@ -119,7 +126,11 @@
     "formatHint": "File nhỏ hơn tải nhanh hơn; chọn chất lượng thấp hơn cho video dài",
     "recommendedFaster": "Khuyến nghị · nhanh hơn",
     "mobileTipStrong": "Mẹo:",
-    "mobileTip": "Bạn đang ở trình duyệt trong ứng dụng; tải xuống có thể bị hạn chế. Nhấn ··· và mở trong Safari / Chrome để trải nghiệm tốt nhất."
+    "mobileTip": "Bạn đang ở trình duyệt trong ứng dụng; tải xuống có thể bị hạn chế. Nhấn ··· và mở trong Safari / Chrome để trải nghiệm tốt nhất.",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "Tóm tắt video bằng AI",

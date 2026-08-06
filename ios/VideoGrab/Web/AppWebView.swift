@@ -83,43 +83,12 @@ struct AppWebView: UIViewRepresentable {
             didReceive message: WKScriptMessage
         ) {
             switch BridgeMessage(rawValue: message.name) {
-            case .download:
-                handleDownload(message.body)
             case .openExternal:
                 handleOpenExternal(message.body)
             case .shareBlob:
                 handleShareBlob(message.body)
             case .none:
                 break
-            }
-        }
-
-        private func handleDownload(_ body: Any) {
-            guard let payload = NativeBridge.decode(DownloadBridgePayload.self, from: body) else {
-                model.failDownload("下载参数无效")
-                return
-            }
-            model.showBanner("正在保存…")
-            let apiBase = payload.apiBase?.isEmpty == false
-                ? (payload.apiBase ?? AppConfig.productionURL.absoluteString)
-                : (webView?.url?.originString ?? AppConfig.productionURL.absoluteString)
-
-            DownloadManager.downloadJobFile(
-                jobId: payload.jobId,
-                filename: payload.filename,
-                token: payload.token,
-                apiBase: apiBase
-            ) { [weak self] result in
-                Task { @MainActor in
-                    guard let self else { return }
-                    switch result {
-                    case .success(let fileURL):
-                        self.model.showBanner("已准备好分享")
-                        self.model.presentShare(fileURL: fileURL)
-                    case .failure(let error):
-                        self.model.failDownload(error.localizedDescription)
-                    }
-                }
             }
         }
 

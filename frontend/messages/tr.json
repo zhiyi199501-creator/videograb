@@ -22,7 +22,9 @@
     "disclaimerTitle": "Sorumluluk reddi",
     "disclaimer": "Bu araç yalnızca kişisel öğrenme ve araştırma içindir. İçeriği indirme yasal hakkınız olduğundan emin olun ve her platformun koşullarına uyun. Telif hakkı ihlali veya ticari amaçlar için kullanmayın; sorumluluk yalnızca size aittir. Videolar kalıcı olarak saklanmaz ve 2 saat sonra silinir.",
     "copyright": "© 2026 VideoGrab. Açık kaynak yt-dlp projesi üzerine kurulmuştur.",
-    "icp": "ICP kayıt yer tutucusu"
+    "icp": "ICP kayıt yer tutucusu",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "Herhangi bir videoyu indirin,",
@@ -80,7 +82,12 @@
     "faq5q": "Diğer indiricilerden farkı nedir?",
     "faq5a": "Daha geniş kapsam (1000+), yerleşik yapay zekâ özeti ve zihin haritaları, yalnızca tarayıcı, çok formatlı altyazı, mobil uyumlu.",
     "faq6q": "Telefonda kullanabilir miyim?",
-    "faq6a": "Evet. Duyarlıdır; WeChat’te indirmeyi tamamlamak için sistem tarayıcısında açmanız istenir."
+    "faq6a": "Evet. Duyarlıdır; WeChat’te indirmeyi tamamlamak için sistem tarayıcısında açmanız istenir.",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← Ana sayfaya dön",
@@ -119,7 +126,11 @@
     "formatHint": "Daha küçük dosyalar daha hızlı iner; uzun videolar için daha düşük kalite seçin",
     "recommendedFaster": "Önerilen · daha hızlı",
     "mobileTipStrong": "İpucu:",
-    "mobileTip": "Uygulama içi tarayıcıdasınız; indirmeler sınırlı olabilir. ··· öğesine dokunup Safari / Chrome’da açın."
+    "mobileTip": "Uygulama içi tarayıcıdasınız; indirmeler sınırlı olabilir. ··· öğesine dokunup Safari / Chrome’da açın.",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "Yapay zekâ video özeti",

@@ -2,16 +2,8 @@ import Foundation
 import WebKit
 
 enum BridgeMessage: String {
-    case download = "vgDownload"
     case openExternal = "vgOpenExternal"
     case shareBlob = "vgShareBlob"
-}
-
-struct DownloadBridgePayload: Decodable {
-    let jobId: String
-    let filename: String
-    let token: String?
-    let apiBase: String?
 }
 
 struct OpenExternalPayload: Decodable {
@@ -26,7 +18,6 @@ struct ShareBlobPayload: Decodable {
 
 enum NativeBridge {
     static let handlerNames: [String] = [
-        BridgeMessage.download.rawValue,
         BridgeMessage.openExternal.rawValue,
         BridgeMessage.shareBlob.rawValue,
     ]
@@ -38,10 +29,8 @@ enum NativeBridge {
           if (window.VideoGrabNative) return;
           window.VideoGrabNative = {
             platform: 'ios',
-            version: '1.0.0',
-            downloadJob: function (payload) {
-              window.webkit.messageHandlers.vgDownload.postMessage(payload);
-            },
+            mode: 'ai-summary',
+            version: '1.1.0',
             openExternal: function (url) {
               window.webkit.messageHandlers.vgOpenExternal.postMessage({ url: String(url) });
             },
@@ -50,6 +39,7 @@ enum NativeBridge {
             }
           };
           document.documentElement.dataset.vgNative = 'ios';
+          document.documentElement.dataset.vgMode = 'ai-summary';
         })();
         """
     }

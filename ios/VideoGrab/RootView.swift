@@ -13,7 +13,7 @@ struct RootView: View {
                     ProgressView(value: model.progress)
                         .progressViewStyle(.linear)
                         .frame(width: 160)
-                    Text("VideoGrab")
+                    Text("VideoGrab AI")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                 }
@@ -43,7 +43,7 @@ struct RootView: View {
         .sheet(item: $model.shareItem) { item in
             ShareSheet(items: [item.url])
         }
-        .alert("下载失败", isPresented: Binding(
+        .alert("导出失败", isPresented: Binding(
             get: { model.downloadError != nil },
             set: { if !$0 { model.downloadError = nil } }
         )) {

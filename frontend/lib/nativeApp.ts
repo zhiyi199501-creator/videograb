@@ -2,9 +2,14 @@
 
 export type NativePlatform = "ios";
 
+/** App Store–oriented shell: AI summary first, no video download UI. */
+export type NativeAppMode = "ai-summary" | "full";
+
 export interface VideoGrabNativeBridge {
   platform: NativePlatform;
   version?: string;
+  /** Default for iOS App Store build: ai-summary */
+  mode?: NativeAppMode;
   downloadJob?: (payload: {
     jobId: string;
     filename: string;
@@ -38,6 +43,18 @@ export function isNativeApp(): boolean {
   return /VideoGrabiOS\//i.test(navigator.userAgent || "");
 }
 
+export function getNativeAppMode(): NativeAppMode | null {
+  if (!isNativeApp()) return null;
+  const mode = window.VideoGrabNative?.mode;
+  if (mode === "full" || mode === "ai-summary") return mode;
+  // iOS shell defaults to AI-first even if an older bridge omitted `mode`.
+  return "ai-summary";
+}
+
+export function isAiSummaryApp(): boolean {
+  return getNativeAppMode() === "ai-summary";
+}
+
 export function nativeDownloadJob(payload: {
   jobId: string;
   filename: string;
@@ -45,6 +62,8 @@ export function nativeDownloadJob(payload: {
   apiBase?: string;
 }): boolean {
   if (typeof window === "undefined") return false;
+  // AI-first shell: never hand off video file downloads.
+  if (isAiSummaryApp()) return false;
   if (window.VideoGrabNative?.downloadJob) {
     window.VideoGrabNative.downloadJob(payload);
     return true;

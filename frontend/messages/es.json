@@ -22,7 +22,9 @@
     "disclaimerTitle": "Aviso legal",
     "disclaimer": "Esta herramienta es solo para aprendizaje e investigación personal. Asegúrate de tener el derecho legal de descargar el contenido y de cumplir las condiciones de cada plataforma. No la uses para infracción de derechos de autor ni fines comerciales; eres el único responsable. Los videos no se almacenan de forma permanente y se eliminan tras 2 horas.",
     "copyright": "© 2026 VideoGrab. Basado en el proyecto de código abierto yt-dlp.",
-    "icp": "Placeholder de registro ICP"
+    "icp": "Placeholder de registro ICP",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "Descarga cualquier video,",
@@ -80,7 +82,12 @@
     "faq5q": "¿En qué se diferencia de otros descargadores?",
     "faq5a": "Mayor cobertura (más de 1000), resumen y mapas mentales con IA integrados, solo navegador, subtítulos en varios formatos, apto para móvil.",
     "faq6q": "¿Puedo usarlo en el móvil?",
-    "faq6a": "Sí. Es responsive; en WeChat se te pedirá abrir el navegador del sistema para completar la descarga."
+    "faq6a": "Sí. Es responsive; en WeChat se te pedirá abrir el navegador del sistema para completar la descarga.",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← Volver al inicio",
@@ -119,7 +126,11 @@
     "formatHint": "Los archivos más pequeños se descargan más rápido; elige menor calidad para videos largos",
     "recommendedFaster": "Recomendado · más rápido",
     "mobileTipStrong": "Consejo:",
-    "mobileTip": "Estás en un navegador integrado; las descargas pueden estar limitadas. Toca ··· y ábrelo en Safari / Chrome para la mejor experiencia."
+    "mobileTip": "Estás en un navegador integrado; las descargas pueden estar limitadas. Toca ··· y ábrelo en Safari / Chrome para la mejor experiencia.",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "Resumen de video con IA",

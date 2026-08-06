@@ -22,7 +22,9 @@
     "disclaimerTitle": "अस्वीकरण",
     "disclaimer": "यह टूल केवल व्यक्तिगत अध्ययन और शोध के लिए है। सुनिश्चित करें कि आपके पास सामग्री डाउनलोड करने का कानूनी अधिकार है और प्रत्येक प्लेटफ़ॉर्म की शर्तों का पालन करें। कॉपीराइट उल्लंघन या व्यावसायिक उद्देश्यों के लिए उपयोग न करें; आप स्वयं पूरी तरह जिम्मेदार हैं। वीडियो स्थायी रूप से संग्रहीत नहीं होते और 2 घंटे बाद हटा दिए जाते हैं।",
     "copyright": "© 2026 VideoGrab. ओपन-सोर्स प्रोजेक्ट yt-dlp पर आधारित।",
-    "icp": "ICP फाइलिंग प्लेसहोल्डर"
+    "icp": "ICP फाइलिंग प्लेसहोल्डर",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "कोई भी वीडियो डाउनलोड करें,",
@@ -80,7 +82,12 @@
     "faq5q": "अन्य डाउनलोडर से कैसे अलग है?",
     "faq5a": "व्यापक कवरेज (1000+), अंतर्निहित AI सारांश और माइंड मैप, केवल ब्राउज़र, बहु-प्रारूप सबटाइटल, मोबाइल-अनुकूल।",
     "faq6q": "क्या मैं इसे फ़ोन पर उपयोग कर सकता हूँ?",
-    "faq6a": "हाँ। यह रेस्पॉन्सिव है; WeChat में डाउनलोड पूरा करने के लिए सिस्टम ब्राउज़र में खोलने का संकेत मिलेगा।"
+    "faq6a": "हाँ। यह रेस्पॉन्सिव है; WeChat में डाउनलोड पूरा करने के लिए सिस्टम ब्राउज़र में खोलने का संकेत मिलेगा।",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← होम पर वापस",
@@ -119,7 +126,11 @@
     "formatHint": "छोटी फ़ाइलें तेज़ डाउनलोड होती हैं; लंबे वीडियो के लिए कम गुणवत्ता चुनें",
     "recommendedFaster": "अनुशंसित · तेज़",
     "mobileTipStrong": "सुझाव:",
-    "mobileTip": "आप इन-ऐप ब्राउज़र में हैं; डाउनलोड सीमित हो सकते हैं। ··· टैप करें और बेहतर अनुभव के लिए Safari / Chrome में खोलें।"
+    "mobileTip": "आप इन-ऐप ब्राउज़र में हैं; डाउनलोड सीमित हो सकते हैं। ··· टैप करें और बेहतर अनुभव के लिए Safari / Chrome में खोलें।",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "AI वीडियो सारांश",

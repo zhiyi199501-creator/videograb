@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useAiSummaryApp } from "@/lib/useAiSummaryApp";
 
 interface HeroSectionProps {
   /** 紧凑首屏：缩小间距；演示模式关闭时弱化副文案 */
@@ -9,6 +10,11 @@ interface HeroSectionProps {
 
 export default function HeroSection({ compact = false }: HeroSectionProps) {
   const t = useTranslations("home");
+  const aiFirst = useAiSummaryApp();
+
+  const titleBefore = aiFirst ? t("aiHeroTitleBefore") : t("heroTitleBefore");
+  const titleAccent = aiFirst ? t("aiHeroTitleAccent") : t("heroTitleAccent");
+  const subtitle = aiFirst ? t("aiHeroSubtitle") : t("heroSubtitle");
 
   return (
     <section
@@ -21,7 +27,7 @@ export default function HeroSection({ compact = false }: HeroSectionProps) {
         className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-36 max-w-2xl rounded-full bg-[radial-gradient(ellipse_at_center,rgba(22,119,255,0.12),transparent_70%)] blur-2xl"
       />
       <p className="relative mb-2 text-xs font-semibold tracking-[0.18em] text-[#1677ff]/80 uppercase">
-        VideoGrab
+        {aiFirst ? "VideoGrab AI" : "VideoGrab"}
       </p>
       <h1
         className={`relative font-extrabold leading-[1.15] tracking-tight text-[#0f172a] ${
@@ -30,14 +36,18 @@ export default function HeroSection({ compact = false }: HeroSectionProps) {
             : "text-[2rem] sm:text-4xl lg:text-[2.75rem]"
         }`}
       >
-        {t("heroTitleBefore")}
-        <span className="text-[#1677ff]">{t("heroTitleAccent")}</span>
+        {titleBefore}
+        <span className="text-[#1677ff]">{titleAccent}</span>
       </h1>
-      {!compact && (
+      {(!compact || aiFirst) && (
         <p className="relative mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#64748b] sm:text-[15px]">
-          {t("heroSubtitle")}
-          <br className="hidden sm:block" />
-          {t("heroSubtitleAi")}
+          {subtitle}
+          {!aiFirst && (
+            <>
+              <br className="hidden sm:block" />
+              {t("heroSubtitleAi")}
+            </>
+          )}
         </p>
       )}
     </section>

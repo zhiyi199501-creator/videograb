@@ -22,7 +22,9 @@
     "disclaimerTitle": "ข้อจำกัดความรับผิดชอบ",
     "disclaimer": "เครื่องมือนี้มีไว้เพื่อการเรียนรู้และวิจัยส่วนบุคคลเท่านั้น โปรดตรวจสอบว่าคุณมีสิทธิ์ตามกฎหมายในการดาวน์โหลดเนื้อหาและปฏิบัติตามข้อกำหนดของแต่ละแพลตฟอร์ม ห้ามใช้เพื่อละเมิดลิขสิทธิ์หรือเชิงพาณิชย์ คุณรับผิดชอบแต่เพียงผู้เดียว วิดีโอไม่ถูกเก็บถาวรและจะถูกลบหลัง 2 ชั่วโมง",
     "copyright": "© 2026 VideoGrab. สร้างบนโครงการโอเพนซอร์ส yt-dlp",
-    "icp": "ตัวยึดตำแหน่งการจดทะเบียน ICP"
+    "icp": "ตัวยึดตำแหน่งการจดทะเบียน ICP",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "ดาวน์โหลดวิดีโอใดก็ได้,",
@@ -80,7 +82,12 @@
     "faq5q": "ต่างจากตัวดาวน์โหลดอื่นอย่างไร?",
     "faq5a": "ครอบคลุมกว้างกว่า (1000+) มีสรุปและแผนที่ความคิดด้วย AI ในตัว ใช้แค่เบราว์เซอร์ คำบรรยายหลายรูปแบบ เป็นมิตรกับมือถือ",
     "faq6q": "ใช้บนมือถือได้ไหม?",
-    "faq6a": "ได้ ออกแบบแบบตอบสนอง ใน WeChat จะแนะนำให้เปิดในเบราว์เซอร์ระบบเพื่อดาวน์โหลดให้เสร็จ"
+    "faq6a": "ได้ ออกแบบแบบตอบสนอง ใน WeChat จะแนะนำให้เปิดในเบราว์เซอร์ระบบเพื่อดาวน์โหลดให้เสร็จ",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← กลับหน้าแรก",
@@ -119,7 +126,11 @@
     "formatHint": "ไฟล์เล็กกว่าดาวน์โหลดเร็วกว่า วิดีโอยาวควรเลือกคุณภาพต่ำกว่า",
     "recommendedFaster": "แนะนำ · เร็วกว่า",
     "mobileTipStrong": "เคล็ดลับ:",
-    "mobileTip": "คุณอยู่ในเบราว์เซอร์ในแอป การดาวน์โหลดอาจถูกจำกัด แตะ ··· แล้วเปิดใน Safari / Chrome เพื่อประสบการณ์ที่ดีที่สุด"
+    "mobileTip": "คุณอยู่ในเบราว์เซอร์ในแอป การดาวน์โหลดอาจถูกจำกัด แตะ ··· แล้วเปิดใน Safari / Chrome เพื่อประสบการณ์ที่ดีที่สุด",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "สรุปวิดีโอด้วย AI",

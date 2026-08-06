@@ -1,35 +1,42 @@
-# VideoGrab iOS
+# VideoGrab iOS（AI 总结精简版）
 
-WKWebView 壳 App：加载线上站点 `https://videograb.codedance.work`，与 Web 功能同步。下载经原生桥接到系统分享面板；Stripe 结账跳转 Safari。
+WKWebView 壳 App，产品定位 **AI 视频总结**（字幕 / 导图 / 问答），**不提供视频文件下载**。
+
+默认加载 `https://videograb.codedance.work`，通过注入 `window.VideoGrabNative.mode = 'ai-summary'` 让 Web 隐藏下载 UI。
 
 ## 打开与运行
 
-1. 用 Xcode 打开 `ios/VideoGrab.xcodeproj`
-2. Signing & Capabilities → 选择你的 Team（Bundle ID：`work.codedance.videograb`，可按需改）
-3. 选模拟器或真机 → Run
+1. Xcode 打开 `ios/VideoGrab.xcodeproj`
+2. Signing → 选择 Team（Bundle ID：`work.codedance.videograb`）
+3. Run（显示名：VideoGrab AI）
 
-本地联调前端时，在 Xcode Scheme → Run → Arguments → Environment Variables 加：
+本地联调前端：Scheme → Run → Environment Variables：
 
 ```
 VG_START_URL = http://127.0.0.1:3000
 ```
 
-真机请改成电脑局域网 IP（如 `http://192.168.1.8:3000`）。
+真机请改成电脑局域网 IP。**需部署含 `ai-summary` 桥接的前端**，否则壳仍显示网站下载 UI。
 
-## 上架前清单
+## 功能边界
 
-- [ ] 替换 `Assets.xcassets/AppIcon` 为正式 1024×1024 图标
-- [ ] 填 `DEVELOPMENT_TEAM` / App Store Connect 应用
-- [ ] 部署含 `nativeApp` 桥接的前端到生产（否则 App 内下载仍可能失败）
-- [ ] App Privacy / 审核备注：说明为官网 Web 壳；付费走 Stripe（Safari）
-- [ ] 评估 Guideline 3.1.1（数字内容 IAP）与下载类用途审核风险
+| 有 | 无 |
+|----|----|
+| 粘贴链接解析 | 视频文件下载 / 分享面板存视频 |
+| AI 总结、字幕、导图、问答 | 定价 / 下载额度入口 |
+| 字幕与导图小文件分享（`vgShareBlob`） | Stripe 下载 Pro（壳内已隐藏） |
 
 ## 原生桥
 
 | Handler | 用途 |
 |---------|------|
-| `vgDownload` | `{ jobId, filename, token?, apiBase? }` → URLSession 下载后分享 |
-| `vgOpenExternal` | `{ url }` → 系统浏览器（Stripe） |
-| `vgShareBlob` | `{ filename, base64, mimeType? }` → 小文件分享 |
+| `vgOpenExternal` | 外链（如未来账号相关） |
+| `vgShareBlob` | 字幕 / 导图导出分享 |
 
-Web 侧见 `frontend/lib/nativeApp.ts`。
+Web 侧：`frontend/lib/nativeApp.ts`、`useAiSummaryApp()`。
+
+## 上架注意
+
+- 审核话术按「AI 总结工具」写，勿强调下载
+- 替换正式 App Icon；填 DEVELOPMENT_TEAM
+- 生产前端必须先上线本分支的 AI-first 适配

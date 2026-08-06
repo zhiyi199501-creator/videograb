@@ -19,8 +19,10 @@ enum AppConfig {
         return productionURL
     }
 
-    static let appUserAgentSuffix = "VideoGrabiOS/1.0"
+    static let appUserAgentSuffix = "VideoGrabiOS/1.1"
     static let urlScheme = "videograb"
+    /// App Store product mode: AI summary only (no video file download UI).
+    static let appMode = "ai-summary"
 
     /// Hosts allowed inside the WKWebView (everything else → Safari / share).
     static let allowedHosts: Set<String> = [

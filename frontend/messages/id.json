@@ -22,7 +22,9 @@
     "disclaimerTitle": "Penafian",
     "disclaimer": "Alat ini hanya untuk pembelajaran dan penelitian pribadi. Pastikan Anda memiliki hak hukum untuk mengunduh konten dan mematuhi ketentuan setiap platform. Jangan gunakan untuk pelanggaran hak cipta atau tujuan komersial; Anda bertanggung jawab penuh. Video tidak disimpan secara permanen dan dihapus setelah 2 jam.",
     "copyright": "© 2026 VideoGrab. Dibangun di atas proyek open-source yt-dlp.",
-    "icp": "Placeholder pendaftaran ICP"
+    "icp": "Placeholder pendaftaran ICP",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "Unduh video apa pun,",
@@ -80,7 +82,12 @@
     "faq5q": "Apa bedanya dengan pengunduh lain?",
     "faq5a": "Cakupan lebih luas (1000+), ringkasan AI dan peta pikiran bawaan, hanya browser, subtitle multi-format, ramah ponsel.",
     "faq6q": "Bisakah digunakan di ponsel?",
-    "faq6a": "Ya. Desain responsif; di WeChat Anda akan diminta membuka browser sistem untuk menyelesaikan unduhan."
+    "faq6a": "Ya. Desain responsif; di WeChat Anda akan diminta membuka browser sistem untuk menyelesaikan unduhan.",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← Kembali ke beranda",
@@ -119,7 +126,11 @@
     "formatHint": "File lebih kecil lebih cepat diunduh; pilih kualitas lebih rendah untuk video panjang",
     "recommendedFaster": "Direkomendasikan · lebih cepat",
     "mobileTipStrong": "Tips:",
-    "mobileTip": "Anda berada di browser dalam aplikasi; unduhan mungkin terbatas. Ketuk ··· dan buka di Safari / Chrome untuk pengalaman terbaik."
+    "mobileTip": "Anda berada di browser dalam aplikasi; unduhan mungkin terbatas. Ketuk ··· dan buka di Safari / Chrome untuk pengalaman terbaik.",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "Ringkasan video AI",

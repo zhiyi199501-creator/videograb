@@ -22,7 +22,9 @@
     "disclaimerTitle": "إخلاء المسؤولية",
     "disclaimer": "هذه الأداة للتعلّم والبحث الشخصي فقط. تأكد من أن لديك الحق القانوني لتنزيل المحتوى والتزم بشروط كل منصة. لا تستخدمها لانتهاك حقوق النشر أو لأغراض تجارية؛ أنت المسؤول وحدك. لا تُخزَّن الفيديوهات بشكل دائم وتُحذف بعد ساعتين.",
     "copyright": "© 2026 VideoGrab. مبني على مشروع yt-dlp مفتوح المصدر.",
-    "icp": "عنصر نائب لتسجيل ICP"
+    "icp": "عنصر نائب لتسجيل ICP",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "نزّل أي فيديو،",
@@ -80,7 +82,12 @@
     "faq5q": "ما الفرق عن منزّلات أخرى؟",
     "faq5a": "تغطية أوسع (أكثر من 1000)، ملخص وخرائط ذهنية بالذكاء الاصطناعي مدمجة، عبر المتصفح فقط، ترجمات متعددة الصيغ، مناسب للجوال.",
     "faq6q": "هل يمكنني استخدامه على هاتفي؟",
-    "faq6a": "نعم. التصميم متجاوب؛ في WeChat سيُطلب منك الفتح في متصفح النظام لإكمال التنزيل."
+    "faq6a": "نعم. التصميم متجاوب؛ في WeChat سيُطلب منك الفتح في متصفح النظام لإكمال التنزيل.",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← العودة إلى الرئيسية",
@@ -119,7 +126,11 @@
     "formatHint": "الملفات الأصغر تُنزَّل أسرع؛ اختر جودة أقل للفيديوهات الطويلة",
     "recommendedFaster": "موصى به · أسرع",
     "mobileTipStrong": "نصيحة:",
-    "mobileTip": "أنت في متصفح داخل التطبيق؛ قد تكون التنزيلات محدودة. اضغط ··· وافتح في Safari / Chrome لأفضل تجربة."
+    "mobileTip": "أنت في متصفح داخل التطبيق؛ قد تكون التنزيلات محدودة. اضغط ··· وافتح في Safari / Chrome لأفضل تجربة.",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "ملخص فيديو بالذكاء الاصطناعي",

@@ -20,6 +20,7 @@ import {
   subscribeJobEvents,
 } from "@/lib/api";
 import { mergeJobProgress } from "@/lib/jobProgress";
+import { useAiSummaryApp } from "@/lib/useAiSummaryApp";
 
 type Phase = "extracting" | "ready" | "downloading" | "complete" | "failed";
 
@@ -50,6 +51,7 @@ export default function DownloadPage() {
   const router = useRouter();
   const jobId = params.id as string;
   const { user, loading: authLoading, refreshMe } = useAuth();
+  const aiFirst = useAiSummaryApp();
 
   const [phase, setPhase] = useState<Phase>("extracting");
   const [job, setJob] = useState<JobResponse | null>(null);
@@ -77,6 +79,7 @@ export default function DownloadPage() {
   }, [jobId]);
 
   useEffect(() => {
+    if (aiFirst) return;
     if (phase !== "complete" || autoSavedRef.current) return;
     autoSavedRef.current = true;
 
@@ -87,7 +90,7 @@ export default function DownloadPage() {
         autoSavedRef.current = false;
         setAutoSaved(false);
       });
-  }, [phase, jobId, job?.filename]);
+  }, [phase, jobId, job?.filename, aiFirst]);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -278,13 +281,13 @@ export default function DownloadPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-3 sm:px-5 sm:py-4">
-      <MobileTip />
+      {!aiFirst && <MobileTip />}
 
       <Link
         href="/"
         className="mb-3 inline-flex items-center gap-1 text-xs text-[#64748b] hover:text-[#1677ff] sm:text-sm"
       >
-        {t("backHome")}
+        {aiFirst ? t("aiBackHome") : t("backHome")}
       </Link>
 
       {phase === "extracting" && (
@@ -295,7 +298,7 @@ export default function DownloadPage() {
             <div className="mx-auto h-4 w-1/2 rounded bg-[#f0f1f2]" />
           </div>
           <p className="mt-5 text-center text-sm text-[#64748b]">
-            {t("extracting")}
+            {aiFirst ? t("aiExtracting") : t("extracting")}
           </p>
           <div className="mt-3">
             <ProgressBar progress={progress || 0.1} />
@@ -303,7 +306,56 @@ export default function DownloadPage() {
         </div>
       )}
 
-      {showSplit && (
+      {showSplit && aiFirst && job && (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-xl bg-white p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              {!thumbError ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={getThumbnailUrl(jobId)}
+                  alt={job.title || t("thumbnailAlt")}
+                  onError={() => setThumbError(true)}
+                  className="h-36 w-full shrink-0 rounded-lg object-cover sm:h-28 sm:w-40"
+                />
+              ) : (
+                <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1677ff]/10 to-[#4096ff]/5 sm:h-28 sm:w-40">
+                  <span className="text-3xl opacity-60">🎬</span>
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <h1 className="line-clamp-2 text-sm font-bold text-[#0f172a] sm:text-base">
+                  {job.title}
+                </h1>
+                <div className="mt-1.5 flex flex-wrap gap-2 text-xs text-[#94a3b8]">
+                  {job.uploader && <span>{job.uploader}</span>}
+                  {job.duration != null && (
+                    <span>· {formatDuration(job.duration)}</span>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-[#64748b]">{t("aiReadyHint")}</p>
+                <Link
+                  href="/"
+                  className="mt-3 inline-block text-xs font-medium text-[#1677ff] hover:underline"
+                >
+                  {t("aiContinueOther")}
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="min-h-[480px] w-full">
+            <SummaryPanel
+              jobId={jobId}
+              title={job.title}
+              autoStart
+              className="h-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {showSplit && !aiFirst && (
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
           {/* 左栏 ~40%：视频信息 / 下载 */}
           <div className="w-full shrink-0 lg:w-[40%]">

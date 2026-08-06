@@ -6,6 +6,7 @@ import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
 import LocaleSwitcher from "@/components/layout/LocaleSwitcher";
 import { useAuth } from "@/lib/auth";
+import { useAiSummaryApp } from "@/lib/useAiSummaryApp";
 
 function AuthSlot() {
   const t = useTranslations("nav");
@@ -62,14 +63,17 @@ export default function Navbar() {
   const tc = useTranslations("common");
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const aiFirst = useAiSummaryApp();
 
-  const navItems = [
-    { href: "/", label: t("home") },
-    { href: "/#how-to-use", label: t("howTo") },
-    { href: "/#comparison", label: t("comparison") },
-    { href: "/#faq", label: t("faq") },
-    { href: "/pricing", label: t("pricing") },
-  ];
+  const navItems = aiFirst
+    ? [{ href: "/", label: t("home") }]
+    : [
+        { href: "/", label: t("home") },
+        { href: "/#how-to-use", label: t("howTo") },
+        { href: "/#comparison", label: t("comparison") },
+        { href: "/#faq", label: t("faq") },
+        { href: "/pricing", label: t("pricing") },
+      ];
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e8eef5]/80 bg-white/75 backdrop-blur-md">
@@ -79,7 +83,7 @@ export default function Navbar() {
             V
           </div>
           <span className="text-base font-bold tracking-tight text-[#0f172a]">
-            VideoGrab
+            {aiFirst ? "VideoGrab AI" : "VideoGrab"}
           </span>
         </Link>
 
@@ -102,7 +106,7 @@ export default function Navbar() {
             </NextLink>
           )}
           <LocaleSwitcher />
-          <AuthSlot />
+          {!aiFirst && <AuthSlot />}
         </nav>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -155,32 +159,33 @@ export default function Navbar() {
               后台
             </NextLink>
           )}
-          {user ? (
-            <>
-              <p className="py-2 text-sm text-[#64748b]">
-                {user.email}
-                {user.is_pro ? " · Pro" : ""}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  logout();
-                  setMobileOpen(false);
-                }}
-                className="mt-1 w-full rounded-full border border-[#e2e8f0] py-2 text-sm"
+          {!aiFirst &&
+            (user ? (
+              <>
+                <p className="py-2 text-sm text-[#64748b]">
+                  {user.email}
+                  {user.is_pro ? " · Pro" : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    setMobileOpen(false);
+                  }}
+                  className="mt-1 w-full rounded-full border border-[#e2e8f0] py-2 text-sm"
+                >
+                  {t("logout")}
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="mt-2 block w-full rounded-full bg-[#1677ff] py-2 text-center text-sm font-medium text-white"
+                onClick={() => setMobileOpen(false)}
               >
-                {t("logout")}
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/login"
-              className="mt-2 block w-full rounded-full bg-[#1677ff] py-2 text-center text-sm font-medium text-white"
-              onClick={() => setMobileOpen(false)}
-            >
-              {t("login")}
-            </Link>
-          )}
+                {t("login")}
+              </Link>
+            ))}
         </div>
       )}
     </header>

@@ -22,7 +22,9 @@
     "disclaimerTitle": "Disclaimer",
     "disclaimer": "This tool is for personal learning and research only. Ensure you have the legal right to download content and comply with each platform's terms. Do not use it for copyright infringement or commercial purposes; you are solely responsible. Videos are not stored permanently and are deleted after 2 hours.",
     "copyright": "© 2026 VideoGrab. Built on the open-source yt-dlp project.",
-    "icp": "ICP filing placeholder"
+    "icp": "ICP filing placeholder",
+    "aiTagline": "AI video summaries: subtitles, mind maps, and Q&A for YouTube, Bilibili, TikTok and 1000+ sites.",
+    "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
     "heroTitleBefore": "Download any video,",
@@ -80,7 +82,12 @@
     "faq5q": "How is it different from other downloaders?",
     "faq5a": "Broader coverage (1000+), built-in AI summary and mind maps, browser-only, multi-format subtitles, mobile-friendly.",
     "faq6q": "Can I use it on my phone?",
-    "faq6a": "Yes. It is responsive; in WeChat you will be prompted to open in the system browser to finish download."
+    "faq6a": "Yes. It is responsive; in WeChat you will be prompted to open in the system browser to finish download.",
+    "aiHeroTitleBefore": "Paste a video link, ",
+    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
+    "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
+    "aiStartParse": "Summarize"
   },
   "download": {
     "backHome": "← Back to home",
@@ -119,7 +126,11 @@
     "formatHint": "Smaller files download faster; pick lower quality for long videos",
     "recommendedFaster": "Recommended · faster",
     "mobileTipStrong": "Tip:",
-    "mobileTip": "You are in an in-app browser; downloads may be limited. Tap ··· and open in Safari / Chrome for the best experience."
+    "mobileTip": "You are in an in-app browser; downloads may be limited. Tap ··· and open in Safari / Chrome for the best experience.",
+    "aiExtracting": "Fetching video info…",
+    "aiReadyHint": "Ready — AI summary starts below.",
+    "aiBackHome": "Back home",
+    "aiContinueOther": "Summarize another video"
   },
   "summary": {
     "title": "AI video summary",

@@ -22,7 +22,9 @@
     "disclaimerTitle": "면책 조항",
     "disclaimer": "이 도구는 개인 학습 및 연구 목적으로만 사용할 수 있습니다. 콘텐츠를 다운로드할 법적 권리가 있는지 확인하고 각 플랫폼의 약관을 준수하세요. 저작권 침해나 상업적 용도로 사용하지 마세요. 책임은 전적으로 사용자에게 있습니다. 동영상은 영구 저장되지 않으며 2시간 후 삭제됩니다.",
     "copyright": "© 2026 VideoGrab. 오픈소스 프로젝트 yt-dlp를 기반으로 구축.",
-    "icp": "ICP 등록 플레이스홀더"
+    "icp": "ICP 등록 플레이스홀더",
+    "aiTagline": "YouTube, Bilibili, TikTok 등 1000+ 사이트 AI 영상 요약.",
+    "aiDisclaimer": "개인 학습·연구 용도로만 사용하세요. 분석 콘텐츠에 대한 권리와 각 플랫폼 약관을 준수하세요. 영상 파일은 영구 저장하지 않습니다."
   },
   "home": {
     "heroTitleBefore": "어떤 동영상도 다운로드,",
@@ -80,7 +82,12 @@
     "faq5q": "다른 다운로더와 무엇이 다른가요?",
     "faq5a": "더 넓은 범위(1000+), 내장 AI 요약·마인드맵, 브라우저만으로 사용, 다양한 자막 형식, 모바일 친화적.",
     "faq6q": "휴대폰에서도 사용할 수 있나요?",
-    "faq6a": "네. 반응형입니다. WeChat에서는 다운로드를 완료하려면 시스템 브라우저에서 열라는 안내가 표시됩니다."
+    "faq6a": "네. 반응형입니다. WeChat에서는 다운로드를 완료하려면 시스템 브라우저에서 열라는 안내가 표시됩니다.",
+    "aiHeroTitleBefore": "영상 링크를 붙여넣고 ",
+    "aiHeroTitleAccent": "AI 요약",
+    "aiHeroSubtitle": "자막 · 마인드맵 · Q&A. 무료, 로그인 불필요.",
+    "aiUrlPlaceholder": "AI 요약을 위해 영상 URL 붙여넣기…",
+    "aiStartParse": "요약 시작"
   },
   "download": {
     "backHome": "← 홈으로 돌아가기",
@@ -119,7 +126,11 @@
     "formatHint": "파일이 작을수록 더 빠릅니다. 긴 동영상은 낮은 화질을 선택하세요",
     "recommendedFaster": "추천 · 더 빠름",
     "mobileTipStrong": "팁:",
-    "mobileTip": "인앱 브라우저에 있어 다운로드가 제한될 수 있습니다. ···을 누르고 Safari / Chrome에서 열면 가장 좋습니다."
+    "mobileTip": "인앱 브라우저에 있어 다운로드가 제한될 수 있습니다. ···을 누르고 Safari / Chrome에서 열면 가장 좋습니다.",
+    "aiExtracting": "영상 정보 가져오는 중…",
+    "aiReadyHint": "준비됨 — 아래에서 AI 요약을 생성합니다.",
+    "aiBackHome": "홈으로",
+    "aiContinueOther": "다른 영상 요약"
   },
   "summary": {
     "title": "AI 동영상 요약",
