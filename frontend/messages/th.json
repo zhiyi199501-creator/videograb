@@ -27,8 +27,8 @@
     "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
-    "heroTitleBefore": "ดาวน์โหลดวิดีโอใดก็ได้,",
-    "heroTitleAccent": "บันทึกได้ในคลิกเดียว",
+    "heroTitleBefore": "ดาวน์โหลดวิดีโอ, ",
+    "heroTitleAccent": "สรุปด้วย AI",
     "heroSubtitle": "YouTube, Bilibili, Douyin และ 1000+ แพลตฟอร์ม — ใช้บนมือถือได้ด้วย",
     "heroSubtitleAi": "พร้อมสรุปไฮไลต์วิดีโอด้วย AI",
     "urlPlaceholder": "วางลิงก์วิดีโอ เช่น bilibili.com/video/BV...",
@@ -83,8 +83,8 @@
     "faq5a": "ครอบคลุมกว้างกว่า (1000+) มีสรุปและแผนที่ความคิดด้วย AI ในตัว ใช้แค่เบราว์เซอร์ คำบรรยายหลายรูปแบบ เป็นมิตรกับมือถือ",
     "faq6q": "ใช้บนมือถือได้ไหม?",
     "faq6a": "ได้ ออกแบบแบบตอบสนอง ใน WeChat จะแนะนำให้เปิดในเบราว์เซอร์ระบบเพื่อดาวน์โหลดให้เสร็จ",
-    "aiHeroTitleBefore": "Paste a video link, ",
-    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroTitleBefore": "วางลิงก์, ",
+    "aiHeroTitleAccent": "สรุปด้วย AI",
     "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
     "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
     "aiStartParse": "Summarize"

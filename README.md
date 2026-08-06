@@ -1,11 +1,11 @@
 # VideoGrab — 万能视频下载网站
 
-基于 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 的万能视频下载网站，支持 YouTube、B站、抖音、TikTok 等 1000+ 平台，手机也能下。前端采用清爽卡片风 + 付费转化设计；后端为轻量 FastAPI（下载 Job 在内存，用户/订阅用 SQLite）。
+基于 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 的万能视频下载网站，支持 YouTube、B站、抖音、TikTok 等 1000+ 平台，手机也能下。前端为清爽卡片风（Pro 自助入口已隐藏）；后端为轻量 FastAPI（下载 Job 在内存，用户/订阅用 SQLite）。
 
 ## 功能特性
 
 - 粘贴链接一键解析，选择清晰度/格式后下载
-- 实时下载进度（SSE 推送）；下载完成后自动唤起浏览器保存
+- 实时下载进度（SSE = 服务器拉取）；完成后浏览器再保存到本机（两跳）
 - **AI 视频总结**（解析后自动触发，可重新生成）：字幕提取 / 无字幕语音转写 → DeepSeek 流式摘要 → 思维导图 → 智能问答
   - Markdown 精美排版；思维导图全屏与 PNG/SVG 导出；字幕下载 SRT / VTT / TXT
   - 下载页与总结左右同屏；首页紧凑首屏（连按三次 Enter 展开演示 Slogan）

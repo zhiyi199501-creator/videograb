@@ -27,8 +27,8 @@
     "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
-    "heroTitleBefore": "نزّل أي فيديو،",
-    "heroTitleAccent": "واحفظه بنقرة واحدة",
+    "heroTitleBefore": "تنزيل الفيديو، ",
+    "heroTitleAccent": "ملخص بالذكاء الاصطناعي",
     "heroSubtitle": "YouTube وBilibili وDouyin وأكثر من 1000 منصة — يعمل على الجوال أيضًا.",
     "heroSubtitleAi": "بالإضافة إلى ملخصات ذكاء اصطناعي لأبرز نقاط الفيديو.",
     "urlPlaceholder": "الصق رابط فيديو، مثل bilibili.com/video/BV...",
@@ -83,8 +83,8 @@
     "faq5a": "تغطية أوسع (أكثر من 1000)، ملخص وخرائط ذهنية بالذكاء الاصطناعي مدمجة، عبر المتصفح فقط، ترجمات متعددة الصيغ، مناسب للجوال.",
     "faq6q": "هل يمكنني استخدامه على هاتفي؟",
     "faq6a": "نعم. التصميم متجاوب؛ في WeChat سيُطلب منك الفتح في متصفح النظام لإكمال التنزيل.",
-    "aiHeroTitleBefore": "Paste a video link, ",
-    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroTitleBefore": "الصق الرابط، ",
+    "aiHeroTitleAccent": "ملخص بالذكاء الاصطناعي",
     "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
     "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
     "aiStartParse": "Summarize"

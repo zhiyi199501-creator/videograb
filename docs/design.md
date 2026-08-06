@@ -30,14 +30,14 @@
 
 ```
 用户粘贴 URL
-  → POST /api/extract（yt-dlp extract_info, skip_download=True）
+  → POST /api/extract（yt-dlp extract_info, skip_download=True；封面写入 job 目录 thumb.*）
   → 返回 jobId, title, thumbnail, formats[]
   → 用户选择 formatId
   → POST /api/jobs/{id}/download
-  → yt-dlp download + progress_hooks 更新 Job
-  → GET /api/jobs/{id}/events（SSE 推送 progress）
+  → yt-dlp download + progress_hooks 更新 Job（SSE 进度 = 服务器拉取，非浏览器存盘）
+  → 完成后选成品须跳过 thumb.*（`_pick_downloaded_file`），避免把封面当视频
   → GET /api/jobs/{id}/file（Content-Disposition: attachment）
-  → 用户保存到本地
+  → 浏览器再传到本机（第二跳，无服务端进度条；前端解析结束勿用 Math.max 卡住下载进度）
 ```
 
 ## 3. Job 状态机
