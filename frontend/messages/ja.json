@@ -27,8 +27,8 @@
     "aiDisclaimer": "個人の学習・研究目的のみ。分析するコンテンツの権利と各サービスの規約を遵守してください。動画ファイルは永続保存しません。"
   },
   "home": {
-    "heroTitleBefore": "どんな動画もダウンロード、",
-    "heroTitleAccent": "ワンクリックで保存",
+    "heroTitleBefore": "動画ダウンロード、",
+    "heroTitleAccent": "AI要約",
     "heroSubtitle": "YouTube、ビリビリ、抖音など1000以上のプラットフォーム — スマホでも使えます。",
     "heroSubtitleAi": "さらに、動画の要点をAIで要約。",
     "urlPlaceholder": "動画リンクを貼り付け、例：bilibili.com/video/BV...",
@@ -83,8 +83,8 @@
     "faq5a": "より広い対応（1000+）、内蔵AI要約とマインドマップ、ブラウザのみ、多形式字幕、モバイル対応。",
     "faq6q": "スマホで使えますか？",
     "faq6a": "はい。レスポンシブ対応です。WeChat内では、ダウンロード完了のためシステムブラウザで開くよう案内されます。",
-    "aiHeroTitleBefore": "動画リンクを貼って、",
-    "aiHeroTitleAccent": "AIで要約",
+    "aiHeroTitleBefore": "リンクを貼って、",
+    "aiHeroTitleAccent": "AI要約",
     "aiHeroSubtitle": "字幕・マインドマップ・Q&A。無料・ログイン不要。",
     "aiUrlPlaceholder": "動画URLを貼り付けてAI要約…",
     "aiStartParse": "要約する"

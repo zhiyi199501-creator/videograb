@@ -27,8 +27,8 @@
     "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
-    "heroTitleBefore": "Скачайте любое видео,",
-    "heroTitleAccent": "сохраните в один клик",
+    "heroTitleBefore": "Скачивание видео, ",
+    "heroTitleAccent": "ИИ-саммари",
     "heroSubtitle": "YouTube, Bilibili, Douyin и 1000+ платформ — работает и на телефоне.",
     "heroSubtitleAi": "Плюс ИИ-саммари ключевых моментов видео.",
     "urlPlaceholder": "Вставьте ссылку на видео, напр. bilibili.com/video/BV...",
@@ -83,8 +83,8 @@
     "faq5a": "Шире охват (1000+), встроенные ИИ-саммари и интеллект-карты, только браузер, субтитры в нескольких форматах, удобно на мобильных.",
     "faq6q": "Можно ли пользоваться на телефоне?",
     "faq6a": "Да. Адаптивный дизайн; в WeChat предложат открыть системный браузер, чтобы завершить скачивание.",
-    "aiHeroTitleBefore": "Paste a video link, ",
-    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroTitleBefore": "Вставьте ссылку, ",
+    "aiHeroTitleAccent": "ИИ-саммари",
     "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
     "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
     "aiStartParse": "Summarize"

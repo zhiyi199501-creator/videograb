@@ -27,8 +27,8 @@
     "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
-    "heroTitleBefore": "Tải mọi video,",
-    "heroTitleAccent": "lưu chỉ với một cú nhấp",
+    "heroTitleBefore": "Tải video, ",
+    "heroTitleAccent": "tóm tắt AI",
     "heroSubtitle": "YouTube, Bilibili, Douyin và 1000+ nền tảng — dùng được trên điện thoại.",
     "heroSubtitleAi": "Thêm tóm tắt AI các điểm chính của video.",
     "urlPlaceholder": "Dán liên kết video, ví dụ bilibili.com/video/BV...",
@@ -83,8 +83,8 @@
     "faq5a": "Phạm vi rộng hơn (1000+), tóm tắt AI và sơ đồ tư duy tích hợp, chỉ cần trình duyệt, phụ đề nhiều định dạng, thân thiện với di động.",
     "faq6q": "Tôi dùng trên điện thoại được không?",
     "faq6a": "Được. Giao diện đáp ứng; trong WeChat bạn sẽ được nhắc mở trình duyệt hệ thống để hoàn tất tải.",
-    "aiHeroTitleBefore": "Paste a video link, ",
-    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroTitleBefore": "Dán liên kết, ",
+    "aiHeroTitleAccent": "tóm tắt AI",
     "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
     "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
     "aiStartParse": "Summarize"

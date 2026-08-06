@@ -27,8 +27,8 @@
     "aiDisclaimer": "For personal learning and research only. Ensure you have rights to the content you analyze and follow each platform’s terms. We do not permanently store video files."
   },
   "home": {
-    "heroTitleBefore": "Descarga cualquier video,",
-    "heroTitleAccent": "guárdalo en un clic",
+    "heroTitleBefore": "Descarga de videos, ",
+    "heroTitleAccent": "resumen IA",
     "heroSubtitle": "YouTube, Bilibili, Douyin y más de 1000 plataformas — también en el móvil.",
     "heroSubtitleAi": "Además, resúmenes con IA de los puntos clave del video.",
     "urlPlaceholder": "Pega un enlace de video, p. ej. bilibili.com/video/BV...",
@@ -83,8 +83,8 @@
     "faq5a": "Mayor cobertura (más de 1000), resumen y mapas mentales con IA integrados, solo navegador, subtítulos en varios formatos, apto para móvil.",
     "faq6q": "¿Puedo usarlo en el móvil?",
     "faq6a": "Sí. Es responsive; en WeChat se te pedirá abrir el navegador del sistema para completar la descarga.",
-    "aiHeroTitleBefore": "Paste a video link, ",
-    "aiHeroTitleAccent": "get an AI summary",
+    "aiHeroTitleBefore": "Pega el enlace, ",
+    "aiHeroTitleAccent": "resumen IA",
     "aiHeroSubtitle": "Subtitles, mind map, and Q&A — free, no account needed.",
     "aiUrlPlaceholder": "Paste a video URL for an AI summary…",
     "aiStartParse": "Summarize"

@@ -27,8 +27,8 @@
     "aiDisclaimer": "개인 학습·연구 용도로만 사용하세요. 분석 콘텐츠에 대한 권리와 각 플랫폼 약관을 준수하세요. 영상 파일은 영구 저장하지 않습니다."
   },
   "home": {
-    "heroTitleBefore": "어떤 동영상도 다운로드,",
-    "heroTitleAccent": "한 번에 저장",
+    "heroTitleBefore": "동영상 다운로드, ",
+    "heroTitleAccent": "AI 요약",
     "heroSubtitle": "YouTube, Bilibili, Douyin 등 1000개 이상 플랫폼 — 모바일에서도 사용 가능.",
     "heroSubtitleAi": "게다가 동영상 핵심을 AI로 요약.",
     "urlPlaceholder": "동영상 링크를 붙여넣으세요. 예: bilibili.com/video/BV...",
@@ -83,7 +83,7 @@
     "faq5a": "더 넓은 범위(1000+), 내장 AI 요약·마인드맵, 브라우저만으로 사용, 다양한 자막 형식, 모바일 친화적.",
     "faq6q": "휴대폰에서도 사용할 수 있나요?",
     "faq6a": "네. 반응형입니다. WeChat에서는 다운로드를 완료하려면 시스템 브라우저에서 열라는 안내가 표시됩니다.",
-    "aiHeroTitleBefore": "영상 링크를 붙여넣고 ",
+    "aiHeroTitleBefore": "링크 붙여넣기, ",
     "aiHeroTitleAccent": "AI 요약",
     "aiHeroSubtitle": "자막 · 마인드맵 · Q&A. 무료, 로그인 불필요.",
     "aiUrlPlaceholder": "AI 요약을 위해 영상 URL 붙여넣기…",
