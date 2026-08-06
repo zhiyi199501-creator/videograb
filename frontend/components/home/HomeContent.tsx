@@ -7,17 +7,20 @@ import PlatformGrid from "@/components/home/PlatformGrid";
 import HowToSection from "@/components/home/HowToSection";
 import ComparisonSection from "@/components/home/ComparisonSection";
 import FaqSection from "@/components/home/FaqSection";
+import { useAiSummaryApp } from "@/lib/useAiSummaryApp";
 
 /**
  * 简洁首页：标题 + 搜索居中；连按三次 Enter 展开 Slogan 副文案。
- * 首屏下方为 GEO 结构化内容（使用说明 / 对比 / FAQ）。
+ * iOS AI 精简壳：只保留输入与平台标签，隐藏下载向 GEO 长文。
  */
 export default function HomeContent() {
   const [demoMode, setDemoMode] = useState(false);
+  const aiFirst = useAiSummaryApp();
   const enterCountRef = useRef(0);
   const enterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (aiFirst) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return;
       const tag = (e.target as HTMLElement | null)?.tagName;
@@ -41,21 +44,26 @@ export default function HomeContent() {
       window.removeEventListener("keydown", onKeyDown);
       if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
     };
-  }, []);
+  }, [aiFirst]);
 
   return (
     <>
       <div
         data-demo={demoMode ? "on" : "off"}
+        data-ai-first={aiFirst ? "on" : "off"}
         className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center pb-8"
       >
-        <HeroSection compact={!demoMode} />
+        <HeroSection compact={!demoMode && !aiFirst} />
         <UrlInputBar compact />
         <PlatformGrid compact />
       </div>
-      <HowToSection />
-      <ComparisonSection />
-      <FaqSection />
+      {!aiFirst && (
+        <>
+          <HowToSection />
+          <ComparisonSection />
+          <FaqSection />
+        </>
+      )}
     </>
   );
 }

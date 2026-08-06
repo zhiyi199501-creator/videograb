@@ -104,8 +104,10 @@ Ready! Your webhook signing secret is whsec_xxxxx
 
 ## 6. 走一遍完整测试支付
 
+> **注意（2026-08）**：前端已隐藏 `/pricing` 与「升级 Pro」。自助 Checkout 需临时调 `POST /api/billing/checkout`（带 JWT），或用 admin 人工开通 Pro。下列步骤保留供后端联调。
+
 1. 打开 http://localhost:3000/register 注册账号并登录  
-2. 打开 http://localhost:3000/pricing ，点 Pro 的「升级 Pro」  
+2. 用登录 JWT 调用 `POST /api/billing/checkout`，打开返回的 `url`（或临时恢复定价页）  
 3. 跳到 Stripe Checkout，使用测试卡：
 
 | 字段 | 值 |
@@ -115,9 +117,9 @@ Ready! Your webhook signing secret is whsec_xxxxx
 | CVC | 任意三位数 |
 | 邮编 | 任意（如 `10000`） |
 
-4. 支付成功后应回到 `/pricing/success`  
+4. 支付成功后 Stripe success URL 仍可能指向 `/pricing/success`（现会重定向首页）；以 webhook 履约为准  
 5. 看 Stripe CLI 终端（终端 2）：应出现 `checkout.session.completed` 等事件且 HTTP 200  
-6. 打开下载页：AI 总结全站免费（无需登录）；视频下载需登录，登录免费 3 次，Pro 不限次数
+6. 打开下载页：AI 总结全站免费（无需登录）；视频下载需登录，登录后每天免费 10 次；Pro 用户不扣次
 
 ### 常用失败场景测试卡
 

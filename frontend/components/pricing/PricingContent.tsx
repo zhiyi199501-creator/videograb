@@ -56,7 +56,12 @@ export default function PricingContent() {
     setBusy("checkout");
     try {
       const url = await createCheckoutSession();
-      window.location.href = url;
+      const { nativeOpenExternal } = await import("@/lib/nativeApp");
+      if (!nativeOpenExternal(url)) {
+        window.location.href = url;
+      } else {
+        setBusy(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("checkoutFailed"));
       setBusy(null);
@@ -68,7 +73,12 @@ export default function PricingContent() {
     setBusy("portal");
     try {
       const url = await createPortalSession();
-      window.location.href = url;
+      const { nativeOpenExternal } = await import("@/lib/nativeApp");
+      if (!nativeOpenExternal(url)) {
+        window.location.href = url;
+      } else {
+        setBusy(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("portalFailed"));
       setBusy(null);

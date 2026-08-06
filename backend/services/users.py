@@ -7,15 +7,22 @@ import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from db import get_db
 
-# 登录用户免费下载次数（非 Pro）
-DOWNLOAD_FREE_LIMIT = 3
+# 登录非 Pro 用户每日免费下载次数（按 Asia/Shanghai 自然日重置）
+DOWNLOAD_FREE_LIMIT = 10
+DOWNLOAD_QUOTA_TZ = ZoneInfo("Asia/Shanghai")
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _quota_day() -> str:
+    """当前额度日（YYYY-MM-DD，上海时区）。"""
+    return datetime.now(DOWNLOAD_QUOTA_TZ).date().isoformat()
 
 
 def create_user(email: str, password_hash: str) -> dict[str, Any]:
@@ -136,12 +143,37 @@ def is_pro_user(user_id: str) -> bool:
     return True
 
 
+def _reset_daily_quota_if_needed(conn: sqlite3.Connection, user_id: str) -> None:
+    today = _quota_day()
+    row = conn.execute(
+        "SELECT download_free_used, download_free_day FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+    if not row:
+        return
+    day = row["download_free_day"] if "download_free_day" in row.keys() else None
+    if day != today:
+        conn.execute(
+            """
+            UPDATE users
+            SET download_free_used = 0, download_free_day = ?
+            WHERE id = ?
+            """,
+            (today, user_id),
+        )
+
+
 def get_download_free_used(user_id: str) -> int:
-    user = get_user_by_id(user_id)
-    if not user:
+    with get_db() as conn:
+        _reset_daily_quota_if_needed(conn, user_id)
+        row = conn.execute(
+            "SELECT download_free_used FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    if not row:
         return 0
     try:
-        return max(0, int(user.get("download_free_used") or 0))
+        return max(0, int(row["download_free_used"] or 0))
     except (TypeError, ValueError):
         return 0
 
@@ -159,20 +191,22 @@ def can_download(user_id: str) -> bool:
 
 
 def consume_download_free_credit(user_id: str) -> bool:
-    """非 Pro 用户消耗 1 次免费下载额度。成功返回 True；已用尽或 Pro 不扣次。
+    """非 Pro 用户消耗 1 次当日免费下载额度。成功返回 True；已用尽或 Pro 不扣次。
 
-    Pro 直接返回 True（不写库）。
+    Pro 直接返回 True（不写库）。额度按上海时区自然日重置。
     """
     if is_pro_user(user_id):
         return True
     with get_db() as conn:
+        _reset_daily_quota_if_needed(conn, user_id)
         cur = conn.execute(
             """
             UPDATE users
-            SET download_free_used = download_free_used + 1
+            SET download_free_used = download_free_used + 1,
+                download_free_day = COALESCE(download_free_day, ?)
             WHERE id = ? AND download_free_used < ?
             """,
-            (user_id, DOWNLOAD_FREE_LIMIT),
+            (_quota_day(), user_id, DOWNLOAD_FREE_LIMIT),
         )
         return cur.rowcount == 1
 

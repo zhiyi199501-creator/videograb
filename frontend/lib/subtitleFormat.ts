@@ -99,16 +99,24 @@ export function parseSubtitleText(raw: string): SubtitleSegment[] {
 export function downloadTextFile(content: string, filename: string) {
   // 用 octet-stream，避免浏览器把 text/* 强制存成 .txt，忽略 .srt/.vtt 后缀
   const blob = new Blob([content], { type: "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  void (async () => {
+    try {
+      const { nativeShareBlob } = await import("@/lib/nativeApp");
+      if (await nativeShareBlob(blob, filename)) return;
+    } catch {
+      /* fall through to anchor download */
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  })();
 }
 
 export type SubtitleFormat = "srt" | "vtt" | "txt";

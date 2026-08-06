@@ -1,4 +1,5 @@
 import time
+from datetime import date, timedelta
 
 from services import auth
 from services import users as user_store
@@ -17,17 +18,36 @@ def test_create_user_and_lookup(db_path):
 def test_download_free_limit_and_consume(db_path):
     user = _make_user("free@example.com")
     uid = user["id"]
-    assert user_store.DOWNLOAD_FREE_LIMIT == 3
+    assert user_store.DOWNLOAD_FREE_LIMIT == 10
     assert user_store.can_download(uid) is True
     assert user_store.is_pro_user(uid) is False
 
-    for i in range(3):
+    for i in range(10):
         assert user_store.consume_download_free_credit(uid) is True
         assert user_store.get_download_free_used(uid) == i + 1
 
     assert user_store.can_download(uid) is False
     assert user_store.consume_download_free_credit(uid) is False
-    assert user_store.get_download_free_used(uid) == 3
+    assert user_store.get_download_free_used(uid) == 10
+
+
+def test_download_quota_resets_next_day(db_path, monkeypatch):
+    user = _make_user("daily@example.com")
+    uid = user["id"]
+    for _ in range(10):
+        assert user_store.consume_download_free_credit(uid) is True
+    assert user_store.can_download(uid) is False
+
+    today = user_store._quota_day()
+    monkeypatch.setattr(
+        user_store,
+        "_quota_day",
+        lambda: (date.fromisoformat(today) + timedelta(days=1)).isoformat(),
+    )
+    assert user_store.get_download_free_used(uid) == 0
+    assert user_store.can_download(uid) is True
+    assert user_store.consume_download_free_credit(uid) is True
+    assert user_store.get_download_free_used(uid) == 1
 
 
 def test_pro_user_skips_free_download_credit(db_path):
