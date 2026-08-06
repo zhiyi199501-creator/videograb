@@ -59,7 +59,7 @@
 
 ## 当前状态 / 下一步
 
-- 已上（生产 live 2026-08-06 核验）：下载（含 thumb/进度修复）、AI 总结、登录、SEO、Cookie 运维、导图 SSE、ASR HF 缓存、15 语 i18n、每日 10 次额度、隐藏 Pro 自助入口、`/admin`、iOS Web 侧 `ai-summary`；`GET /health` → 200。生产 git = `origin/main` = `68cb7ff`
-- 中文标语已上：首页「视频下载，AI总结」；AI 壳「粘贴链接，AI总结」。其余 14 语同款标语仍在本地未提交（生产 `/en` 仍旧文案）
+- 已上（生产 live 2026-08-06 核验）：下载（含 thumb/进度修复）、AI 总结、登录、SEO、Cookie 运维、导图 SSE、ASR HF 缓存、15 语 i18n、每日 10 次额度、隐藏 Pro 自助入口、`/admin`、iOS Web 侧 `ai-summary`；`GET /health` → 200。生产 git = `origin/main` = `5a13683`
+- 首页/AI 壳标语已全语种对齐：中文「视频下载，AI总结」/「粘贴链接，AI总结」；其他语种同义（如 en：Video download / Paste a link + AI summary）
 - 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；Stripe **Live** / 是否永久下线自助 Pro；subtitle/ASR 底层错误全量 i18n；业务漏斗埋点；App Store 发版节奏独立于 Web 部署
 - 扩展前读对应 `docs/*`；以代码为准修正文档，勿双写矛盾
