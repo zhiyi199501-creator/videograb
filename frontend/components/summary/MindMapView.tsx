@@ -19,7 +19,13 @@ const NODE_FONT_SIZE = 14;
 const TOOLBAR_BTN =
   "rounded-md border border-[#1677ff]/30 bg-white/95 px-2.5 py-1 text-xs font-medium text-[#1677ff] shadow-sm backdrop-blur-sm transition-colors hover:bg-[#1677ff]/10 disabled:cursor-not-allowed disabled:opacity-50";
 
-function downloadBlob(blob: Blob, filename: string) {
+async function downloadBlob(blob: Blob, filename: string) {
+  try {
+    const { nativeShareBlob } = await import("@/lib/nativeApp");
+    if (await nativeShareBlob(blob, filename)) return;
+  } catch {
+    /* fall through */
+  }
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -342,7 +348,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
       const blob = new Blob([svgString], {
         type: "image/svg+xml;charset=utf-8",
       });
-      downloadBlob(blob, `${exportBaseName}.svg`);
+      await downloadBlob(blob, `${exportBaseName}.svg`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("svgExportFailed");
       console.error(msg, err);
@@ -362,7 +368,7 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
         pngExportFailed: t("pngExportFailed"),
         svgRenderFailed: t("svgRenderFailed"),
       });
-      downloadBlob(blob, `${exportBaseName}.png`);
+      await downloadBlob(blob, `${exportBaseName}.png`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("pngExportFailed");
       console.error(msg, err);

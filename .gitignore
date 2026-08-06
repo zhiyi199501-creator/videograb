@@ -37,3 +37,10 @@ downloads/
 
 # Logs
 *.log
+
+# Xcode / iOS
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+ios/DerivedData/
+ios/*.xcarchive
+*.ipa

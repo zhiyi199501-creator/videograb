@@ -20,11 +20,13 @@
 - 前端：Next.js 16 + Tailwind + next-intl + marked + markmap
 - 后端：FastAPI；Job 内存 + `/tmp/videos`；用户/订阅 SQLite（`backend/data/app.db`）；`backend/i18n/` 错误文案
 - AI：DeepSeek + faster-whisper（Compose 卷 `hf-cache`）；会员：Stripe Checkout 月付 Pro ¥9.9
+- iOS：`ios/VideoGrab.xcodeproj` WKWebView 壳（加载线上站）；桥接见 `frontend/lib/nativeApp.ts`
 - 部署：Docker Compose + Caddy（海外机）；测试：pytest / Vitest / GitHub Actions 三 job
 
 ## 目录与约定
 
 - `docs/`：`requirements.md`、`design.md`、`ai-summary.md`、`membership.md`、`stripe-setup.md`、`deploy-online-guide.md`
+- `ios/`：Xcode 工程；说明见 `ios/README.md`；Bundle ID `work.codedance.videograb`
 - `frontend/messages/` + `frontend/i18n/`：15 语 UI/SEO；`backend/i18n/`：API 错误（`Accept-Language` / `?locale=`）
 - `docker-compose.yml` 通用默认；`docker-compose.prod.yml` 正式域名 / CORS / FRONTEND_URL
 - `backend/routers/`：`api` / `summarize` / `auth` / `billing` / `analytics` / `admin`；密钥只放 `backend/.env`，勿提交
@@ -56,5 +58,6 @@
 
 - 已上（生产 live 2026-08-05 核验）：下载、AI 总结、登录、Stripe Pro（Test）、SEO、Cookie 运维、导图 SSE、ASR HF 缓存、15 语 i18n；`GET /health` → 200。生产 git 仍停在较旧 `main`（当时核验为 `86e1a21`），落后 `origin/main`
 - 进行中（未合入 / 未部署）：[PR #18](https://github.com/zhiyi199501-creator/videograb/pull/18) `/admin` 后台。生产 `backend/.env` 已写 `ADMIN_EMAILS`，但代码未上线时 `/admin` 与 `/api/admin/*` 为 404
+- 进行中：iOS WKWebView 壳（`ios/`）+ Web 原生桥；需部署前端桥接后 App 下载才走分享面板；App Store 审核/IAP 策略未定
 - 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；Stripe **Live**；subtitle/ASR 底层错误全量 i18n；业务漏斗埋点
 - 扩展前读对应 `docs/*`；以代码为准修正文档，勿双写矛盾

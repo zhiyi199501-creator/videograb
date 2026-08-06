@@ -119,6 +119,25 @@ export async function downloadFile(
   jobId: string,
   filename: string
 ): Promise<void> {
+  // iOS WKWebView: <a download> + blob URLs are unreliable — hand off to native.
+  const { nativeDownloadJob } = await import("@/lib/nativeApp");
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("vg_access_token")
+      : null;
+  if (
+    nativeDownloadJob({
+      jobId,
+      filename,
+      token,
+      apiBase:
+        API_BASE ||
+        (typeof window !== "undefined" ? window.location.origin : ""),
+    })
+  ) {
+    return;
+  }
+
   const headers = withAuthHeaders();
 
   const res = await fetch(`${API_BASE}/api/jobs/${jobId}/file`, { headers });
