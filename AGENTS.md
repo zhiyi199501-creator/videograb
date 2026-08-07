@@ -21,7 +21,7 @@
 - 后端：FastAPI；Job 内存 + `/tmp/videos`；用户/订阅 SQLite（`backend/data/app.db`）；`backend/i18n/` 错误文案
 - AI：DeepSeek + faster-whisper（Compose 卷 `hf-cache`）
 - 额度：登录用户每天 **10** 次免费下载（`download_free_used` + `download_free_day`，Asia/Shanghai 自然日重置）；后端仍保留 Pro/Stripe/人工 Pro
-- iOS：`ios/VideoGrab.xcodeproj` WKWebView 壳，**AI 总结精简版**（`mode=ai-summary`，无视频下载 UI）；桥接见 `frontend/lib/nativeApp.ts`
+- iOS：`ios/VideoGrab.xcodeproj` WKWebView 壳，**AI 总结精简版**（`mode=ai-summary`，无视频下载 UI）；桥接 `vgOpenExternal` / `vgShareBlob` / `vgCopyText` 见 `frontend/lib/nativeApp.ts` 与 `ios/README.md`
 - 部署：Docker Compose + Caddy（海外机）；测试：pytest / Vitest / GitHub Actions 三 job
 
 ## 目录与约定
@@ -55,11 +55,13 @@
 - 本机 Python 3.9 会让 yt-dlp 告警；目标 3.12
 - 缺 `next-intl` → 在 `frontend/` 跑 `npm install` 后再 `./dev.sh`
 - 下载进度：解析结束 `progress=1`；开始下载须允许回退（`mergeJobProgress`），勿只用 `Math.max`
-- 成品选择：job 目录有 `thumb.*`，须 `_pick_downloaded_file`，勿 `glob(*)[0]`；iOS `DEVELOPMENT_TEAM` 本地填，勿提交
+- 成品选择：job 目录有 `thumb.*`，须 `_pick_downloaded_file`，勿 `glob(*)[0]`；iOS `DEVELOPMENT_TEAM` / Scheme `VG_START_URL` 本地填，勿提交
+- iOS 真机联调：手机与电脑须同一局域网（手机热点常隔离）；`Info.plist` 含本地网络权限；Debug + `VG_START_URL=http://电脑IP:3000`；模拟器用 `127.0.0.1`
+- WKWebView：无可靠 Clipboard/Fullscreen API → 复制走 `vgCopyText`，导图全屏用 CSS；关掉 `bounces` 以免 fixed 顶栏被橡皮筋拖走
 
 ## 当前状态 / 下一步
 
-- 已上（生产 live 2026-08-06 核验）：下载（含 thumb/进度修复）、AI 总结、登录、SEO、Cookie 运维、导图 SSE、ASR HF 缓存、15 语 i18n、每日 10 次额度、隐藏 Pro 自助入口、`/admin`、iOS Web 侧 `ai-summary`；`GET /health` → 200。生产 git = `origin/main` = `5a13683`
-- 首页/AI 壳标语已全语种对齐：中文「视频下载，AI总结」/「粘贴链接，AI总结」；其他语种同义（如 en：Video download / Paste a link + AI summary）
+- 已上（生产 live 2026-08-07 核验）：下载、AI 总结、登录、SEO、Cookie、导图 SSE、ASR、15 语、每日 10 次额度、隐藏 Pro 入口、`/admin`、iOS Web `ai-summary`；`GET /health` → 200。生产 git = `origin/main` = `2f35f2e`（含 PR #24/#25：复制/全屏、去 AI 页脚与汉堡菜单、首页间距、App Icon、本地网络说明）
+- 中文标语：首页「视频下载，AI总结」；AI 壳「粘贴视频链接，AI总结」（15 语同义已对齐）
 - 未做：字幕翻译、批量/历史、Team、Job 挂 user_id；Stripe **Live** / 是否永久下线自助 Pro；subtitle/ASR 底层错误全量 i18n；业务漏斗埋点；App Store 发版节奏独立于 Web 部署
 - 扩展前读对应 `docs/*`；以代码为准修正文档，勿双写矛盾
