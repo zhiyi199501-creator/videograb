@@ -22,6 +22,8 @@ export interface VideoGrabNativeBridge {
     mimeType?: string;
     base64: string;
   }) => void;
+  /** Copy plain text via UIPasteboard (WKWebView clipboard API is unreliable). */
+  copyText?: (text: string) => void;
 }
 
 declare global {
@@ -32,6 +34,7 @@ declare global {
         vgDownload?: { postMessage: (msg: unknown) => void };
         vgOpenExternal?: { postMessage: (msg: unknown) => void };
         vgShareBlob?: { postMessage: (msg: unknown) => void };
+        vgCopyText?: { postMessage: (msg: unknown) => void };
       };
     };
   }
@@ -120,4 +123,56 @@ export async function nativeShareBlob(
   }
   window.webkit!.messageHandlers!.vgShareBlob!.postMessage(payload);
   return true;
+}
+
+function nativeCopyText(text: string): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.VideoGrabNative?.copyText) {
+    window.VideoGrabNative.copyText(text);
+    return true;
+  }
+  const handler = window.webkit?.messageHandlers?.vgCopyText;
+  if (handler) {
+    handler.postMessage({ text });
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Copy plain text. Prefers native UIPasteboard in iOS WKWebView,
+ * then Clipboard API, then execCommand fallback (HTTP / denied clipboard).
+ */
+export async function copyText(text: string): Promise<boolean> {
+  const value = text.trimEnd();
+  if (!value) return false;
+
+  if (nativeCopyText(value)) return true;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    /* fall through */
+  }
+
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = value;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, value.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Transformer } from "markmap-lib";
 import { Markmap } from "markmap-view";
 import { safeFilename } from "@/lib/subtitleFormat";
+import { isNativeApp } from "@/lib/nativeApp";
 
 interface MindMapViewProps {
   markdown: string;
@@ -316,8 +317,10 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      const active = document.fullscreenElement === containerRef.current;
-      setIsFullscreen(active);
+      // Native Fullscreen API path (desktop browsers)
+      if (document.fullscreenElement) {
+        setIsFullscreen(document.fullscreenElement === containerRef.current);
+      }
       requestAnimationFrame(() => {
         syncSvgSize();
         void safeFit(mmRef.current);
@@ -328,6 +331,24 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
     return () =>
       document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, [syncSvgSize]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    requestAnimationFrame(() => {
+      syncSvgSize();
+      void safeFit(mmRef.current);
+    });
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isFullscreen, syncSvgSize]);
 
   const getExportData = useCallback(() => {
     const markmap = mmRef.current;
@@ -382,26 +403,49 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
     const el = containerRef.current;
     if (!el) return;
 
+    // iOS WKWebView / many mobile browsers: Fullscreen API 不可用，用 CSS 铺满视口
+    const preferCss =
+      isNativeApp() ||
+      typeof document === "undefined" ||
+      !document.fullscreenEnabled ||
+      typeof el.requestFullscreen !== "function";
+
+    if (preferCss) {
+      setIsFullscreen((v) => !v);
+      return;
+    }
+
     try {
       if (document.fullscreenElement === el) {
         await document.exitFullscreen();
-      } else if (el.requestFullscreen) {
-        await el.requestFullscreen();
+        setIsFullscreen(false);
       } else {
-        window.alert(t("fullscreenUnsupported"));
+        await el.requestFullscreen();
+        setIsFullscreen(true);
       }
     } catch (err) {
       console.error("Fullscreen toggle failed:", err);
-      window.alert(t("fullscreenFailed"));
+      // 失败时仍走 CSS 伪全屏，避免「点了没反应」
+      setIsFullscreen((v) => !v);
     }
-  }, [t]);
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="relative h-[480px] w-full overflow-hidden rounded-xl border border-[#eef0f3] bg-[#fafbfc] fullscreen:h-full fullscreen:rounded-none fullscreen:border-0 fullscreen:bg-white sm:h-[520px]"
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[200] h-[100dvh] w-screen overflow-hidden rounded-none border-0 bg-white"
+          : "relative h-[480px] w-full overflow-hidden rounded-xl border border-[#eef0f3] bg-[#fafbfc] sm:h-[520px]"
+      }
     >
-      <div className="absolute top-2 right-2 z-10 flex flex-wrap justify-end gap-1.5">
+      <div
+        className={
+          isFullscreen
+            ? "absolute right-[max(0.5rem,env(safe-area-inset-right,0px))] z-10 flex flex-wrap justify-end gap-1.5 top-[max(0.5rem,env(safe-area-inset-top,0px))]"
+            : "absolute top-2 right-2 z-10 flex flex-wrap justify-end gap-1.5"
+        }
+      >
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -430,7 +474,13 @@ export default function MindMapView({ markdown, title }: MindMapViewProps) {
       {/* 不用 Tailwind h-full/w-full 百分比，改由 JS 写入像素宽高 */}
       <svg ref={svgRef} className="block" />
 
-      <p className="pointer-events-none absolute right-3 bottom-2 text-[10px] text-[#94a3b8]">
+      <p
+        className={
+          isFullscreen
+            ? "pointer-events-none absolute right-3 text-[10px] text-[#94a3b8] bottom-[max(0.5rem,env(safe-area-inset-bottom,0px))]"
+            : "pointer-events-none absolute right-3 bottom-2 text-[10px] text-[#94a3b8]"
+        }
+      >
         {t("zoomHint")}
       </p>
     </div>

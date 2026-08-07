@@ -7,6 +7,8 @@ import {
   SubtitleFormat,
   downloadSubtitles,
 } from "@/lib/subtitleFormat";
+import { copyText } from "@/lib/nativeApp";
+import { markdownToPlainText } from "@/lib/plainText";
 import ChatBox from "./ChatBox";
 import MarkdownContent from "./MarkdownContent";
 import MindMapView from "./MindMapView";
@@ -127,16 +129,16 @@ export default function SummaryPanel({
   };
 
   const handleCopySummary = async () => {
-    const text = summary.trim();
+    const text = markdownToPlainText(summary);
     if (!text) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
-    } catch {
+    const ok = await copyText(text);
+    if (!ok) {
       window.alert(t("copyFailed"));
+      return;
     }
+    setCopied(true);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 1600);
   };
 
   const tabs: { id: Tab; label: string; disabled?: boolean }[] = [

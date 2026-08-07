@@ -5,10 +5,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 BACKEND="$ROOT/backend"
 FRONTEND="$ROOT/frontend"
-API_URL="${NEXT_PUBLIC_API_URL:-http://localhost:8000}"
+API_URL="${NEXT_PUBLIC_API_URL-}"
 BACKEND_PID=""
 FRONTEND_PID=""
-
 cleanup() {
   echo ""
   echo "正在停止服务…"
@@ -54,14 +53,24 @@ fi
 echo "启动前端 → http://localhost:3000"
 (
   cd "$FRONTEND"
-  exec env NEXT_PUBLIC_API_URL="$API_URL" npm run dev
+  if [[ -n "$API_URL" ]]; then
+    exec env NEXT_PUBLIC_API_URL="$API_URL" npm run dev
+  else
+    # 空 API_URL：页面用同源 /api，适合 iOS 真机访问局域网 IP
+    exec env -u NEXT_PUBLIC_API_URL npm run dev
+  fi
 ) &
 FRONTEND_PID=$!
 
+LAN_IP="$(ipconfig getifaddr en0 2>/dev/null || true)"
 echo ""
 echo "========================================"
 echo "  前端: http://localhost:3000"
 echo "  后端: http://localhost:8000"
+if [[ -n "$LAN_IP" ]]; then
+  echo "  真机: http://${LAN_IP}:3000"
+  echo "  Xcode VG_START_URL = http://${LAN_IP}:3000"
+fi
 echo "  按 Ctrl+C 同时停止"
 echo "========================================"
 echo ""

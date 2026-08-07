@@ -1,9 +1,11 @@
 import Foundation
+import UIKit
 import WebKit
 
 enum BridgeMessage: String {
     case openExternal = "vgOpenExternal"
     case shareBlob = "vgShareBlob"
+    case copyText = "vgCopyText"
 }
 
 struct OpenExternalPayload: Decodable {
@@ -16,10 +18,15 @@ struct ShareBlobPayload: Decodable {
     let base64: String
 }
 
+struct CopyTextPayload: Decodable {
+    let text: String
+}
+
 enum NativeBridge {
     static let handlerNames: [String] = [
         BridgeMessage.openExternal.rawValue,
         BridgeMessage.shareBlob.rawValue,
+        BridgeMessage.copyText.rawValue,
     ]
 
     /// Injected at document start so the web app can detect the shell before React hydrates.
@@ -36,6 +43,9 @@ enum NativeBridge {
             },
             shareBlob: function (payload) {
               window.webkit.messageHandlers.vgShareBlob.postMessage(payload);
+            },
+            copyText: function (text) {
+              window.webkit.messageHandlers.vgCopyText.postMessage({ text: String(text) });
             }
           };
           document.documentElement.dataset.vgNative = 'ios';

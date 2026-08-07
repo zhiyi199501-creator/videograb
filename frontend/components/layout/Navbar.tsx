@@ -75,7 +75,8 @@ export default function Navbar() {
       ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e8eef5]/80 bg-white/75 backdrop-blur-md">
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-[#e8eef5]/80 bg-white/90 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#1677ff] to-[#38bdf8] text-sm font-bold text-white shadow-[0_4px_12px_-4px_rgba(22,119,255,0.5)]">
@@ -110,34 +111,36 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2 md:hidden">
           <LocaleSwitcher />
-          <button
-            type="button"
-            className="rounded-lg p-2 text-[#0f172a]"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={tc("menu")}
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {mobileOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
+          {!aiFirst && (
+            <button
+              type="button"
+              className="rounded-lg p-2 text-[#0f172a]"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={tc("menu")}
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
-      {mobileOpen && (
+      {!aiFirst && mobileOpen && (
         <div className="border-t border-[#f0f1f2] bg-white px-4 py-3 md:hidden">
           {navItems.map((item) => (
             <Link
@@ -158,35 +161,41 @@ export default function Navbar() {
               后台
             </NextLink>
           )}
-          {!aiFirst &&
-            (user ? (
-              <>
-                <p className="py-2 text-sm text-[#64748b]">
-                  {user.email}
-                  {user.is_pro ? " · Pro" : ""}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    setMobileOpen(false);
-                  }}
-                  className="mt-1 w-full rounded-full border border-[#e2e8f0] py-2 text-sm"
-                >
-                  {t("logout")}
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="mt-2 block w-full rounded-full bg-[#1677ff] py-2 text-center text-sm font-medium text-white"
-                onClick={() => setMobileOpen(false)}
+          {user ? (
+            <>
+              <p className="py-2 text-sm text-[#64748b]">
+                {user.email}
+                {user.is_pro ? " · Pro" : ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  setMobileOpen(false);
+                }}
+                className="mt-1 w-full rounded-full border border-[#e2e8f0] py-2 text-sm"
               >
-                {t("login")}
-              </Link>
-            ))}
+                {t("logout")}
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="mt-2 block w-full rounded-full bg-[#1677ff] py-2 text-center text-sm font-medium text-white"
+              onClick={() => setMobileOpen(false)}
+            >
+              {t("login")}
+            </Link>
+          )}
         </div>
       )}
-    </header>
+      </header>
+      {/* fixed 顶栏占位，避免内容被挡住；含刘海安全区 */}
+      <div
+        className="shrink-0"
+        style={{ height: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
+        aria-hidden
+      />
+    </>
   );
 }

@@ -51,7 +51,11 @@ export default function HomeContent() {
       <div
         data-demo={demoMode ? "on" : "off"}
         data-ai-first={aiFirst ? "on" : "off"}
-        className="flex min-h-[calc(100vh-8.5rem)] flex-col justify-center pb-8"
+        className={
+          aiFirst
+            ? "flex min-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] flex-col justify-center pb-6"
+            : "flex min-h-[calc(100vh-8.5rem)] flex-col justify-center pb-8"
+        }
       >
         <HeroSection compact={!demoMode && !aiFirst} />
         <UrlInputBar compact />
