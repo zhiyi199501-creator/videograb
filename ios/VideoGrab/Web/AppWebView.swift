@@ -31,7 +31,14 @@ struct AppWebView: UIViewRepresentable {
         webView.navigationDelegate = coordinator
         webView.uiDelegate = coordinator
         webView.allowsBackForwardNavigationGestures = true
-        webView.scrollView.contentInsetAdjustmentBehavior = .automatic
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        // 关掉下拉橡皮筋，避免 fixed 顶栏跟着整页被拖走
+        webView.scrollView.bounces = false
+        webView.scrollView.alwaysBounceVertical = false
+        // 禁止双指捏合放大缩小（配合前端 viewport maximumScale=1）
+        webView.scrollView.minimumZoomScale = 1.0
+        webView.scrollView.maximumZoomScale = 1.0
+        webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         webView.customUserAgent = Self.mergedUserAgent(webView: webView)
         webView.isOpaque = false
         webView.backgroundColor = .systemBackground
@@ -87,6 +94,8 @@ struct AppWebView: UIViewRepresentable {
                 handleOpenExternal(message.body)
             case .shareBlob:
                 handleShareBlob(message.body)
+            case .copyText:
+                handleCopyText(message.body)
             case .none:
                 break
             }
@@ -97,6 +106,12 @@ struct AppWebView: UIViewRepresentable {
                   let url = URL(string: payload.url)
             else { return }
             UIApplication.shared.open(url)
+        }
+
+        private func handleCopyText(_ body: Any) {
+            guard let payload = NativeBridge.decode(CopyTextPayload.self, from: body) else { return }
+            UIPasteboard.general.string = payload.text
+            model.showBanner("已复制到剪贴板")
         }
 
         private func handleShareBlob(_ body: Any) {

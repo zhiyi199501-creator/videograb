@@ -16,7 +16,13 @@ WKWebView 壳 App，产品定位 **AI 视频总结**（字幕 / 导图 / 问答�
 VG_START_URL = http://127.0.0.1:3000
 ```
 
-真机请改成电脑局域网 IP。**需部署含 `ai-summary` 桥接的前端**，否则壳仍显示网站下载 UI。
+真机请改成电脑局域网 IP（`./dev.sh` 启动时会打印），例如：
+
+```
+VG_START_URL = http://192.168.1.23:3000
+```
+
+须用 **Debug** Run；并先 `./dev.sh`（已允许局域网 `allowedDevOrigins`，API 默认走同源 `/api`）。
 
 ## 功能边界
 
@@ -32,6 +38,7 @@ VG_START_URL = http://127.0.0.1:3000
 |---------|------|
 | `vgOpenExternal` | 外链（如未来账号相关） |
 | `vgShareBlob` | 字幕 / 导图导出分享 |
+| `vgCopyText` | 复制摘要等到系统剪贴板（WKWebView 无可靠 Clipboard API） |
 
 Web 侧：`frontend/lib/nativeApp.ts`、`useAiSummaryApp()`。
 
