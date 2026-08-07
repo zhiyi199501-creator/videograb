@@ -50,13 +50,13 @@ export default function PlatformGrid({ compact = false }: PlatformGridProps) {
   return (
     <section
       id="platforms"
-      className={`px-4 sm:px-6 ${compact ? "pb-3 pt-8 sm:pt-10" : "pb-6 pt-10"}`}
+      className={`px-4 sm:px-6 ${compact ? "pb-3 pt-8 sm:pt-10" : "pb-6 pt-4"}`}
     >
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-medium tracking-wide text-[#94a3b8]">
           {t("platformsLabel")}
         </p>
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
           {platforms.map((p) => (
             <a
               key={p.name}

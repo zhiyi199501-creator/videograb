@@ -38,6 +38,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>开发联调时需要访问同一局域网内电脑上的 VideoGrab 本地服务。</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp.</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

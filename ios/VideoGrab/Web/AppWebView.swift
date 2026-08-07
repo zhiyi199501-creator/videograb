@@ -152,7 +152,15 @@ struct AppWebView: UIViewRepresentable {
             withError error: Error
         ) {
             model.isLoading = false
-            model.showBanner("无法连接服务器")
+            let ns = error as NSError
+            // -999 = 取消加载，忽略
+            if ns.domain == NSURLErrorDomain, ns.code == NSURLErrorCancelled { return }
+            let host = webView.url?.absoluteString
+                ?? model.startURL.absoluteString
+            model.showBanner("无法连接 \(host)")
+            #if DEBUG
+            print("WKWebView provisional fail:", ns.code, ns.localizedDescription, host)
+            #endif
         }
 
         func webView(
