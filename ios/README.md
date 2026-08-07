@@ -24,6 +24,14 @@ VG_START_URL = http://192.168.1.23:3000
 
 须用 **Debug** Run；并先 `./dev.sh`（已允许局域网 `allowedDevOrigins`，API 默认走同源 `/api`）。
 
+首次真机访问局域网时，系统会弹出「本地网络」权限，请点允许。`Info.plist` 已声明 `NSLocalNetworkUsageDescription`。
+
+**注意**：手机开热点、电脑连热点时，手机常访问不到电脑 IP（`172.20.10.x`）。请改用：
+
+1. 手机和电脑连同一 Wi‑Fi，再更新 `VG_START_URL`；或  
+2. 模拟器：`VG_START_URL=http://127.0.0.1:3000`；或  
+3. 去掉 `VG_START_URL`，直接打生产站。
+
 ## 功能边界
 
 | 有 | 无 |

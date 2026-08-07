@@ -53,13 +53,13 @@ export default function HomeContent() {
         data-ai-first={aiFirst ? "on" : "off"}
         className={
           aiFirst
-            ? "flex min-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] flex-col justify-center pb-6"
+            ? "flex min-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] flex-col justify-center gap-8 pb-10 pt-4"
             : "flex min-h-[calc(100vh-8.5rem)] flex-col justify-center pb-8"
         }
       >
         <HeroSection compact={!demoMode && !aiFirst} />
-        <UrlInputBar compact />
-        <PlatformGrid compact />
+        <UrlInputBar compact={!aiFirst} />
+        <PlatformGrid compact={!aiFirst} />
       </div>
       {!aiFirst && (
         <>

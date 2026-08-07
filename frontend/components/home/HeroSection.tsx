@@ -26,7 +26,7 @@ export default function HeroSection({ compact = false }: HeroSectionProps) {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-36 max-w-2xl rounded-full bg-[radial-gradient(ellipse_at_center,rgba(22,119,255,0.12),transparent_70%)] blur-2xl"
       />
-      <p className="relative mb-2 text-xs font-semibold tracking-[0.18em] text-[#1677ff]/80 uppercase">
+      <p className="relative mb-3 text-xs font-semibold tracking-[0.18em] text-[#1677ff]/80 uppercase">
         {aiFirst ? "VideoGrab AI" : "VideoGrab"}
       </p>
       <h1
@@ -40,7 +40,11 @@ export default function HeroSection({ compact = false }: HeroSectionProps) {
         <span className="text-[#1677ff]">{titleAccent}</span>
       </h1>
       {(!compact || aiFirst) && (
-        <p className="relative mx-auto mt-3 max-w-lg text-sm leading-relaxed text-[#64748b] sm:text-[15px]">
+        <p
+          className={`relative mx-auto max-w-lg text-sm leading-relaxed text-[#64748b] sm:text-[15px] ${
+            aiFirst ? "mt-5" : "mt-3"
+          }`}
+        >
           {subtitle}
           {!aiFirst && (
             <>
